@@ -22,7 +22,8 @@ class UserManager(BaseUserManager):
         user = self.create_user(
             email,
             password=password,
-            is_service_agree=True,
+            terms_of_use_agree=True,
+            terms_of_privacy_agree=True,
         )
         user.is_admin = True
         user.is_active = True
@@ -38,7 +39,7 @@ class User(AbstractBaseUser):
     terms_of_use_agree = models.BooleanField(default=False)
     terms_of_privacy_agree = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expiration_date = models.DateTimeField(default=False)
+    expiration_date = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
