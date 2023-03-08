@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="mt-5">
+    <form action="{% url 'account:login' %}" method="post">
+        {{ form.errors }}
+        {% csrf_token %}
+        <div class="mb-3 form-floating">
+            <input type="text" class="form-control" name="username" id="username"
+                    value="{{ form.username.value|default_if_none:'' }}" placeholder="E-mail">
+            <label for="username">E-mail</label>
+        </div>
+        <div class="mb-3 form-floating">
+            <input type="password" class="form-control" name="password" id="password"
+                    value="{{ form.password.value|default_if_none:'' }}" placeholder="Password">
+            <label for="password">Password</label>
+        </div>
+
+        <div class="my-3">
+            <a class="btn btn-outline-secondary" href="{% url 'account:naver_login' %}">
+                Naver Login
+            </a>
+            <a class="btn btn-outline-secondary" href="{% url 'account:kakao_login' %}">
+                Kakao Login
+            </a>
+            <a class="btn btn-outline-secondary" href="{% url 'account:google_login' %}">
+                Google Login
+            </a>
+        </div>
+
+        <input type="submit" class="btn btn-primary" value="로그인">
+        <a class="btn btn-secondary" href="{% url 'account:signup' %}">회원가입</a>
+        <a class="btn btn-outline-primary" href="{% url 'account:password_reset' %}">비밀번호 찾기</a>
+    </form>
+</div>
+{% endblock %}
