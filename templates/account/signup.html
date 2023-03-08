@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mt-5">
+    <form action="{% url 'account:signup' %}" method="post">
+        {{ form.errors }}
+        {% csrf_token %}
+        <div class="mb-3 form-floating">
+            <input type="text" class="form-control" name="email" id="email"
+                    value="{{ form.email.value|default_if_none:'' }}" placeholder="E-mail">
+            <label for="email">E-mail</label>
+        </div>
+        <div class="mb-3 form-floating">
+            <input type="password" class="form-control" name="password1" id="password1"
+                    value="{{ form.password1.value|default_if_none:'' }}" placeholder="Password">
+            <label for="password1">Password</label>
+        </div>
+        <div class="mb-3 form-floating">
+            <input type="password" class="form-control" name="password2" id="password2"
+                    value="{{ form.password2.value|default_if_none:'' }}" placeholder="Password">
+            <label for="password2">Confirm Password</label>
+        </div>
+        <div class="mb-3 form-check">
+            <div class="form-check p-0" style="font-size: 0.9rem;">
+                <input class="form-check-input" type="checkbox" name="terms_of_use_agree" id="terms_of_use_agree">
+                <label class="form-check-label fw-bold" for="terms_of_use_agree">
+                    [필수]서비스 이용 약관에 동의합니다. 
+                </label>
+                <a class="float-end" href="#" data-bs-toggle="modal" data-bs-target="#terms_of_use_agree">보기</a>
+            </div>
+        </div>
+        <div class="mb-3 form-check">
+            <div class="form-check p-0" style="font-size: 0.9rem;">
+                <input class="form-check-input" type="checkbox" name="terms_of_privacy_agree" id="terms_of_privacy_agree">
+                <label class="form-check-label fw-bold" for="terms_of_privacy_agree">
+                    [필수]개인정보 수집이용에 동의합니다. 
+                </label>
+                <a class="float-end" href="#" data-bs-toggle="modal" data-bs-target="#terms_of_privacy_agree">보기</a>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary" name="send_mail" data-bs-toggle="modal" data-bs-target="#email_verify_modal">확인</button>
+        
+        <div class="modal fade" id="email_verify_modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
+            <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h1 class="modal-title font-md">이메일 인증</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <p class="font-sm">
+                            입력하신 이메일로 인증 메일이 발송되었습니다. 발송된 이메일 내 PIN 번호를 확인하신 후 입력해주세요.
+                        </p>
+                    </div>
+
+                    <div class="mb-3 form-floating">
+                        <input type="text" class="form-control" name="pin" id="pin"
+                                value="{{ form.pin.value|default_if_none:'' }}" placeholder="PIN">
+                        <label for="pin">PIN 번호</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger font-sm" data-bs-dismiss="modal">닫기</button>
+                    <input type="submit" class="btn btn-primary" value="확인">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#email_verify_modal').modal({
+            keyboard: false
+        })
+    })
+
+    $("button[name='send_mail']").click(function(){
+        $.ajax({
+            url: "{% url 'account:send_pin' %}",
+            method: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                email: $('input[name="email"]').val(),
+            }
+        });
+    });
+</script>
+{% endblock %}

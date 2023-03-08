@@ -1,0 +1,23 @@
+.bg-main {
+    background: #044FBF;
+}
+
+.bg-sub {
+    background: #0564F2;
+}
+
+.font-lg {
+    font-size: 30px;
+}
+
+.font-md {
+    font-size: 20px;
+}
+
+.font-sm {
+    font-size: 14px !important;
+}
+
+.font-min {
+    font-size: 12px;
+}
