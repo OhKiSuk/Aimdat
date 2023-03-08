@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'axes',
     'admin_dashboard',
     'account',
     'services'
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -204,6 +206,11 @@ LOGGING = {
 
 #User Model Setting
 AUTH_USER_MODEL = 'account.User'
+
+#AXES Setting
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 0.166667 #10분
+AXES_LOCKOUT_TEMPLATE  = 'account/lockout.html' #로그인 실패 시 나오는 html 페이지
 
 #Login Redirect URL
 LOGIN_REDIRECT_URL = '/'
