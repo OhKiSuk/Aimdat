@@ -1,5 +1,5 @@
 """
-@modified at 2023.02.28
+@created at 2023.03.08
 @author OKS in Aimdat Team
 """
 import re
@@ -8,9 +8,8 @@ from django.core import mail
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from .models import User
+from ..models import User
 
-# Create your tests here.
 class SendPinViewTest(TestCase):
 
     def test_send_pin_success(self):

@@ -38,6 +38,7 @@
             </div>
         </div>
         <button type="button" class="btn btn-primary" name="send_mail" data-bs-toggle="modal" data-bs-target="#email_verify_modal">확인</button>
+        <a class="btn btn-outline-primary" href="{% url 'account:password_change' %}">비밀번호 변경</a>
         
         <div class="modal fade" id="email_verify_modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
             <div class="modal-dialog">
