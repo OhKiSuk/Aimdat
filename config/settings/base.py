@@ -9,7 +9,10 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+"""
+@modified at 2023.03.02
+@author OKS in Aimdat Team
+"""
 import os, json
 from pathlib import Path
 
@@ -51,7 +54,7 @@ INSTALLED_APPS = [
     'axes',
     'admin_dashboard',
     'account',
-    'services'
+    'services',
 ]
 
 MIDDLEWARE = [
@@ -201,6 +204,40 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+    }
+}
+
+#AUTHENTICATION_BACKEND Setting
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    'account.backends.EmailBackend'
+]
+
+#Social Login Setting
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'INIT_PARAMS': {'cookie_policy': 'single_host_origin'},
+        'FIELDS': ['email'],
+        'EXCHANGE_TOKEN': True,
+        'VERIFIED_EMAIL': False,
+    },
+    'naver': {
+        'SCOPE': ['email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'INIT_PARAMS': {'cookie_policy': 'single_host_origin'},
+        'FIELDS': ['email'],
+        'EXCHANGE_TOKEN': True,
+        'VERIFIED_EMAIL': False,
+
+    },
+    'kakao': {
+        'SCOPE': ['account_email'],
+        'FIELDS': ['email'],
+        'EXCHANGE_TOKEN': True,
+        'VERIFIED_EMAIL': False,
     }
 }
 
