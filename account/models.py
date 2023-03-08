@@ -37,7 +37,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser):
     user_classify = models.CharField(
         max_length=255,
-        default=None # G: 구글 소셜 로그인, K: 카카오 소셜 로그인, N: 네이버 소셜 로그인, None: 일반 사용자
+        default='U' # G: 구글 소셜 로그인, K: 카카오 소셜 로그인, N: 네이버 소셜 로그인, U: 일반 사용자
     )
     email = models.EmailField(
         verbose_name='email address',
