@@ -14,16 +14,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 """
-@modified at 2023.03.02
+@modified at 2023.03.09
 @author OKS in Aimdat Team
 """
-from django.contrib import admin
+from admin_dashboard.admin import custom_admin_site
 from django.urls import path, include
 
 from account.views.login_views import ServiceLoginView
 
 urlpatterns = [
     path('', ServiceLoginView.as_view(), name='index'),
-    path('admin/', admin.site.urls),
+    path('admin/', custom_admin_site.urls),
     path('account/', include('account.urls')),
 ]
