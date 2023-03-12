@@ -213,14 +213,6 @@
 {% block script %}
 <script src="{% static 'chart.umd.min.js' %}"></script>
 <script>
-    $(document).ready(function(){ 
-        $('.nav-pills li a').click(function() {
-            $('.nav-pills li a').removeClass('active');
-            $(this).addClass('active');
-        });
-    });
-</script>
-<script>
     var ctx = document.getElementById('service_useage').getContext('2d');
     var myChart = new Chart(ctx, {
         type: 'line',

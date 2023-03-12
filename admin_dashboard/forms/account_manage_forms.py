@@ -1,30 +1,22 @@
 """
-@created at 2023.02.28
-@author OKS in Aimdat Team
-
-@modified at 2023.03.11
+@created at 2023.03.11
 @author OKS in Aimdat Team
 """
+from account.models import User
 from django import forms
-
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
 
-from ..models import User
-
-class UserCreationForm(UserCreationForm):
+class AdminCreationForm(UserCreationForm):
     """
-    사용자 생성 Form
+    관리자 생성 Form
     """
     email = forms.EmailField(required=True)
-    terms_of_use_agree = forms.BooleanField(required=True)
-    terms_of_privacy_agree = forms.BooleanField(required=True)
-    pin = forms.CharField(max_length=6, validators=[RegexValidator(r'^\d{6}$', message='6자리의 숫자만 입력하세요.')])
 
     class Meta:
         model = User
-        fields = ('email', 'password1', 'password2', 'terms_of_use_agree', 'terms_of_privacy_agree', 'pin')
+        fields = ('email', 'password1', 'password2')
 
     def clean_email(self):
         email = self.cleaned_data['email']
@@ -43,6 +35,16 @@ class UserCreationForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password1"])
-        if commit and self.cleaned_data['terms_of_use_agree'] and self.cleaned_data['terms_of_privacy_agree']:
+        if commit:
             user.save()
         return user
+    
+class AdminChangeForm(UserChangeForm):
+    """
+    관리자 정보 변경 Form
+    """
+    password = ReadOnlyPasswordHashField()
+
+    class Meta(UserChangeForm.Meta):
+        model = User
+        fields = ('email', 'password')

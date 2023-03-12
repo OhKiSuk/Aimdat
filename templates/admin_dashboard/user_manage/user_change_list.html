@@ -1,0 +1,127 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% block content %}
+<div class="row mt-3">
+    <span class="font-lg fw-bold">계정정보 관리</span>
+</div>
+<div class="row mt-3">
+    <div class="col-9">
+        <div class="bg-white p-3">
+            <div>
+                <span class="font-md fw-bold">계정 목록 ({{ cl.result_list.count }})</span>
+                <form class="float-end" method="get">
+                    <div class="input-group input-group-sm">
+                        <input class="form-control" type="text" name="email">
+                        <input class="btn btn-primary btn-sm font-sm" type="submit" value="검색">
+                    </div>
+                </form>
+            </div>
+
+            <table class="table table-bordered table-hover mt-3">
+                <thead>
+                    <tr class="bg-sub fw-bold font-sm text-white text-center">
+                        <td>이메일</td>
+                        <td>소셜 로그인 구분</td>
+                        <td>서비스이용 동의</td>
+                        <td>개인정보처리 동의</td>
+                        <td>생성일자</td>
+                        <td>계정 만료일</td>
+                        <td>계정 활성여부</td>
+                        <td>계정 구분</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in cl.result_list %}
+                    <tr class="font-sm text-center">
+                        <td>
+                            {% if i.is_admin == True %}
+                            <a href="{% url 'admin:account_user_change' i.pk %}">{{ i.email }}</a>
+                            {% else %}
+                            {{ i.email }}
+                            {% endif %}
+                        </td>
+
+                        {% if i.user_classify == 'N' %}
+                        <td>네이버</td>
+                        {% elif i.user_classify == 'K' %}
+                        <td>카카오</td>
+                        {% elif i.user_classify == 'G' %}
+                        <td>구글</td>
+                        {% else %}
+                        <td>일반</td>
+                        {% endif %}
+
+                        {% if i.terms_of_use_agree %}
+                        <td>동의</td>
+                        {% else %}
+                        <td>동의 거부</td>
+                        {% endif %}
+
+                        {% if i.terms_of_privacy_agree %}
+                        <td>동의</td>
+                        {% else %}
+                        <td>동의 거부</td>
+                        {% endif %}
+
+                        <td>{{ i.created_at|date:'Y년 m월 d일 H시 i분 s초' }}</td>
+
+                        {% if expiration_date == 'None' %}
+                        <td>{{ i.expiration_date|date:'Y년 m월 d일 H시 i분 s초' }}</td>
+                        {% else %}
+                        <td>만료됨</td>
+                        {% endif %}
+                        
+                        {% if i.is_active %}
+                        <td>활성</td>
+                        {% else %}
+                        <td>비활성</td>
+                        {% endif %}
+
+                        {% if i.is_admin %}
+                        <td>관리자</td>
+                        {% else %}
+                        <td>사용자</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <div class="text-end">
+                <a href="{% url 'admin:account_user_add' %}" class="btn btn-primary font-sm">관리자 계정 추가</a>
+            </div>
+            
+            <ul class="pagination pagination-sm justify-content-center">
+                {% if cl.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ cl.previous_page_number }}">이전</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+                </li>
+                {% endif %}
+                {% for page_number in cl.paginator.page_range %}
+                {% if page_number == cl.number %}
+                <li class="page-item active" aria-current="page">
+                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                {% if cl.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ cl.next_page_number }}">다음</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
