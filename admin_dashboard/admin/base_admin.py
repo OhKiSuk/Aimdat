@@ -3,6 +3,8 @@
 @author OKS in Aimdat Team
 """
 from account.models import User
+from admin_dashboard.models import InquiryAnswer
+from admin_dashboard.admin.inquiry_answer_admin import InqueryAnswerAdmin
 from admin_dashboard.admin.user_admin import AccountManageAdmin
 from django.contrib.admin import AdminSite
 
@@ -13,3 +15,4 @@ custom_admin_site = CustomAdminSite(name='custom_admin')
 
 # ModelAdmin 등록
 custom_admin_site.register(User, AccountManageAdmin)
+custom_admin_site.register(InquiryAnswer, InqueryAnswerAdmin)

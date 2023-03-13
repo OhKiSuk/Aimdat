@@ -1,0 +1,78 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% block content %}
+<div class="row mt-3">
+    <span class="font-lg fw-bold">1:1 문의 관리</span>
+</div>
+<div class="row mt-3">
+    <div class="col-9">
+        <div class="bg-white p-3">
+            <div>
+                <span class="font-md fw-bold">문의사항 목록</span>
+                <form class="float-end" method="get">
+                    <div class="input-group input-group-sm">
+                        <input class="form-control" type="text" name="inquiry_title">
+                        <input class="btn btn-primary btn-sm font-sm" type="submit" value="검색">
+                    </div>
+                </form>
+            </div>
+
+            <table class="table table-bordered table-hover mt-3">
+                <thead>
+                    <tr class="bg-sub fw-bold font-sm text-white text-center">
+                        <td>제목</td>
+                        <td>문의 유형</td>
+                        <td>작성일</td>
+                        <td>답변 여부</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in cl.object_list %}
+                    <tr class="font-sm text-center">
+                        <td><a href="{% url 'admin:inquiryanswer_show_inquiry' i.id %}">{{ i.title }}</a></td>
+                        <td>{{ i.inquiry_category }}</td>
+                        <td>{{ i.created_at }}</td>
+                        {% if i.id in answer %}
+                        <td>O</td>
+                        {% else %}
+                        <td>X</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <ul class="pagination pagination-sm justify-content-center">
+                {% if cl.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ cl.previous_page_number }}">이전</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+                </li>
+                {% endif %}
+                {% for page_number in cl.paginator.page_range %}
+                {% if page_number == cl.number %}
+                <li class="page-item active" aria-current="page">
+                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                {% if cl.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ cl.next_page_number }}">다음</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

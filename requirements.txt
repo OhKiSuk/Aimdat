@@ -1,2 +1,4 @@
 psycopg2-binary==2.9.5
 django-axes==5.40.1
+django-tinymce==3.5.0
+django-bleach==3.0.1

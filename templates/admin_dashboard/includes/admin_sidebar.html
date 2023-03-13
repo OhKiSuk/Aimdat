@@ -17,11 +17,6 @@
         </li>
         <li class="nav-item">
             <a href="#" class="nav-link">
-            1:1 문의 관리
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
             재무정보 수집
             </a>
         </li>
@@ -43,6 +38,11 @@
         <li class="nav-item">
             <a href="{% url 'admin:account_user_changelist' %}" class="nav-link {% if '/admin/account/user/' in request.path %}active{% endif %}">
             계정정보 관리
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'admin:admin_dashboard_inquiryanswer_changelist' %}" class="nav-link {% if '/admin/admin_dashboard/inquiryanswer/' in request.path %}active{% endif %}">
+            1:1 문의 관리
             </a>
         </li>
     </ul>

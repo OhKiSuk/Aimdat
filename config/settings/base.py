@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_bleach',
+    'tinymce',
     'axes',
     'admin_dashboard',
     'account',
@@ -248,6 +250,21 @@ AUTH_USER_MODEL = 'account.User'
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 0.166667 #10분
 AXES_LOCKOUT_TEMPLATE  = 'account/lockout.html' #로그인 실패 시 나오는 html 페이지
+
+#Tinymce settings
+TINYMCE_FILEBROWSER = False
+TINYMCE_EXTRA_MEDIA = {
+    "js": [
+        "tinymce/tinymce.min.js", 
+    ],
+}
+TINYMCE_DEFAULT_CONFIG = {
+    'height' : 500,
+    'cleanup_on_startup': True,
+    'menubar': False,
+    'toolbar': "styleselect | undo redo | bold italic | alignleft aligncenter alignright | help",
+    'custom_undo_redo_levels': 10,
+}
 
 #Login Redirect URL
 LOGIN_REDIRECT_URL = '/'
