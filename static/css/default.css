@@ -6,6 +6,10 @@
     background: #0564F2;
 }
 
+.bg-white {
+    background: #FFFFFF;
+}
+
 .font-lg {
     font-size: 30px;
 }
@@ -15,7 +19,7 @@
 }
 
 .font-sm {
-    font-size: 14px !important;
+    font-size: 14px;
 }
 
 .font-min {
