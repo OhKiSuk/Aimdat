@@ -6,17 +6,17 @@
         {% csrf_token %}
         <div class="mb-3 form-floating">
             <input type="text" class="form-control" name="email" id="email"
-                    value="{{ form.email.value|default_if_none:'' }}" placeholder="E-mail">
+                    value="" placeholder="E-mail">
             <label for="email">E-mail</label>
         </div>
         <div class="mb-3 form-floating">
             <input type="password" class="form-control" name="password1" id="password1"
-                    value="{{ form.password1.value|default_if_none:'' }}" placeholder="Password">
+                    value="" placeholder="Password">
             <label for="password1">Password</label>
         </div>
         <div class="mb-3 form-floating">
             <input type="password" class="form-control" name="password2" id="password2"
-                    value="{{ form.password2.value|default_if_none:'' }}" placeholder="Password">
+                    value="" placeholder="Password">
             <label for="password2">Confirm Password</label>
         </div>
         <div class="mb-3 form-check">
@@ -37,7 +37,7 @@
                 <a class="float-end" href="#" data-bs-toggle="modal" data-bs-target="#terms_of_privacy_agree">보기</a>
             </div>
         </div>
-        <button type="button" class="btn btn-primary" name="send_mail" data-bs-toggle="modal" data-bs-target="#email_verify_modal">확인</button>
+        <button id="id_send_pin" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#email_verify_modal">확인</button>
         <a class="btn btn-outline-primary" href="{% url 'account:password_change' %}">비밀번호 변경</a>
         
         <div class="modal fade" id="email_verify_modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
@@ -56,7 +56,7 @@
 
                     <div class="mb-3 form-floating">
                         <input type="text" class="form-control" name="pin" id="pin"
-                                value="{{ form.pin.value|default_if_none:'' }}" placeholder="PIN">
+                                value="" placeholder="PIN">
                         <label for="pin">PIN 번호</label>
                     </div>
                 </div>
@@ -69,22 +69,18 @@
     </form>
 </div>
 {% endblock %}
-{% block scripts %}
+{% block script %}
 <script>
     $(document).ready(function() {
-        $('#email_verify_modal').modal({
-            keyboard: false
-        })
-    })
-
-    $("button[name='send_mail']").click(function(){
-        $.ajax({
-            url: "{% url 'account:send_pin' %}",
-            method: 'POST',
-            data: {
-                csrfmiddlewaretoken: '{{ csrf_token }}',
-                email: $('input[name="email"]').val(),
-            }
+        $("#id_send_pin").click(function(e){
+            $.ajax({
+                url: "{% url 'account:send_pin' %}",
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    email: $('input[name="email"]').val(),
+                }
+            });
         });
     });
 </script>

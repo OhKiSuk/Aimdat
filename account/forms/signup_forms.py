@@ -2,16 +2,23 @@
 @created at 2023.02.28
 @author OKS in Aimdat Team
 
-@modified at 2023.03.11
+@modified at 2023.03.18
 @author OKS in Aimdat Team
 """
 from django import forms
-
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-
 from ..models import User
+
+class SendPinForm(forms.Form):
+    """
+    PIN 전송 폼
+    """
+    email = forms.EmailField(required=True)
+    
+    class Meta:
+        fields = ('email')
 
 class UserCreationForm(UserCreationForm):
     """
@@ -20,7 +27,7 @@ class UserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     terms_of_use_agree = forms.BooleanField(required=True)
     terms_of_privacy_agree = forms.BooleanField(required=True)
-    pin = forms.CharField(max_length=6, validators=[RegexValidator(r'^\d{6}$', message='6자리의 숫자만 입력하세요.')])
+    pin = forms.CharField(max_length=6, validators=[RegexValidator(r'^\d{6}$', message='PIN번호가 올바르지 않습니다.')])
 
     class Meta:
         model = User

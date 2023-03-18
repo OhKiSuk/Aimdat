@@ -7,7 +7,7 @@
 """
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views.account_views import SignUpView, SendPinView
+from .views.signup_views import SignUpView, SendPinView
 from .views.login_views import ServiceLoginView
 from .views.kakao_login_views import KakaoLoginView, KakaoCallbackView
 from .views.naver_login_views import NaverLoginView, NaverCallbackView
