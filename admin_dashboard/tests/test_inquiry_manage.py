@@ -39,7 +39,7 @@ class InquiryManageTest(TestCase):
         request = self.factory.get(reverse('admin:index'))
         self.client.login(request=request, username=email, password=password)
         
-        response = self.client.post(reverse('admin:inquiryanswer_show_inquiry', args=[self.inquiry.id]), {'content': 'test answer'})
+        response = self.client.post(reverse('admin:add_inquiry_answer', args=[self.inquiry.id]), {'content': 'test answer'})
 
         self.assertTrue(response.status_code, 302)
         self.assertTrue(InquiryAnswer.objects.filter(inquiry_id=self.inquiry.id).exists())
