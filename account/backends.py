@@ -1,12 +1,14 @@
 """
 @created at 2023.03.01
 @author OKS in Aimdat Team
-"""
-from django.contrib.auth.backends import BaseBackend
 
+@modified at 2023.03.19
+@author OKS in Aimdat Team
+"""
+from axes.backends import AxesBackend
 from .models import User
 
-class EmailBackend(BaseBackend):
+class EmailBackend(AxesBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         try:
             user = User.objects.get(email=username)

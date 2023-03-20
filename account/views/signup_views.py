@@ -2,7 +2,7 @@
 @created at 2023.02.27
 @author OKS in Aimdat Team
 
-@modified at 2023.03.18
+@modified at 2023.03.19
 @author OKS in Aimdat Team
 """
 import random
@@ -21,7 +21,7 @@ class SignUpView(FormView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            redirect('index')
+            return redirect('index')
         else:
             return super().dispatch(request, *args, **kwargs)
 
