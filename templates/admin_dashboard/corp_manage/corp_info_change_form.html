@@ -10,32 +10,31 @@
                 <span class="font-md fw-bold">기업 정보 변경</span>
             </div>
 
-            <form class="form-control rounded-3 mt-3" method="post">
-                {% csrf_token %}
-                {% for field, values  in content.items %}
+            <div class="rounded-3 mt-3">
                 <div class="my-3 row">
-                    <label for="id_{{ field }}" class="col-sm-2 col-form-label">
-                    {% if field == 'id' %}기업명
-                    {% elif field == 'corp_homepage_url' %}홈페이지 주소
-                    {% elif field == 'corp_settlement_date' %}기업 결산일
-                    {% elif field == 'corp_ceo_name' %}CEO 명
-                    {% else %}기업 소개{% endif %}
-                    </label>
+                    <label for="id_corp_name" class="col-sm-2 col-form-label">기업명</label>
                     <div class="col-sm-10">
-                        {% if field == 'id' %}
-                        <input type="text" class="form-control" id="id_{{ field }}" name="{{ field }}" value="{{ corp_name|default_if_none:'' }}">
-                        {% elif field == 'corp_summary' %}
-                        <textarea name="{{ field }}" id="id_{{ field }}" cols="30" rows="10">{{ values|default_if_none' }}</textarea>
-                        {% else %}
-                        <input type="text" class="form-control" id="id_{{ field }}" name="{{ field }}" value="{{ values|default_if_none:'' }}">
-                        {% endif %}
+                        <input type="text" class="form-control" id="id_corp_name" name="corp_name" value="{{ corp_name|default_if_none:'' }}" readonly>
                     </div>
                 </div>
-                {% endfor %}
-
-                <input id="submit_form" type="submit" hidden/>
-            </form>
-
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        {% if field.name == 'corp_id' %}
+                            <input type="hidden" name="{{ field.name }}" value="{{ form.instance.corp_id.id }}">
+                        {% else %}
+                            <div class="my-3 row">
+                                <label for="id_{{ field.id_for_label }}" class="col-sm-2 col-form-label {{ field.label_class }}">{{ field.label }}</label>
+                                <div class="col-sm-10">
+                                    {{ field }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+    
+                    <input id="submit_form" type="submit" hidden/>
+                </form>
+            </div>
             <div class="mt-3 text-end">
                 <button id="id_change" class="btn btn-primary font-sm" type="submit">확인</button>
                 <a href="{% url 'admin:corp_manage' %}" class="btn btn-secondary font-sm">취소</a>

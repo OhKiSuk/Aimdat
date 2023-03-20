@@ -10,55 +10,31 @@
                 <span class="font-md fw-bold">기업 요약 재무제표 변경</span>
             </div>
 
-            <form class="form-control rounded-3 mt-3" method="post">
-                {% csrf_token %}
-                {% for field, values  in content.items %}
+            <div class="rounded-3 mt-3">
                 <div class="my-3 row">
-                    <label for="id_{{ field }}" class="col-sm-2 col-form-label">
-                    {% if field == 'id' %}기업명
-                    {% elif field == 'disclosure_date' %}공시일
-                    {% elif field == 'year' %}년도
-                    {% elif field == 'month' %}월
-                    {% elif field == 'revenue' %}매출액
-                    {% elif field == 'operating_profit' %}영업이익
-                    {% elif field == 'net_profit' %}당기순이익
-                    {% elif field == 'operating_margin' %}영업이익률
-                    {% elif field == 'net_profit_margin' %}순이익률
-                    {% elif field == 'dept_ratio' %}부채비율
-                    {% elif field == 'cost_of_sales_ratio' %}매출원가율
-                    {% elif field == 'quick_ratio' %}당좌비율
-                    {% elif field == 'dividend' %}배당금
-                    {% elif field == 'total_dividend' %}배당금 총액
-                    {% elif field == 'dividend_yield' %}배당 수익률
-                    {% elif field == 'dividend_payout_ratio' %}배당성향
-                    {% elif field == 'dividend_ratio' %}배당률
-                    {% elif field == 'per' %}PER
-                    {% elif field == 'pbr' %}PBR
-                    {% elif field == 'psr' %}PSR
-                    {% elif field == 'ev_ebitda' %}EV/EBITDA
-                    {% elif field == 'ev_per_ebitda' %}EV/PER/EBITDA
-                    {% elif field == 'eps' %}EPS
-                    {% elif field == 'bps' %}BPS
-                    {% elif field == 'roe' %}ROE
-                    {% elif field == 'dps' %}DPS
-                    {% elif field == 'total_dept' %}총 부채
-                    {% elif field == 'total_asset' %}총 자산
-                    {% elif field == 'total_capital' %}총 자본
-                    {% elif field == 'borrow_debt' %}총 차입금
-                    {% else %}액면가{% endif %}
-                    </label>
+                    <label for="id_corp_name" class="col-sm-2 col-form-label">기업명</label>
                     <div class="col-sm-10">
-                        {% if field == 'id' %}
-                        <input type="text" class="form-control" id="id_{{ field }}" name="{{ field }}" value="{{ corp_name|default_if_none:'' }}">
-                        {% else %}
-                        <input type="text" class="form-control" id="id_{{ field }}" name="{{ field }}" value="{{ values|default_if_none:'' }}">
-                        {% endif %}
+                        <input type="text" class="form-control" id="id_corp_name" name="corp_name" value="{{ corp_name|default_if_none:'' }}" readonly>
                     </div>
                 </div>
-                {% endfor %}
-
-                <input id="submit_form" type="submit" hidden/>
-            </form>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        {% if field.name == 'corp_id' %}
+                            <input type="hidden" name="{{ field.name }}" value="{{ form.instance.corp_id.id }}">
+                        {% else %}
+                            <div class="my-3 row">
+                                <label for="id_{{ field.id_for_label }}" class="col-sm-2 col-form-label {{ field.label_class }}">{{ field.label }}</label>
+                                <div class="col-sm-10">
+                                    {{ field }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+    
+                    <input id="submit_form" type="submit" hidden/>
+                </form>
+            </div>
 
             <div class="mt-3 mb-5 text-end">
                 <button id="id_change" class="btn btn-primary font-sm" type="submit">확인</button>
