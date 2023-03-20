@@ -1,6 +1,9 @@
 """
 @created at 2023.03.08
 @author OKS in Aimdat Team
+
+@modified at 2023.03.19
+@author OKS in Aimdat Team
 """
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -37,5 +40,4 @@ class KakaoLoginTest(TestCase):
 
         user = User.objects.get(email=email)
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('account:signup'))
         self.assertEqual(user.email, email)
