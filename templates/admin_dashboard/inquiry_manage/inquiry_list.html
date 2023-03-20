@@ -15,7 +15,7 @@
                     </div>
                 </form>
             </div>
-
+            
             <table class="table table-bordered table-hover mt-3">
                 <thead>
                     <tr class="bg-sub fw-bold font-sm text-white text-center">
@@ -26,12 +26,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for i in cl.object_list %}
+                    {% for i in inquiry_list.object_list %}
                     <tr class="font-sm text-center">
-                        <td><a href="{% url 'admin:inquiryanswer_show_inquiry' i.id %}">{{ i.title }}</a></td>
+                        <td><a href="{% url 'admin:add_inquiry_answer' i.id %}">{{ i.title }}</a></td>
                         <td>{{ i.inquiry_category }}</td>
                         <td>{{ i.created_at }}</td>
-                        {% if i.id in answer %}
+                        {% if i.id in inquiry_answer %}
                         <td>O</td>
                         {% else %}
                         <td>X</td>
@@ -42,17 +42,17 @@
             </table>
             
             <ul class="pagination pagination-sm justify-content-center">
-                {% if cl.has_previous %}
+                {% if inquiry_list.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ cl.previous_page_number }}">이전</a>
+                    <a class="page-link" href="?page={{ inquiry_list.previous_page_number }}">이전</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
                     <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
                 </li>
                 {% endif %}
-                {% for page_number in cl.paginator.page_range %}
-                {% if page_number == cl.number %}
+                {% for page_number in inquiry_list.paginator.page_range %}
+                {% if page_number == inquiry_list.number %}
                 <li class="page-item active" aria-current="page">
                     <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
                 </li>
@@ -62,9 +62,9 @@
                 </li>
                 {% endif %}
                 {% endfor %}
-                {% if cl.has_next %}
+                {% if inquiry_list.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ cl.next_page_number }}">다음</a>
+                    <a class="page-link" href="?page={{ inquiry_list.next_page_number }}">다음</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
