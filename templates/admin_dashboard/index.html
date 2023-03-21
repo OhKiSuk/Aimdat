@@ -13,17 +13,17 @@
                 </div>
                 <div class="mt-3 text-center">
                     <span class="font-md fw-bold">
-                        2.25(+0.6) 억원
+                        -원
                     </span>
                 </div>
             </div>
             <div class="col flex-grow-1 mx-3 p-3 bg-white">
                 <div>
-                    <span class="font-md fw-bold">가입자 수</span>
+                    <span class="font-md fw-bold">총 가입자 수</span>
                 </div>
                 <div class="mt-3 text-center">
                     <span class="font-md fw-bold">
-                        3.24(+0.3) 만명
+                        {{ total_user }}명
                     </span>
                 </div>
             </div>
@@ -33,7 +33,7 @@
                 </div>
                 <div class="mt-3 text-center">
                     <span class="font-md fw-bold">
-                        72.25(+1.03)%
+                        -%
                     </span>
                 </div>
             </div>
@@ -86,52 +86,25 @@
 </div>
 
 <div class="row mt-3">
-    <div class="col-6">
+    <div class="col-12">
         <div class="row">
             <div class="p-3 bg-white">
                 <div>
-                    <span class="font-md fw-bold">이용자 수 통계</span>
+                    <span class="font-md fw-bold">가입자 수 증가 추이</span>
                     <div class="float-end">
-                        <button class="btn btn-sm btn-primary">1주일</button>
-                        <button class="btn btn-sm btn-primary">1개월</button>
-                        <button class="btn btn-sm btn-primary">1년</button>
+                        <a class="btn btn-sm btn-primary" href="?period=week">1주일</a>
+                        <a class="btn btn-sm btn-primary" href="?period=month">1개월</a>
+                        <a class="btn btn-sm btn-primary" href="?period=year">1년</a>
                     </div>
                 </div>
-                <canvas id="service_useage" style="width: 100%"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-6">
-        <div class="row" style="margin-left: 1rem; height: 100%;">
-            <div class="p-3 bg-white">
-                <div>
-                    <span class="font-md fw-bold">서버</span>
-                </div>
-                <div class="mt-4">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <canvas id="cpu" style="width: 100%"></canvas>
-                        </div>
-                        <div class="col-md-6">
-                            <canvas id="ram" style="width: 100%"></canvas>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <canvas id="storage" style="width: 100%"></canvas>
-                        </div>
-                        <div class="col-md-6">
-                            <canvas id="trrafic" style="width: 100%"></canvas>
-                        </div>
-                    </div>
-                </div>
+                <canvas id="user_signup_count" style="width: 100%; height: 450px;"></canvas>
             </div>
         </div>
     </div>
 </div>
 
 <div class="row mt-3">
-    <div class="col-6 p-0">
+    <div class="col-12 p-0">
         <div style="width: 100%;">
             <div class="p-3 bg-white">
                 <div class="mb-3">
@@ -146,63 +119,12 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {% for data in inquiry %}
                         <tr>
-                            <td>2023-03-12</td>
-                            <td>환불해주세요</td>
+                            <td style="width: 20%">{{ data.created_at }}</td>
+                            <td>{{ data.title }}</td>
                         </tr>
-                        <tr>
-                            <td>2023-03-12</td>
-                            <td>환불해주세요</td>
-                        </tr>
-                        <tr>
-                            <td>2023-03-12</td>
-                            <td>환불해주세요</td>
-                        </tr>
-                        <tr>
-                            <td>2023-03-12</td>
-                            <td>환불해주세요</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class="col-6">
-        <div style="margin-left: 1rem; width: 100%;">
-            <div class="p-3 bg-white">
-                <div class="mb-3">
-                    <span class="font-md fw-bold">로그</span>
-                </div>
-
-                <table class="table table-bordered table-hover">
-                    <thead class="fw-bold bg-light">
-                        <tr>
-                            <td>일시</td>
-                            <td>레벨</td>
-                            <td>로그 내용</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>2023-03-12</td>
-                            <td>[경고]</td>
-                            <td>Service ERROR: 024</td>
-                        </tr>
-                        <tr>
-                            <td>2023-03-10</td>
-                            <td>[주의]</td>
-                            <td>Service ERROR: 026</td>
-                        </tr>
-                        <tr>
-                            <td>2023-03-06</td>
-                            <td>[경고]</td>
-                            <td>Service ERROR: 031</td>
-                        </tr>
-                        <tr>
-                            <td>2023-03-06</td>
-                            <td>[경고]</td>
-                            <td>Service ERROR: 031</td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -211,111 +133,15 @@
 </div>
 {% endblock %}
 {% block script %}
-<script src="{% static 'chart.umd.min.js' %}"></script>
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
 <script>
-    var ctx = document.getElementById('service_useage').getContext('2d');
+    var ctx = document.getElementById('user_signup_count').getContext('2d');
     var myChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
-            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+            labels: {{ user_count_label|safe }},
             datasets: [{
-                    data: [652, 1002, 2180, 5381, 7256, 8855, 9040],
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-    });
-</script>
-<script>
-    var ctx = document.getElementById('cpu').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-            datasets: [{
-                    data: [2, 3, 22, 5, 6, 32, 5],
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-    });
-</script>
-<script>
-    var ctx = document.getElementById('ram').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-            datasets: [{
-                    data: [22, 33, 42, 52, 12, 2, 3],
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-    });
-</script>
-<script>
-    var ctx = document.getElementById('storage').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['1', '2', 'March', 'April', 'May', 'June', 'July'],
-            datasets: [{
-                    data: [22, 22, 22, 22, 22, 22, 22],
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-    });
-</script>
-<script>
-    var ctx = document.getElementById('trrafic').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-            datasets: [{
-                    data: [35, 23, 14, 25, 62, 32, 33],
+                    data: {{ user_count_data|safe }},
                     fill: false,
                     borderColor: 'rgb(75, 192, 192)',
                     tension: 0.1
