@@ -7,7 +7,7 @@
     <div class="col-9">
         <div class="bg-white p-3">
             <div>
-                <span class="font-md fw-bold">계정 목록 ({{ cl.result_list.count }})</span>
+                <span class="font-md fw-bold">계정 목록 ({{ user_list.object_list.count }})</span>
                 <form class="float-end" method="get">
                     <div class="input-group input-group-sm">
                         <input class="form-control" type="text" name="email">
@@ -30,7 +30,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for i in cl.result_list %}
+                    {% for i in user_list.object_list %}
                     <tr class="font-sm text-center">
                         <td>
                             {% if i.is_admin == True %}
@@ -91,17 +91,17 @@
             </div>
             
             <ul class="pagination pagination-sm justify-content-center">
-                {% if cl.has_previous %}
+                {% if user_list.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ cl.previous_page_number }}">이전</a>
+                    <a class="page-link" href="?page={{ user_list.previous_page_number }}">이전</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
                     <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
                 </li>
                 {% endif %}
-                {% for page_number in cl.paginator.page_range %}
-                {% if page_number == cl.number %}
+                {% for page_number in user_list.paginator.page_range %}
+                {% if page_number == user_list.number %}
                 <li class="page-item active" aria-current="page">
                     <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
                 </li>
@@ -111,9 +111,9 @@
                 </li>
                 {% endif %}
                 {% endfor %}
-                {% if cl.has_next %}
+                {% if user_list.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ cl.next_page_number }}">다음</a>
+                    <a class="page-link" href="?page={{ user_list.next_page_number }}">다음</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">

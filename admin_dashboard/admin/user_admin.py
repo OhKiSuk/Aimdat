@@ -5,7 +5,9 @@
 from admin_dashboard.forms.account_manage_forms import AdminCreationForm, AdminChangeForm
 from account.models import User
 from django.contrib.admin import ModelAdmin
+from django.core.paginator import Paginator
 from django.http import Http404
+from django.shortcuts import render
 
 class AccountManageAdmin(ModelAdmin):
     model = User
@@ -16,6 +18,26 @@ class AccountManageAdmin(ModelAdmin):
     search_fields = ['user__email']
 
     list_display = ('email', 'user_classify', 'terms_of_use_agree', 'terms_of_privacy_agree', 'created_at', 'expiration_date', 'is_active', 'is_admin')
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        users = User.objects.all().order_by('-created_at')
+
+        search_query = request.GET.get('email', None)
+        if search_query:
+            users = User.objects.filter(email__icontains=search_query).order_by('-created_at')
+        else:
+            users = User.objects.all().order_by('-created_at')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(users, self.list_per_page)
+        page_obj = paginator.get_page(page)
+
+        context = {
+            'user_list': page_obj
+        }
+
+        return render(request, self.change_list_template, context=context)
 
     def add_view(self, request, form_url='', extra_context=None):
         extra_context = extra_context or {}
