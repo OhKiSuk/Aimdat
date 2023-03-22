@@ -13,7 +13,6 @@ from django.urls import path
 from services.models.inquiry import Inquiry
 from .axes_admin import AccessAttemptAdmin, AccessFailureAdmin, AccessSuccessAdmin
 from ..views.corp_manage_views import CorpManageView, CorpIdChangeView, CorpInfoChangeView, CorpSummaryFinancialStatementsChangeView
-from ..views.marketing_views import MarketingView
 from ..views.inquiry_manage_views import InquiryListView, InquiryAddAnswerView
 
 class CustomAdminSite(AdminSite):
