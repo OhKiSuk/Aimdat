@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="{% static 'css/default.css' %}">
     <link rel="stylesheet" href="{% static 'css//bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css.map' %}">
+    {% block style %}
+    {% endblock %}
 </head>
 <body>
     {% include 'navbar.html' %}

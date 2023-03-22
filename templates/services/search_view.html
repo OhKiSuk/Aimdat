@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/search_view.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="header d-flex align-items-center my-3">
+        <span class="mr-3">검색결과</span><span class="mx-2" style="font-size:14px;"><b>총 {{paginator.count}}건</b></span>
+        <!-- 적용된 조건 출력 -->
+        <div class="applied_filter_list">
+            {% for data in applied_filter_list%}
+            <span class="{{data.0}} applied_filter">{{data.1}}:{{data.2}}~{{data.3}}</span>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn ms-auto filter_set" data-bs-toggle="modal" data-bs-target="#filter-modal">필터설정</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <!-- 검색 항목 출력 -->
+                <tr>
+                    <th>No.</th>
+                    <th>회사명</th>
+                    {% for data in table_column %}
+                    <th>{{data}}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 검색 데이터 출력 -->
+                {% for data in object_list %}
+                <tr>
+                    <td>{{page_obj.start_index|add:forloop.counter0}}</td>
+                    <td>
+                        {{data.corp_id.corp_name}}</br>
+                        <a>{{data.corp_id.corp_country}}</a>|<a>{{data.corp_id.corp_market}}</a>|<a>{{data.corp_id.corp_sectors}}</a>
+                    </td>
+                    <td>{{data.revenue}}</td>
+                    <td>{{data.operating_profit}}</td>
+                    <td>{{data.net_profit}}</td>
+                    <td>{{data.operating_margin}}</td>
+                    <td>{{data.net_profit_margin}}</td>
+                    <td>{{data.debt_ratio}}</td>
+                    <td>{{data.cost_of_sales_ratio}}</td>
+                    <td>{{data.quick_ratio}}</td>
+                    <td>{{data.dividend}}</td>
+                    <td>{{data.total_dividend}}</td>
+                    <td>{{data.dividend_yield}}</td>
+                    <td>{{data.dividend_payout_ratio}}</td>
+                    <td>{{data.dividend_ratio}}</td>
+                    <td>{{data.per}}</td>
+                    <td>{{data.pbr}}</td>
+                    <td>{{data.psr}}</td>
+                    <td>{{data.ev_ebitda}}</td>
+                    <td>{{data.ev_per_ebitda}}</td>
+                    <td>{{data.eps}}</td>
+                    <td>{{data.bps}}</td>
+                    <td>{{data.roe}}</td>
+                    <td>{{data.dps}}</td>
+                    <td>{{data.total_dept}}</td>
+                    <td>{{data.total_asset}}</td>
+                    <td>{{data.total_capital}}</td>
+                    <td>{{data.borrow_debt}}</td>
+                    <td>{{data.face_value}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- 페이징 기능 -->
+    <div class="paging m-3">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">이전</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+            </li>
+            {% endif %}
+            {% for page_number in page_obj.paginator.page_range %}
+            {% if page_number >= page_obj.number|add:-5 and page_number <= page_obj.number|add:5 %}
+            {% if page_number == page_obj.number %}
+            <li class="page-item active" aria-current="page">
+                <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+            </li>
+            {% endif %}
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">다음</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<!-- 필터 모달 -->
+<div class="modal modal-lg" id="filter-modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">필터설정</div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="setting_filter_list">
+        </div>
+        <div class="modal-body d-flex">
+            <div class="modal-side col-3">
+                <ul class="tab_style" role="tablist">
+                    <li class="dropdown" role="presentation">
+                        <a class="dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">지표선택</a>
+                        <ul class="dropdown-menu p-0">
+                            <li class="nav-item drop-item">
+                                <button class="dropdown-item active" id="fs_tab" data-bs-toggle="tab" data-bs-target="#item_fs" type="button" role="tab" aria-controls="fs_item" aria-selected="true" tabindex="0">
+                                재무지표
+                                </button>
+                            </li>
+                            <li class="nav-item drop-item">
+                                <button class="dropdown-item" id="rsi_tab" data-bs-toggle="tab" data-bs-target="#item_rsi" type="button" role="tab" aria-controls="rsi_item" aria-selected="false" tabindex="1">
+                                투자지표
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tab-content" id="content">
+                    <!-- 조건 항목 -->
+                    <div class="tab-pane active" id="item_fs" role="tabpanel" aria-labelledby="fs_tab">
+                        <ul class="filter_items">
+                            {% for data in filter_item_fs %}
+                            <li class="{{data.0}} filter_item">{{data.1}}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="tab-pane fade" id="item_rsi" role="tabpanel" aria-labelledby="rsi_tab">
+                        <ul class="filter_items">
+                            {% for data in filter_item_rsi %}
+                            <li class="{{data.1}} filter_item">{{data.0}}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- 조건 form -->
+            <form method="post" class="fitler_data col-9 d-flex align-items-center">
+                {% csrf_token %}
+                {% for data in input_item_fs %}
+                <div class="{{data.0}}_toggle input_data">
+                    <div class="d-flex col-12 align-items-center">
+                        <span class="{{data.0}}" style="width:130px; text-align:center;">{{data.1}}</span>
+                        <input type="text" name="{{data.0}}_min" class="{{data.0}}_min col-3">
+                        <span class="mx-1"> ~ </span>
+                        <input type="text" name="{{data.0}}_max" class="{{data.0}}_max col-3">
+                        <button type="button" class="{{data.0}} btn add-filter mx-3">추가</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% for data in input_item_rsi %}
+                <div class="{{data.1}}_toggle input_data">
+                    <div class="d-flex col-12 align-items-center">
+                        <span class="{{data.1}}" style="width:130px; text-align:center;">{{data.0}}</span>
+                        <input type="text" name="{{data.1}}_min" class="{{data.1}}_min col-3">
+                        <span class="mx-1"> ~ </span>
+                        <input type="text" name="{{data.1}}_max" class="{{data.1}}_max col-3">
+                        <button type="button" class="{{data.1}} btn add-filter mx-3">추가</button>
+                    </div>
+                </div>
+                {% endfor %}
+                <button class="btn submit ms-auto col-2" type="submit">완료</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script src="{% static 'js/search_view.js' %}"></script>
+<script>
+$(document).ready(function() {
+    {% for data in applied_input_data %}
+    $('.{{data.0}}_min').val('{{data.1}}');
+    $('.{{data.0}}_max').val('{{data.2}}');
+    {% endfor %}
+    
+    {% for data in applied_filter_modal%}
+    var set_filter = $('<span>', {
+        class: '{{data.0}} setting_filter',
+        text: '{{data.1}}:{{data.2}}~{{data.3}}',
+        click: remove_filter
+    });
+    $('.setting_filter_list').append(set_filter);
+    {% endfor %}
+});
+</script>
+{% endblock %}

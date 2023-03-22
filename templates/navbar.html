@@ -1,7 +1,11 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-main">
     <div class="container">
         <div class="py-2">
-            <a class="navbar-brand mx-1 fw-bold text-white" href="{% url 'account:signup' %}">Aimdat</a>
+            {% if user.is_authenticated %}
+            <a class="navbar-brand mx-1 fw-bold text-white" style="font-size:30px;" href="{% url 'services:search' %}">Aimdat</a>
+            {% else %}
+            <a class="navbar-brand mx-1 fw-bold text-white" style="font-size:30px;" href="{% url 'account:signup' %}">Aimdat</a>
+            {% endif %}
         </div>
     </div>
 </nav>

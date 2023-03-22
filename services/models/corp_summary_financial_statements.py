@@ -1,6 +1,9 @@
 """
 @created at 2023.03.15
 @author OKS in Aimdat Team
+
+@modified at 2023.03.19
+@author JSU in Aimdat Team
 """
 from django.db import models
 from .corp_id import CorpId
@@ -15,7 +18,7 @@ class CorpSummaryFinancialStatements(models.Model):
     net_profit = models.DecimalField(max_digits=19, decimal_places=2, null=True) #당기순이익
     operating_margin = models.DecimalField(max_digits=19, decimal_places=2, null=True) #영업이익률
     net_profit_margin = models.DecimalField(max_digits=19, decimal_places=2, null=True) #순이익률
-    dept_ratio = models.DecimalField(max_digits=19, decimal_places=2, null=True) #부채비율
+    debt_ratio = models.DecimalField(max_digits=19, decimal_places=2, null=True) #부채비율
     cost_of_sales_ratio = models.DecimalField(max_digits=19, decimal_places=2, null=True) #매출원가율
     quick_ratio = models.DecimalField(max_digits=19, decimal_places=2, null=True) #당좌비율
     dividend = models.DecimalField(max_digits=19, decimal_places=2, null=True) #배당금

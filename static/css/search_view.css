@@ -1,49 +1,112 @@
-.btn-primary {
+.header > span{
+    font-size: 20px;
+}
+
+.applied_filter, .setting_filter {
+    font-size: 12px;
+    padding: 1px;
+    margin: 2px;
+    border: 1px solid #0564F2;
+    border-radius: 5px;
+}
+
+.applied_filter_list, .setting_filter_list {
+    width: 800px;
+    padding: 5px;
+    overflow: scroll;
+    overflow: auto;
+    white-space: nowrap;
+}
+
+.setting_filter_list > span {
+    font-size: 12px;
+}
+
+.table-responsive {
     font-size: 14px;
-    font-weight: bold;
-    border-radius: 10px;
-    width: 82px;
-    height: 40px;
 }
-.content {
+
+th, td{
+    text-align: center;
+    vertical-align : middle;
+    white-space: nowrap;
+}
+
+.modal-body {
     font-size: 14px;
 }
-.modal * {
-    font-size: 14px;
+
+ul {
+    text-align: center;
+    list-style: none;
+    padding-left: 0px;
 }
-.modal .tab-pane {
-    height: 150px;
-    overflow-y: scroll;
-}
-.modal .tab-pane { 
-    -ms-overflow-style: none; /* 인터넷 익스플로러 */
-    scrollbar-width: none; /* 파이어폭스 */
-}
-.modal .tab-pane::-webkit-scrollbar {
-    display: none; /* 크롬, 사파리, 오페라, 엣지 */
-}
-.table * {
-    padding: 0px;
+
+.dropdown-menu {
     text-align: center;
 }
-#condition * {
-    text-align: center;
+
+.dropdown-item {
+    font-size: 14px;
+    color: #000000;
+    background-color: #FFFFFF;
 }
-a { 
-    text-decoration: none;
-    text-align: center;
+
+.dropdown-item:hover {
+    color: #FFFFFF;
+    background-color: #0564F2;
 }
-input[type=submit] {
+
+.dropdown-item:active {
+    color: #FFFFFF;
+    background-color: #044FBF;
+}
+
+.setting_filter {
+    font-size: 14px;
+}
+
+.filter_item:hover {
+    cursor: pointer;
+    color: #FFFFFF;
+    background-color: #0564F2;
+}
+
+.filter_item:active {
+    cursor: pointer;
+    color: #FFFFFF;
+    background-color: #044FBF;
+}
+
+.submit {
     display: none;
 }
-.filter-content .col-5{
-    width: 180px;
+
+.input_data {
+    display: none;
 }
-body { 
-    -ms-overflow-style: none; /* 인터넷 익스플로러 */
-    scrollbar-width: none; /* 파이어폭스 */
-    
+
+.btn {
+    color: #FFFFFF;
+    font-size: 14px;
+    background-color: #0564F2;
 }
-body::-webkit-scrollbar {
-    display: none; /* 크롬, 사파리, 오페라, 엣지 */
+
+.btn:hover, .btn:active {
+    color: #FFFFFF;
+    background-color: #044FBF;
+}
+
+.btn:visited {
+    color: #FFFFFF;
+    background-color: #08090a;
+}
+
+.mr-3 {
+    margin-right: 3px;
+}
+
+a {
+    color: #000000;
+    text-decoration-line: none;
 }
