@@ -1,5 +1,5 @@
 """
-@modified at 2023.03.21
+@modified at 2023.03.22
 @author OKS in Aimdat Team
 """
 from account.models import User
@@ -22,7 +22,6 @@ class CustomAdminSite(AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('marketing/statistics', custom_admin_site.admin_view(MarketingView.as_view()) , name='marketing'),
             path('corp/manage', custom_admin_site.admin_view(CorpManageView.as_view()), name='corp_manage'),
             path('corp/manage/id/<int:pk>/', custom_admin_site.admin_view(CorpIdChangeView.as_view()), name='corp_id_change'),
             path('corp/manage/info/<int:pk>/', custom_admin_site.admin_view(CorpInfoChangeView.as_view()), name='corp_info_change'),
