@@ -35,7 +35,7 @@ class CorpSummaryFinancialStatements(models.Model):
     bps = models.DecimalField(max_digits=19, decimal_places=2, null=True) #주당 장부가치
     roe = models.DecimalField(max_digits=19, decimal_places=2, null=True) #자기자본이익률
     dps = models.DecimalField(max_digits=19, decimal_places=2, null=True) #주당 배당금
-    total_dept = models.DecimalField(max_digits=19, decimal_places=2, null=True) #총 부채
+    total_debt = models.DecimalField(max_digits=19, decimal_places=2, null=True) #총 부채
     total_asset = models.DecimalField(max_digits=19, decimal_places=2, null=True) #총 자산
     total_capital = models.DecimalField(max_digits=19, decimal_places=2, null=True) #총 자본
     borrow_debt = models.DecimalField(max_digits=19, decimal_places=2, null=True) # 총 차입금

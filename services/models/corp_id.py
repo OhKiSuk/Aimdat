@@ -11,3 +11,4 @@ class CorpId(models.Model):
     corp_isin = models.CharField(max_length=255, null=True) #국제 증권 식별번호
     stock_code = models.CharField(max_length=255, null=True) #종목 코드
     corp_sectors = models.CharField(max_length=255, null=True) #소속 섹터(예: 제조업, 서비스업 등)
+    is_crawl = models.BooleanField() # True 크롤링 대상, False API 대상
