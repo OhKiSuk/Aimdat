@@ -1,6 +1,9 @@
 """
 @created at 2023.03.16
 @author OKS in Aimdat Team
+
+@modified at 2023.03.24
+@author OKS in Aidmat Team
 """
 from account.models import User
 from django.test import Client, RequestFactory, TestCase
@@ -24,7 +27,8 @@ class CorpManageTest(TestCase):
             corp_market = 'test',
             corp_isin = 'test',
             stock_code = 'test',
-            corp_sectors = 'test'
+            corp_sectors = 'test',
+            is_crawl = False
         )
         self.corp_info = CorpInfo.objects.create(
             corp_id = self.corp_id,
@@ -43,7 +47,7 @@ class CorpManageTest(TestCase):
             net_profit = 00.00,
             operating_margin = 00.00,
             net_profit_margin = 00.00,
-            dept_ratio = 00.00,
+            debt_ratio = 00.00,
             cost_of_sales_ratio = 00.00,
             quick_ratio = 00.00,
             dividend = 00.00,
@@ -60,7 +64,7 @@ class CorpManageTest(TestCase):
             bps = 00.00,
             roe = 00.00,
             dps = 00.00,
-            total_dept = 00.00,
+            total_debt = 00.00,
             total_asset = 00.00,
             total_capital = 00.00,
             borrow_debt = 00.00,

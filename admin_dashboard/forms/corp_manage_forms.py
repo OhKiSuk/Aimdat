@@ -11,6 +11,7 @@ from services.models.corp_info import CorpInfo
 from services.models.corp_summary_financial_statements import CorpSummaryFinancialStatements
 
 class CorpIdChangeForm(forms.ModelForm):
+    is_crawl = forms.BooleanField()
 
     class Meta:
         model = CorpId
@@ -18,17 +19,26 @@ class CorpIdChangeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        #label명 정의
         self.fields['corp_name'].label = '기업명'
         self.fields['corp_country'].label = '소속 국가'
         self.fields['corp_market'].label = '소속 시장'
         self.fields['corp_isin'].label = '국제 증권 식별번호(ISIN)'
         self.fields['stock_code'].label = '종목 코드'
         self.fields['corp_sectors'].label = '소속 섹터'
+        self.fields['is_crawl'].label = '데이터 자동 수집 여부'
 
+        #각 field class에 form class 추가
         for field_name in self.fields:
-            self.fields[field_name].widget.attrs.update({
-                'class': 'form-control',
-            })
+            if field_name == 'is_crawl':
+                self.fields[field_name].widget.attrs.update({
+                    'class': 'form-check-input',
+                })
+            else:
+                self.fields[field_name].widget.attrs.update({
+                    'class': 'form-control',
+                })
 
 class CorpInfoChangeForm(forms.ModelForm):
 
@@ -87,7 +97,7 @@ class CorpSummaryFinancialStatementsChangeForm(forms.ModelForm):
         self.fields['bps'].label = 'BPS'
         self.fields['roe'].label = 'ROE'
         self.fields['dps'].label = 'DPS'
-        self.fields['total_dept'].label = '총 부채'
+        self.fields['total_debt'].label = '총 부채'
         self.fields['total_asset'].label = '총 자산'
         self.fields['total_capital'].label = '총 자본'
         self.fields['borrow_debt'].label = '총 차입금'

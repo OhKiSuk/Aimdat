@@ -1,10 +1,13 @@
 """
 @created at 2023.03.19
 @author OKS in Aimdat Team
+
+@modified at 2023.03.24
+@author OKS in Aimdat Team
 """
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView, TemplateView
 from services.models.corp_id import CorpId

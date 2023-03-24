@@ -15,6 +15,15 @@
                 {% for field in form %}
                     {% if field.name == 'corp_id' %}
                         <input type="hidden" name="{{ field.name }}" value="{{ form.instance.corp_id.id }}">
+                    {% elif field.name == 'is_crawl' %}
+                        <div class="my-3 row">
+                            <label for="id_{{ field.id_for_label }}" class="col-sm-2 col-form-label {{ field.label_class }}">{{ field.label }}</label>
+                            <div class="col-sm-10">
+                                <div class="form-check">
+                                    {{ field }}
+                                </div>
+                            </div>
+                        </div>
                     {% else %}
                         <div class="my-3 row">
                             <label for="id_{{ field.id_for_label }}" class="col-sm-2 col-form-label {{ field.label_class }}">{{ field.label }}</label>
