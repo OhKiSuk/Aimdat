@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 import win32com.client as win32
 import os
 import sys
+import pythoncom
 
 dir_collect = os.path.dirname(__file__)
 dir_modules = os.path.dirname(dir_collect)
@@ -47,6 +48,7 @@ def _crawl_corp_list_files(year, crawl_time=2, download_time=5):
     time.sleep(download_time)
 
 def _convert_excel(fname):
+    pythoncom.CoInitialize()
     excel = win32.gencache.EnsureDispatch('Excel.Application')
     wb = excel.Workbooks.Open(fname)
     wb.SaveAs(fname+'x', FileFormat = 51) # 51 : xlsx
@@ -83,7 +85,7 @@ def _save_id_and_info(df, corp_list, is_crawl):
     for name in corp_list['회사명']:
         ret = df.loc[df['회사명']==name, ['회사명', '종목코드', '업종', '결산월', '대표자명', '홈페이지']]
         ret = ret.values.tolist()
-        corp_name, stock_code, corp_sectors, corp_settlement_month, corp_ceo_name, corp_homepage_url = ret
+        corp_name, stock_code, corp_sectors, corp_settlement_month, corp_ceo_name, corp_homepage_url = ret[0]
         
         try:
             id_data = CorpId.objects.get(stock_code=stock_code)
@@ -136,10 +138,13 @@ def _delete_id(corp_list):
         except CorpId.DoesNotExist:
             pass
         
-def _remove_file(file_path, operate_system):
+def _remove_file(file_path, operate_system, folder=False):
 
     if operate_system == 'win':
-        os.system('del {}'.format(file_path)) # window
+        if folder:
+            os.system('echo y | rd /s {} '.format(file_path))
+        else:
+            os.system('del {}'.format(file_path)) # window
     elif operate_system == 'linux':
         os.system('rm -rf {}'.format(file_path)) # linux
 
@@ -176,6 +181,6 @@ def collect_corp(year=2022, operate_system='win'):
     # 다사용한 파일 삭제
     _remove_file(file_krx_list, operate_system)
     _remove_file(zip_path, operate_system)
-    _remove_file(folder_path, operate_system)
+    _remove_file(folder_path, operate_system, folder=True)
 
     
