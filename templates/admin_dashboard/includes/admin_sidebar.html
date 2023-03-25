@@ -16,7 +16,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{% url 'admin:collect_corp_info' %}" class="nav-link {% if '/admin/corp/collect' in request.path %}active{% endif %}">
             기업정보 수집
             </a>
         </li>
