@@ -14,9 +14,9 @@ from services.models.stock_price import StockPrice
 
 def _get_API_corp_list():
     try:
-        crawl_list = CorpId.objects.all()
+        corp_list = CorpId.objects.all()
         ret = []
-        for i in crawl_list:
+        for i in corp_list:
             ret.append(i.stock_code)
         return ret
     except CorpId.DoesNotExist:
@@ -24,19 +24,19 @@ def _get_API_corp_list():
 
 
 def _get_service_key(key_name):
-    SECRETS_DIR = os.path.join(dir_aimdat, '.secrets')
-    secrets = json.load(open(os.path.join(SECRETS_DIR, 'secrets.json')))
+    secrets = json.load(open(os.path.join(dir_aimdat, 'secrets.json')))
     data_portal_key = 'data_portal_key'
     service_key = secrets[data_portal_key]
 
     return service_key
 
-def collect_stockPrice():
+def collect_stockPrice(decimal_places=6):
     url = 'https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo'
     data_portal_key = 'data_portal_key'
     service_key = _get_service_key(data_portal_key)
     corp_list = _get_API_corp_list()
     for stock_code in corp_list:
+        print(stock_code) # for watching running
         params = {'serviceKey':service_key, 'numOfRows':100000000, 'pageNo':1, 'resultType':'json', 'beginBasDt':20200102, 'likeSrtnCd':stock_code}
         try:
             res = requests.get(url, params=params, verify=False)
@@ -73,33 +73,42 @@ def collect_stockPrice():
 
         # stockPrice
         for x in dict_list:
-            open_price = x[mkp]
-            high_price = x[hipr]
-            low_price = x[lopr]
-            close_price = x[clpr]
-            trading_date = x[basDt]
-            total_stock = x[lstgStCnt]
-            market_capitalization = x[mrktTotAmt]
-            trade_quantity = x[trqu]
-            trade_price = x[trPrc]
-            change_price = x[vs]
-            change_rate = x[fltRt]
+            trade_date = x[basDt]
+            open_price = round(float(x[mkp]), decimal_places)
+            high_price = round(float(x[hipr]), decimal_places)
+            low_price = round(float(x[lopr]), decimal_places)
+            close_price = round(float(x[clpr]), decimal_places)
+            total_stock = round(float(x[lstgStCnt]), decimal_places)
+            market_capitalization = round(float(x[mrktTotAmt]), decimal_places)
+            trade_quantity = round(float(x[trqu]), decimal_places)
+            trade_price = round(float(x[trPrc]), decimal_places)
+            change_price = round(float(x[vs]), decimal_places)
+            # preprocessing for change_rate
+            tmp_list = x[fltRt].split('.')
+            if tmp_list[0] == '-':
+                tmp_list[0] = '-0'
+            elif tmp_list[0] == '':
+                tmp_list[0] = '0'
+            if len(tmp_list) < 2:
+                tmp_list.append('0')
+            value = float(tmp_list[0])+float(tmp_list[1])
+            change_rate = round(value, decimal_places)
 
             try:
-                sp_data = StockPrice.objects.get(trading_date=trading_date)
-                continue
+                sp_data = StockPrice.objects.get(corp_id=id_data, trade_date=trade_date)
             except StockPrice.DoesNotExist:
                 sp_data = StockPrice(
+                    corp_id=id_data,
                     open_price=open_price,
                     high_price=high_price,
                     low_price=low_price,
                     close_price=close_price,
-                    trading_date=trading_date,
+                    trade_date=trade_date,
                     total_stock=total_stock,
                     market_capitalization=market_capitalization,
                     trade_quantity=trade_quantity,
                     trade_price=trade_price,
                     change_price=change_price,
-                    change_rate=change_rate
+                    change_rate=change_rate,
                 )
             sp_data.save()

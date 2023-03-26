@@ -11,7 +11,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{% url 'admin:collect_stock_price' %}" class="nav-link {% if '/admin/stock/collect' in request.path %}active{% endif %}">
             주가정보 수집
             </a>
         </li>
