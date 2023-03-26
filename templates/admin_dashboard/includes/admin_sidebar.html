@@ -6,7 +6,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{% url 'admin:collect_summary_financial_statements' %}" class="nav-link {% if '/admin/summaryfs/collect' in request.path %}active{% endif %}">
             재무정보 수집
             </a>
         </li>

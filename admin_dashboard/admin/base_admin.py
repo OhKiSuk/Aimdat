@@ -12,7 +12,7 @@ from django.db.models.functions import TruncMonth, TruncYear, TruncDay
 from django.urls import path
 from services.models.inquiry import Inquiry
 from .axes_admin import AccessAttemptAdmin, AccessFailureAdmin, AccessSuccessAdmin
-from ..views.collect_data_views import CollectCorpInfoView, CollectStockPriceView
+from ..views.collect_data_views import CollectCorpInfoView, CollectStockPriceView, CollectFinancialStatementView
 from ..views.corp_manage_views import CorpManageView, CorpIdChangeView, CorpInfoChangeView, CorpSummaryFinancialStatementsChangeView
 from ..views.inquiry_manage_views import InquiryListView, InquiryAddAnswerView
 
@@ -22,6 +22,7 @@ class CustomAdminSite(AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
+            path('summaryfs/collect', custom_admin_site.admin_view(CollectFinancialStatementView.as_view()), name='collect_summary_financial_statements'),
             path('stock/collect', custom_admin_site.admin_view(CollectStockPriceView.as_view()), name='collect_stock_price'),
             path('corp/collect', custom_admin_site.admin_view(CollectCorpInfoView.as_view()), name='collect_corp_info'),
             

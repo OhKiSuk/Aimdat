@@ -1,0 +1,54 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% block content %}
+<div class="row mt-3">
+    <span class="font-lg fw-bold">재무정보 수집</span>
+</div>
+<div class="row mt-3">
+    <span class="font-md fw-bold">재무정보 마지막 수정일</span>
+    <hr style="background-color: blue; border-color: blue">
+    <span class="font-md">
+        <p>
+            yyyy.mm.dd
+        <div style="text-align: right;">
+            <form method="post" action="{% url 'admin:collect_summary_financial_statements' %}">
+                {% csrf_token %}
+                <select name="year">
+                    <option value="all">최근 4년</option>
+                    <option value="2020">2020</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                    <option value="2023">2023</option>
+                </select>
+                <select name="quarter">
+                    <option value="all">모든 분기</option>
+                    <option value="1">1분기</option>
+                    <option value="2">2분기</option>
+                    <option value="3">3분기</option>
+                    <option value="4">4분기</option>
+                </select>
+                <button type="submit" id="collect" style="background-color: blue; color: white;" href>
+                    <a class="collect_btn">수집</a>
+                </button>
+                <button id="cancel" style="background-color: red; color: white;">
+                    <a class="cancel_btn" href="?tab=cancel">취소</a>
+                </button>
+            </form>
+        </div>
+        </p>
+    </span>
+    <p>
+        <textarea rows="10" cols="80" style="background-color: white; border-color: blue" readonly>
+            결과 및 변동사항
+        </textarea>
+        <textarea rows="10" cols="80" style="background-color: white; border-color: red" readonly>
+            실패 결과
+        </textarea>
+    </p>
+
+</div>
+
+{% endblock %}
+{% block script %}
+<script>
+</script>
+{% endblock %}
