@@ -3,6 +3,7 @@
 @ collect fs data
 """
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 import time
 from selenium.webdriver.common.by import By
 import time, warnings
@@ -77,9 +78,9 @@ def _crawl_dart(crawl_crp_list, year, month, sleep_time=2):
         input_start_date.clear()
         start_date = str(year)+month+day
         input_start_date.send_keys(start_date)
-        m_idx += 1
-        end_year = year + m_idx // 4
-        end_month = months[m_idx % 4]
+        end_m_idx = (m_idx+1) % 4
+        end_year = year + (end_m_idx == 0)
+        end_month = months[end_m_idx]
         # endDate
         input_end_date = driver.find_element(By.ID, 'endDate')
         input_end_date.clear()
@@ -98,13 +99,20 @@ def _crawl_dart(crawl_crp_list, year, month, sleep_time=2):
         rows = tbody.find_elements(By.TAG_NAME, "tr")    
         title = dict_title[month]+' 공시뷰어 새창'  # title = '분기보고서 공시뷰어 새창'
         disclosure_date = ''
+        fail = 0
         for index, value in enumerate(rows):
-            body = value.find_element(By.XPATH, "//a[@title='{}']".format(title))
-            if body:
-                x = value.find_elements(By.TAG_NAME, "td")
-                disclosure_date = x[4].text # 접수날짜
-                print(disclosure_date)
-                break   
+            try:
+                body = value.find_element(By.XPATH, "//a[@title='{}']".format(title))
+                if body:
+                    x = value.find_elements(By.TAG_NAME, "td")
+                    disclosure_date = x[4].text # 접수날짜
+                    print(disclosure_date)
+                    break   
+            except NoSuchElementException:
+                fail = 1
+        if fail == 1:
+            continue
+
         # get df_list
         title = dict_title[month]+' 공시뷰어 새창'  # title = '분기보고서 공시뷰어 새창'
         text_title = driver.find_element(By.XPATH, "//a[@title='{}']".format(title))
