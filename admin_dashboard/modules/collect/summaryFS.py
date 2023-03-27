@@ -26,16 +26,16 @@ from services.models.stock_price import StockPrice
 
 warnings.filterwarnings('ignore')
 
-def _get_crawl_target_list():
+units = ['백만원', '원']
+dict_units = {'백만원':1000_000, '원':1, '':1}
 
+def _get_corp_list():
     try:
-        crawl_list = CorpId.objects.filter(is_crawl=True)
-        ret = []
-        for i in crawl_list:
-            ret.append(i.stock_code)
+        corp_list = CorpId.objects.all()
+        ret = [i.stock_code for i in corp_list]
         return ret
     except CorpId.DoesNotExist:
-        print('크롤링을 해야하는 기업 리스트가 존재하지 않습니다.')
+        print('기업 리스트가 존재하지 않습니다.')
 
 def _make_dart_sector_url(html, sector): 
     x = html.split(sector)[1]
@@ -100,13 +100,12 @@ def _crawl_dart(crawl_crp_list, year, month, sleep_time=2):
         title = dict_title[month]+' 공시뷰어 새창'  # title = '분기보고서 공시뷰어 새창'
         disclosure_date = ''
         fail = 0
-        for index, value in enumerate(rows):
+        for value in rows:
             try:
                 body = value.find_element(By.XPATH, "//a[@title='{}']".format(title))
                 if body:
                     x = value.find_elements(By.TAG_NAME, "td")
                     disclosure_date = x[4].text # 접수날짜
-                    print(disclosure_date)
                     break   
             except NoSuchElementException:
                 fail = 1
@@ -148,12 +147,10 @@ def _get_re_word_with_space(word):
         ret += '.*'
         return ret
 
+
 def _parse_fs(df_list):
-    
     # init
     table_names = ['재무상태표', '포괄손익계산서', '자본변동표', '현금흐름표']
-    units = ['백만원', '원']
-    dict_units = {'백만원':1000_000, '원':1}
 
     for idx in range(len(df_list)-1):
         df = df_list[idx]
@@ -198,7 +195,7 @@ def _parse_fs(df_list):
                             total_val = list(map(float, row[cols[2]].values))
                             ret = total_val if np.isnan(val) else val
                             ret = ret[0]
-                            if dict_ret[keyword] is None:
+                            if dict_ret[keyword] is None: # 나중에 로직 수정이 필요한 부분
                                 dict_ret[keyword] = ret * money_unit
                             break
                 ret = list(dict_ret.values())
@@ -208,11 +205,13 @@ def _parse_fs(df_list):
                 crawl_list = ['자산총계', '부채총계', '자본총계', '차입부채']
                 total_asset, total_debt, total_capital, borrow_debt = crawl_data(crawl_list)  
             elif name[0] == '포': # 포괄손익계산서 
-                crawl_list = ['영업수익', '영업이익', '기순이익']
-                sales_revenue, operate_profit, net_profit = crawl_data(crawl_list)
+                crawl_list = ['영업수익', '매출액', '영업이익', '기순이익']
+                sale_revenue, revenue, operate_profit, net_profit = crawl_data(crawl_list)
+                if revenue is None:
+                    revenue = sale_revenue
             break
     
-    return total_asset, total_debt, total_capital, borrow_debt, sales_revenue, operate_profit, net_profit
+    return total_asset, total_debt, total_capital, borrow_debt, revenue, operate_profit, net_profit
 
 def _parse_dividend(df_list):
     for idx in range(len(df_list)):
@@ -223,12 +222,10 @@ def _parse_dividend(df_list):
         for i in range(len(cols)-1):
             col = cols[i]
             x = re.findall(re_now, col)
-
             if x != []:
                 prev_quarter = cols[i+1]
                 now_quarter = col # cols[i]
                 break
-        
         if now_quarter == '': # 상관없는 테이블 건너뛰기
             continue
 
@@ -239,23 +236,20 @@ def _parse_dividend(df_list):
                 for keyword, re_keyword in zip(keywords, re_keywords):
                     tmp = re.findall(re_keyword, str(x))
                     if tmp != []:
-                        row = df[ df[cols[0]] == tmp[0]]
-
+                        row = df[df[cols[0]] == tmp[0]]
                         x = str(row[section].values)
                         if re.findall(_get_re_word_with_space('-'), x) != []:
                             continue
 
                         # 단위
                         unit = ''
-                        target = row[cols[0]].values[0]
-                        units = ['백만원', '원']
+                        target = row[cols[0]].values[0]       
                         for x in units:
                             xx = _get_re_word_with_space(x)
                             y = re.findall(xx, target)
                             if y != []:
                                 unit = x
                                 break
-                        dict_units = {'백만원':1000_000, '원':1, '':1}
                         money_unit = dict_units[unit]
                         # 값
                         ret = list(map(float, row[section].values))[0]
@@ -268,18 +262,14 @@ def _parse_dividend(df_list):
             return ret
 
    
-        keywords = ['액면가',  '배당금총액', '배당수익률', '배당금']
-        # 당기
-        face_value, total_dividend, dividend_yield, dividend = crawl_data(keywords, now_quarter)
-        # dividend_ratio = dividend / face_value * 100 if dividend is not None & face_value is not None else None
-        # 전기
-        prev_face_value, prev_total_dividend, prev_dividend_yield, prev_dividend = crawl_data(keywords, prev_quarter)
-        # dividend_ratio = dividend / face_value * 100 if dividend is not None & face_value is not None else None
+        keywords = ['액면가',  '배당금총액', '배당수익률', '배당금']    
+        face_value, total_dividend, dividend_yield, dividend = crawl_data(keywords, now_quarter) # 당기
+        prev_face_value, prev_total_dividend, prev_dividend_yield, prev_dividend = crawl_data(keywords, prev_quarter)  # 전기
     
     return face_value, total_dividend, dividend_yield, dividend, prev_face_value, prev_total_dividend, prev_dividend_yield, prev_dividend
 
-def _can_calc(a, b):
-    return a is not None and b is not None
+def _can_calc(a=0, b=0, c=0):
+    return a is not None and b is not None and c is not None
 
 def _calc_and_update_fs(fs_data:CorpSummaryFinancialStatements, stock_price, market_captialization, total_stock):
     # calculate all params is not None
@@ -319,7 +309,7 @@ def _calc_and_update_fs(fs_data:CorpSummaryFinancialStatements, stock_price, mar
         pbr = stock_price / fs_data.bps 
     else:
         pbr = None
-    if _can_calc(stock_price, market_captialization) and fs_data.revenue is not None:
+    if _can_calc(stock_price, market_captialization, fs_data.revenue):
         psr = stock_price / market_captialization * fs_data.revenue # psr = stock_price / (market_captialization / revenue)
     else:
         psr = None
@@ -333,49 +323,45 @@ def _calc_and_update_fs(fs_data:CorpSummaryFinancialStatements, stock_price, mar
         dividend_payout_ratio = None
     
     # update value is not None
-    if operate_margin is not None:
+    if _can_calc(operate_margin):
         fs_data.operating_margin = operate_margin
-    if net_profit_margin is not None:
+    if _can_calc(net_profit_margin):
         fs_data.net_profit_margin = net_profit_margin
-    if debt_ratio is not None:
+    if _can_calc(debt_ratio):
         fs_data.debt_ratio = debt_ratio
-    if dividend_ratio is not None:
+    if _can_calc(dividend_ratio):
         fs_data.dividend_ratio = dividend_ratio
-    if eps is not None:
+    if _can_calc(eps):
         fs_data.eps = eps
-    if bps is not None:
+    if _can_calc(bps):
         fs_data.bps = bps
-    if roe is not None:
+    if _can_calc(roe):
         fs_data.roe = roe
-    if per is not None:
+    if _can_calc(per):
         fs_data.per = per
-    if pbr is not None:
+    if _can_calc(pbr):
         fs_data.pbr = pbr
-    if psr is not None:
+    if _can_calc(psr):
         fs_data.psr = psr
-    if dps is not None:
+    if _can_calc(dps):
         fs_data.dps = dps
-    if dividend_payout_ratio is not None:
+    if _can_calc(dividend_payout_ratio):
         fs_data.dividend_payout_ratio = dividend_payout_ratio
     fs_data.save()
 
 def collect_fs_data(year, month):
-    crawl_list = _get_crawl_target_list()
-    ret = _crawl_dart(crawl_list, year, month, sleep_time=2) # [crp_code, disclosure_date, df_fs_list, df_dividend_list]
+    crawl_list = _get_corp_list()
+    ret = _crawl_dart(crawl_list, year, month, sleep_time=2) # [stock_code, disclosure_date, df_fs_list, df_dividend_list]
     # calc and save
-    for crp_code, disclosure_date, df_fs_list, df_dividend_list in ret:
-       
-        # parse_fs
+    for stock_code, disclosure_date, df_fs_list, df_dividend_list in ret:
+        # parsing df -> data
         total_asset, total_debt, total_capital, borrow_debt, sales_revenue, operate_profit, net_profit = _parse_fs(df_fs_list)
-        # parse_dividend
         face_value, total_dividend, dividend_yield, dividend, prev_face_value, prev_total_dividend, prev_dividend_yield, prev_dividend = _parse_dividend(df_dividend_list)
-
         # save  
         try:
-            corp_id = CorpId.objects.get(stock_code=crp_code)
+            corp_id = CorpId.objects.get(stock_code=stock_code)
         except CorpId.DoesNotExist:
             continue
-        
         try:
             fs_data = CorpSummaryFinancialStatements.objects.get(corp_id=corp_id, year=year, month=month)
             fs_data.disclosure_date = disclosure_date
@@ -413,16 +399,14 @@ def collect_fs_data(year, month):
         # DB disclosure_date ( open data에서 stockprice 수집이 선행되어야함)
         stock_price, market_captialization, total_stock = _get_stockInfos(corp_id, disclosure_date)
         _calc_and_update_fs(fs_data, stock_price, market_captialization, total_stock)
-      
-
-        # 전기 배당정보 update
+        
         # calc year and month
         prev_month = (month + 9) % 12
         prev_year = year
         if prev_month == 0:
             prev_month = 12
             prev_year -= 1
-
+        # 전기 배당정보 update
         try:
             fs_prev_data = CorpSummaryFinancialStatements.objects.get(corp_id=corp_id, year=prev_year, month=prev_month)
             fs_prev_data.face_value=prev_face_value
