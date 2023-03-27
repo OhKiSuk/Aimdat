@@ -1,13 +1,13 @@
 .bg-main {
-    background: #044FBF;
+    background-color: #044FBF;
 }
 
 .bg-sub {
-    background: #0564F2;
+    background-color: #0564F2;
 }
 
 .bg-white {
-    background: #FFFFFF;
+    background-color: #FFFFFF;
 }
 
 .font-lg {
@@ -24,4 +24,22 @@
 
 .font-min {
     font-size: 12px;
+}
+
+.font-gray {
+    color: #A1A1A1 !important;
+}
+
+.login {
+    padding-left: 20%;
+    padding-right: 20%;
+}
+
+.footer a, .footer div {
+    text-decoration-line:none !important;
+    color: #A1A1A1;
+}
+
+.social a {
+    text-decoration-line:none !important;
 }

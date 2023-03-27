@@ -1,0 +1,6 @@
+{% load get_form_errors %}
+{% if form.errors %}
+<div class="alert alert-warning mt-3" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> {{ form.errors.values|get_form_errors }}
+</div>
+{% endif %}
