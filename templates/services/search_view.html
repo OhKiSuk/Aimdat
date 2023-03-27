@@ -33,7 +33,7 @@
                 <tr>
                     <td>{{page_obj.start_index|add:forloop.counter0}}</td>
                     <td>
-                        {{data.corp_id.corp_name}}</br>
+                        <a href="{% url 'services:detail' data.corp_id.id %}">{{data.corp_id.corp_name}}</a></br>
                         <a>{{data.corp_id.corp_country}}</a>|<a>{{data.corp_id.corp_market}}</a>|<a>{{data.corp_id.corp_sectors}}</a>
                     </td>
                     <td>{{data.revenue}}</td>

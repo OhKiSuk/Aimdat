@@ -1,0 +1,324 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/corp_detail_view.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="info_header d-flex p-2">
+        <div class="corp_basic col-3 d-flex flex-wrap">
+            <div class="col-12 font-lg">{{corp_id.corp_name}}<span class="country font-sm">({{corp_id.corp_country}})</span></div>
+            <div clss="col-12 font-sm">{{corp_id.corp_market}} | {{corp_id.stock_code}}</div>
+        </div>
+        <div class="corp_summary col-9 p-2">
+            <span class="font-sm">{{corp_info.corp_summary}}</span>
+        </div>
+    </div>
+    <div class="info_body d-flex flex-wrap">
+        <div class="stock_price d-flex flex-wrap justify-content-around col-6 p-2">
+            <span class="col-4">현재주가{{stock_price.close_price}}</span>
+            <span class="col-8">{{stock_price.change_price}}/{{stock_price.change_rate}}%</span>
+            <span class="col-4">52주 최고/최저</span>
+            <span class="col-8 right">{{stock_price.high_price}}/{{stock_price.low_price}}</span>
+            <span class="col-4">거래량</span>
+            <span class="col-8 right">{{stock_price.trade_quantity}}</span>
+            <span class="col-4">거래대금</span>
+            <span class="col-8">{{stock_price.trade_price}}</span>
+            <span class="col-4">시가총액</span>
+            <span class="col-8">{{stock_price.market_capitalization}}</span>
+            <span class="col-4">상장주식수</span>
+            <span class="col-8">{{stock_price.total_stock}}</span>
+        </div>
+        <div id="lightweight" class="col-6 p-2">
+        </div>
+        <table class="col-12 m-2">
+            <thead>
+                <tr>
+                    <td rowspan="2">재무정보</td>
+                    <td colspan="3">최근연간실적</td>
+                    <td colspan="3">최근분기실적</td>
+                    <tr>
+                        {% for data in report_data.0 %}
+                        <td>{{data.0.year}}.{{data.0.month}}</td>
+                        {% endfor %}
+                        {% for data in report_data.1 %}
+                        <td>{{data.0.year}}.{{data.0.month}}</td>
+                        {% endfor %}
+                    </tr>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>매출액</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.revenue}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>영업이익</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.operating_profit}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>당기순이익</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.net_profit}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>영업이익률</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.operating_margin}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>순이익률</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.net_profit_margin}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>부채비율</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.debt_ratio }}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>매출원가율</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.cost_of_sales_ratio}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>당좌비율</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.quick_ratio}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>배당금</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.dividend }}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>총배당금</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.total_dividend}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>배당수익률</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.dividend_yield}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>배당지급률</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.dividend_payout_ratio}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>배당률</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.dividend_ratio}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>PER</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.per}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>PBR</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.pbr}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>psr</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.psr}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>EV_EBITDA</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.ev_ebitda}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>EV_PER_EBITDA</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.ev_per_ebitda }}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>EPS</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.eps}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>BPS</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.bps}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>ROE</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.roe}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>DPS</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.dps}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>총부채</td>
+                    {% for data in report_data %}
+                    {% for obj in total_debt %}
+                    <td>{{obj.0.bps}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>총자산</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.total_asset}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>총자본</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.total_capital}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>총차입금</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.borrow_debt }}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>액면가</td>
+                    {% for data in report_data %}
+                    {% for obj in data %}
+                    <td>{{obj.0.face_value}}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script src="{% static 'js/lightweight-charts.standalone.production.js' %}"></script>
+<script>
+    var chart = LightweightCharts.createChart($('#lightweight')[0]);
+    // 주식 가격 변동 그래프
+    chart.applyOptions({
+        priceScale: {
+            autoScale: true,
+        },
+        timeScale: { 
+            barSpacing: 10,
+        },
+    });
+    const candlestickSeries = chart.addCandlestickSeries({
+        upColor: 'BLUE',
+        wickUpColor: 'BLUE',
+        downColor: 'RED',
+        wickDownColor: 'RED',
+    });
+    var data = [
+    {% for data in price_graph_data %}
+            {
+                time: '{{data.trade_date|date:"Y-m-d"}}',
+                open: {{data.open_price}},
+                high: {{data.high_price}},
+                low: {{data.low_price}},
+                close: {{data.close_price}},
+            },
+    {% endfor %}
+    ];
+    candlestickSeries.setData(data);
+    
+    //주식 거래량 그래프
+    const areaSeries = chart.addAreaSeries({
+        lineColor: '#2962FF',
+        topColor: '#2962FF',
+        bottomColor: 'rgba(41, 98, 255, 0.28)' 
+    });
+
+    var trade_data = [
+        {% for data in trade_graph_data %}
+        {
+            time: '{{data.trade_date|date:"Y-m-d"}}',
+            value: {{data.trade_quantity}},
+        },
+        {% endfor %}
+    ];
+    areaSeries.setData(trade_data);
+    chart.timeScale().fitContent();
+</script>
+{% endblock %}

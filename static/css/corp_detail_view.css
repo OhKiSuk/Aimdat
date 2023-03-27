@@ -1,0 +1,11 @@
+.stock_price span {
+    font-size: 14px;
+}
+
+.stock_price .col-8 {
+    text-align: right;
+}
+
+table * {
+    font-size: 14px;
+}
