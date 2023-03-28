@@ -2,7 +2,7 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.03.18
+@modified at 2023.03.28
 @author OKS in Aimdat Team
 """
 import re
@@ -37,6 +37,7 @@ class SendPinViewTest(TestCase):
         User.objects.create_user(
             email='testsendpin@aimdat.com',
             password='testsendpin1!',
+            is_not_teen=True,
             terms_of_privacy_agree=True,
             terms_of_use_agree=True
         )
@@ -56,6 +57,7 @@ class SignUpViewTest(TestCase):
             'email': 'testfailure@aimdat.com',
             'password1': 'testpassword1!',
             'password2': 'testpassword1!',
+            'is_not_teen': True,
             'terms_of_use_agree': True,
             'terms_of_privacy_agree': True
         }
@@ -71,6 +73,7 @@ class SignUpViewTest(TestCase):
             'email': 'testsuccess@aimdat.com',
             'password1': 'testpassword1!',
             'password2': 'testpassword1!',
+            'is_not_teen': True,
             'terms_of_use_agree': True,
             'terms_of_privacy_agree': True,
         }

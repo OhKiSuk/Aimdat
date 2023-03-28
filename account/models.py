@@ -1,5 +1,5 @@
 """
-@modified at 2023.03.07
+@modified at 2023.03.28
 @author OKS in Aimdat Team
 """
 from django.db import models
@@ -8,12 +8,13 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, terms_of_use_agree=False, terms_of_privacy_agree=False, password=None):
+    def create_user(self, email, is_not_teen=False, terms_of_use_agree=False, terms_of_privacy_agree=False, password=None):
         if not email:
             raise ValueError('Users must have an email address')
 
         user = self.model(
             email=self.normalize_email(email),
+            is_not_teen=is_not_teen,
             terms_of_use_agree=terms_of_use_agree,
             terms_of_privacy_agree=terms_of_privacy_agree
         )
@@ -26,6 +27,7 @@ class UserManager(BaseUserManager):
         user = self.create_user(
             email,
             password=password,
+            is_not_teen=True,
             terms_of_use_agree=True,
             terms_of_privacy_agree=True,
         )
@@ -48,6 +50,7 @@ class User(AbstractBaseUser):
     terms_of_privacy_agree = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expiration_date = models.DateTimeField(null=True, blank=True)
+    is_not_teen = models.BooleanField(default=False) #만 14세 이하인지 확인(만 14세 이하의 경우 서비스 이용 불가)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 

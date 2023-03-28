@@ -1,6 +1,9 @@
 """
 @created at 2023.03.08
 @author OKS in Aimdat Team
+
+@modified at 2023.03.28
+@author OKS in Aimdat Team
 """
 from django.core import mail
 from django.http import HttpRequest
@@ -15,6 +18,7 @@ class CustomPasswordResetViewTest(TestCase):
         self.user = User.objects.create_user(
             email='test@aimdat.com',
             password='testuser1!',
+            is_not_teen=True,
             terms_of_use_agree=True,
             terms_of_privacy_agree=True
         )
@@ -63,6 +67,7 @@ class CustomPasswordConfirmViewTest(TestCase):
         self.user = User.objects.create_user(
             email='test@aimdat.com',
             password='testuser1!',
+            is_not_teen=True,
             terms_of_use_agree=True,
             terms_of_privacy_agree=True
         )

@@ -30,7 +30,7 @@
     color: #A1A1A1 !important;
 }
 
-.login {
+.login, .signup {
     padding-left: 20%;
     padding-right: 20%;
 }

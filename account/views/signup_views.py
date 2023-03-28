@@ -2,7 +2,7 @@
 @created at 2023.02.27
 @author OKS in Aimdat Team
 
-@modified at 2023.03.19
+@modified at 2023.03.28
 @author OKS in Aimdat Team
 """
 import random
@@ -17,7 +17,6 @@ from django.views.generic import FormView
 class SignUpView(FormView):
     template_name = 'account/signup.html'
     form_class = UserCreationForm
-    success_url = reverse_lazy('account:signup')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -34,13 +33,14 @@ class SignUpView(FormView):
 
         if session_pin and pin and session_pin == pin:
             form.save()
+            return redirect('index')
 
         del self.request.session['pin']
         return super().form_valid(form)
 
 class SendPinView(FormView):
     form_class = SendPinForm
-    success_url = reverse_lazy('index')
+    success_url = reverse_lazy('account:signup')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
