@@ -108,7 +108,7 @@ def _save_id_and_info(df, corp_list, is_crawl):
                 corp_summary = None
             )
         except CorpId.DoesNotExist:
-            id_data = CorpSummaryFinancialStatements(  # create
+            id_data = CorpId(  # create
                 corp_name = corp_name,
                 corp_sectors = corp_sectors,
                 stock_code = stock_code,
