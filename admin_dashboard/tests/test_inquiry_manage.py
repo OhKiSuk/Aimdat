@@ -12,12 +12,22 @@ class InquiryManageTest(TestCase):
     
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_superuser(
+        self.user = User.objects.create_user(
+            email='testuser@aidmat.com',
+            password='testUser1!',
+            is_not_teen=True,
+            terms_of_use_agree=True,
+            terms_of_privacy_agree=True
+        )
+
+        self.admin = User.objects.create_superuser(
             email='testadmin@aimdat.com',
             password='testadmin1!'
         )
+
         self.factory = RequestFactory()
         self.inquiry = Inquiry.objects.create(
+            user = self.user,
             email='testuser@naver.com',
             title='test',
             inquiry_category='test',
