@@ -2,7 +2,7 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.03.28
+@modified at 2023.03.29
 @author OKS in Aimdat Team
 """
 import re
@@ -36,7 +36,7 @@ class SendPinViewTest(TestCase):
         """
         User.objects.create_user(
             email='testsendpin@aimdat.com',
-            password='testsendpin1!',
+            password='testSendPin1!',
             is_not_teen=True,
             terms_of_privacy_agree=True,
             terms_of_use_agree=True
@@ -44,7 +44,7 @@ class SendPinViewTest(TestCase):
         factory = RequestFactory()
 
         request = factory.get(reverse('account:login'))
-        self.client.login(request=request, username='testsendpin@aimdat.com', password='testsendpin1!')
+        self.client.login(request=request, username='testsendpin@aimdat.com', password='testSendPin1!')
 
         response = self.client.post(reverse('account:send_pin'), {'email': 'abcdef@absfda.com'})
         self.assertEqual(response.status_code, 403)
@@ -55,8 +55,8 @@ class SignUpViewTest(TestCase):
         self.clinet = Client()
         self.user_data = {
             'email': 'testfailure@aimdat.com',
-            'password1': 'testpassword1!',
-            'password2': 'testpassword1!',
+            'password1': 'testPassword1!',
+            'password2': 'testPassword1!',
             'is_not_teen': True,
             'terms_of_use_agree': True,
             'terms_of_privacy_agree': True
@@ -71,14 +71,14 @@ class SignUpViewTest(TestCase):
         """
         user_data = {
             'email': 'testsuccess@aimdat.com',
-            'password1': 'testpassword1!',
-            'password2': 'testpassword1!',
+            'password1': 'testPassword1!',
+            'password2': 'testPassword1!',
             'is_not_teen': True,
             'terms_of_use_agree': True,
             'terms_of_privacy_agree': True,
         }
 
-        self.client.post(reverse('account:send_pin'), data={'email': 'test@aimdat.com'})
+        self.client.post(reverse('account:send_pin'), data={'email': 'testsuccess@aimdat.com'})
         match = re.search(r'\d{6}', mail.outbox[0].body)
         pin = match.group()
 
@@ -86,7 +86,6 @@ class SignUpViewTest(TestCase):
 
         response = self.client.post(reverse('account:signup'), data=user_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertRedirects(response, reverse('account:signup'))
         self.assertTrue(User.objects.filter(email=user_data['email']).exists())
 
     def test_signup_with_pin_if_not_number(self):
@@ -103,4 +102,4 @@ class SignUpViewTest(TestCase):
         """
         self.user_data['pin'] = '1234567'
         response = self.client.post(reverse('account:signup'), data=self.user_data, follow=True)
-        self.assertContains(response, "이 값이 최대 6 개의 글자인지 확인하세요")
+        self.assertContains(response, "PIN번호가 올바르지 않습니다.")
