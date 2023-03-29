@@ -52,7 +52,7 @@ class SendPinView(FormView):
         """
         회원가입 정보 입력 시 PIN 번호 생성 후 이메일 전송
         """
-        pin = '{:06d}'.format(random.randint(100_000, 999_999))
+        pin = '{:06d}'.format(random.randint(0, 999_999))
         email = self.request.POST.get('email')
         self.request.session['pin'] = pin
 
