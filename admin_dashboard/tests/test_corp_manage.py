@@ -33,7 +33,7 @@ class CorpManageTest(TestCase):
         self.corp_info = CorpInfo.objects.create(
             corp_id = self.corp_id,
             corp_homepage_url = 'http://www.test.com',
-            corp_settlement_date = '2000-12-31',
+            corp_settlement_month = '2000-12-31',
             corp_ceo_name = 'test',
             corp_summary = 'test',
         )
