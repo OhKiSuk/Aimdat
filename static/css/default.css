@@ -30,7 +30,7 @@
     color: #A1A1A1 !important;
 }
 
-.login, .signup {
+.login, .signup, .password-reset {
     padding-left: 20%;
     padding-right: 20%;
 }

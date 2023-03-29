@@ -1,11 +1,14 @@
 """
 @created at 2023.03.08
 @author OKS in Aimdat Team
+
+@modified at 2023.03.29
+@author OKS in Aimdat Team
 """
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView, PasswordResetCompleteView, PasswordResetDoneView
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.middleware.csrf import get_token
+from ..forms.password_reset_forms import CustomPasswordResetForm, CustomSetPasswordForm
 
 class CustomPasswordResetView(PasswordResetView):
     """
@@ -14,6 +17,7 @@ class CustomPasswordResetView(PasswordResetView):
     template_name = 'account/password_reset.html'
     email_template_name= 'account/password_reset_email.html'
     success_url = reverse_lazy('account:password_reset_done')
+    form_class = CustomPasswordResetForm
 
     def dispatch(self, request, *args, **kwargs):
         if self.request.user.is_authenticated:
@@ -28,7 +32,7 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'account/password_reset_done.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if self.request.user.is_authenticated or request.POST.get('csrfmiddlewaretoken') != get_token(request):
+        if self.request.user.is_authenticated:
             return redirect('account:login')
 
         return super().dispatch(request, *args, **kwargs)
@@ -39,6 +43,7 @@ class CustomPasswordConfirmView(PasswordResetConfirmView):
     """
     template_name = 'account/password_reset_confirm.html'
     success_url = reverse_lazy('account:password_reset_complete')
+    form_class = CustomSetPasswordForm
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     """
@@ -47,7 +52,7 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'account/password_reset_complete.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if self.request.user.is_authenticated or request.POST.get('csrfmiddlewaretoken') != get_token(request):
+        if self.request.user.is_authenticated:
             return redirect('account:login')
 
         return super().dispatch(request, *args, **kwargs)

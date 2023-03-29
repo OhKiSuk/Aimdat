@@ -59,7 +59,7 @@ class CustomPasswordResetViewTest(TestCase):
         response = self.client.post(reverse('account:password_reset'), {'email': email})
 
         self.assertEqual(len(mail.outbox), 0)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
 
 class CustomPasswordConfirmViewTest(TestCase):
     def setUp(self):
