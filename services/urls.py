@@ -6,8 +6,9 @@
 @author OKS in Aimdat Team
 """
 from django.urls import path
-from .views.search_views import SearchView
 from .views.corp_detail_views import CorpDetailView
+from .views.faq_views import FaqView
+from .views.search_views import SearchView
 from .views.terms_views import (
     TermsOfPrivacyView, 
     TermsOfUseView
@@ -22,4 +23,7 @@ urlpatterns = [
     #약관
     path('terms/use/', TermsOfUseView.as_view(), name='terms_of_use'),
     path('terms/privacy/', TermsOfPrivacyView.as_view(), name='terms_of_privacy'),
+
+    #FAQ
+    path('faq/', FaqView.as_view(), name='faq'),
 ]
