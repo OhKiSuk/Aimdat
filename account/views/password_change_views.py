@@ -11,12 +11,14 @@ from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.http import BadHeaderError
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from ..forms.password_change_forms import CustomPasswordChangeForm
 
 class CustomPasswordChangeView(PasswordChangeView):
     """
     비밀번호 변경 뷰
     """
     template_name = 'account/password_change.html'
+    form_class = CustomPasswordChangeForm
 
     def dispatch(self, request, *args, **kwargs):
         if not self.request.user.is_authenticated:
