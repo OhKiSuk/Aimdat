@@ -2,7 +2,7 @@
 @created at 2023.02.27
 @author OKS in Aimdat Team
 
-@modified at 2023.03.07
+@modified at 2023.03.30
 @author OKS in Aimdat Team
 """
 from django.urls import path
@@ -20,7 +20,7 @@ app_name = 'account'
 urlpatterns = [
     # 로그인
     path('login/', ServiceLoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='account:login'), name='logout'),
     path('google/login', GoogleLoginView.as_view(), name='google_login'),
     path('google/login/callback/', GoogleCallbackView.as_view(), name='google_login_callback'),
     path('naver/login', NaverLoginView.as_view(), name='naver_login'),

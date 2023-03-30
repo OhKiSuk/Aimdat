@@ -1,11 +1,24 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-main">
+<nav class="navbar navbar-expand-lg bg-main">
     <div class="container">
-        <div class="py-2">
-            {% if user.is_authenticated %}
-            <a class="navbar-brand mx-1 fw-bold text-white" style="font-size:30px;" href="{% url 'services:search' %}">Aimdat</a>
-            {% else %}
-            <a class="navbar-brand mx-1 fw-bold text-white" style="font-size:30px;" href="{% url 'account:signup' %}">Aimdat</a>
-            {% endif %}
+        <a class="navbar-brand text-white fw-bold font-lg" href="{% url 'index' %}">Aimdat</a>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarContent"
+                aria-controls="navbarContent"
+                aria-expanded="false"
+                style="color: white !important; border: 1px solid transparent !important;">
+                <i class="bi bi-list font-md"></i>
+        </button>
+        <div class="float-end">
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mb-2 mb-lg-0">
+                    {% if user.is_authenticated %}
+                    <li>
+                        <a class="fw-bold text-white font-sm" href="{% url 'account:logout' %}">로그아웃</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </div>
 </nav>

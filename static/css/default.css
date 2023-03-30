@@ -43,3 +43,7 @@
 .social a {
     text-decoration-line:none !important;
 }
+
+.collapse ul > li > a {
+    text-decoration: none;
+}
