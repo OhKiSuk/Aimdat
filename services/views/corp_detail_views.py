@@ -3,16 +3,20 @@
 @author JSU in Aimdat Team
 """
 
-from django.views.generic import DetailView
-from django.http import HttpResponseRedirect
-from django.utils import timezone
-from django.urls import reverse
-from datetime import datetime, timedelta
+from datetime import timedelta
+
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils import timezone
+from django.views.generic import DetailView
+
 from ..models.corp_id import CorpId
 from ..models.corp_info import CorpInfo
-from ..models.corp_summary_financial_statements import CorpSummaryFinancialStatements as FS
+from ..models.corp_summary_financial_statements import \
+    CorpSummaryFinancialStatements as FS
 from ..models.stock_price import StockPrice
+
 
 class CorpDetailView(UserPassesTestMixin, DetailView):
     model = CorpId
@@ -22,7 +26,7 @@ class CorpDetailView(UserPassesTestMixin, DetailView):
     def test_func(self):
         user = self.request.user
         date = user.expiration_date if user.is_authenticated else None
-        return date and date >= datetime.now()
+        return date and date >= timezone.now()
     
     def handle_no_permission(self):
         return HttpResponseRedirect(reverse('account:login'))

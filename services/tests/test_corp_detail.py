@@ -3,12 +3,17 @@
 @author JSU in Aimdat Team
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
+
 from django.test import Client, RequestFactory, TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.utils import timezone
+
 from account.models import User
+
 from ..models.corp_id import CorpId
+
 
 class DetailTest(TestCase):
     def setUp(self):
@@ -30,7 +35,7 @@ class DetailTest(TestCase):
         email = 'test@aimdat.com'
         password = 'testpassword1!'
 
-        self.user.expiration_date = datetime.now() - timedelta(days=1)
+        self.user.expiration_date = timezone.now() - timedelta(days=1)
         request = self.factory.get(reverse('services:detail', kwargs={'pk': self.corp.pk}))
         expired_login = self.client.login(request=request, username=email, password=password)
         self.assertTrue(expired_login)
@@ -45,7 +50,7 @@ class DetailTest(TestCase):
         email = 'test@aimdat.com'
         password = 'testpassword1!'
 
-        self.user.expiration_date = datetime.now() + timedelta(days=1)
+        self.user.expiration_date = timezone.now() + timedelta(days=1)
 
         request = self.factory.get(reverse('services:detail', kwargs={'pk': self.corp.pk}))
         normal_login = self.client.login(request=request, username=email, password=password)

@@ -6,16 +6,22 @@
 @author JSU in Aimdat Team
 """
 
+from datetime import timedelta
+from decimal import Decimal
+
+from django.http import QueryDict
 from django.test import TestCase
-from datetime import datetime, timedelta
 from django.test.client import Client, RequestFactory
 from django.test.utils import override_settings
 from django.urls import reverse
-from django.http import QueryDict
-from decimal import Decimal
+from django.utils import timezone
+
 from account.models import User
-from ..models.corp_summary_financial_statements import CorpSummaryFinancialStatements as fs
+
 from ..models.corp_id import CorpId
+from ..models.corp_summary_financial_statements import \
+    CorpSummaryFinancialStatements as fs
+
 
 class SearchTest(TestCase):
     @classmethod
@@ -62,7 +68,7 @@ class SearchTest(TestCase):
         email = 'test@aimdat.com'
         password = 'testpassword1!'
 
-        self.user.expiration_date = datetime.now() - timedelta(days=1)
+        self.user.expiration_date = timezone.now() - timedelta(days=1)
         request = self.factory.get(reverse('services:detail', kwargs={'pk': self.corp.pk}))
         expired_login = self.client.login(request=request, username=email, password=password)
         self.assertTrue(expired_login)
@@ -77,7 +83,7 @@ class SearchTest(TestCase):
         email = 'test@aimdat.com'
         password = 'testpassword1!'
 
-        self.user.expiration_date = datetime.now() + timedelta(days=1)
+        self.user.expiration_date = timezone.now() + timedelta(days=1)
 
         request = self.factory.get(reverse('services:detail', kwargs={'pk': self.corp.pk}))
         normal_login = self.client.login(request=request, username=email, password=password)

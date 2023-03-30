@@ -4,35 +4,45 @@
 
 @modified at 2023.03.20
 @author JSU in Aimdat Team
+
+@modified at 2023.03.28
+@author JSU in Aimdat Team
 """
 
-from datetime import datetime
-from django.views.generic.list import ListView
-from django.http import HttpResponseRedirect
-from django.db.models import Q
-from django.shortcuts import render
-from django.urls import reverse
-from django.contrib.auth.mixins import UserPassesTestMixin
-from ..models.corp_summary_financial_statements import CorpSummaryFinancialStatements as fs
 from decimal import Decimal
 
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models import Max, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.generic.list import ListView
+
+from ..models.corp_id import CorpId
+from ..models.corp_summary_financial_statements import \
+    CorpSummaryFinancialStatements as FS
+
+
 class SearchView(UserPassesTestMixin, ListView):
-    model = fs
+    model = FS
     template_name = 'services/search_view.html'
     paginate_by = 100
-    q = Q()
     
     def test_func(self):
         user = self.request.user
-        date = user.expiration_date if user.is_authenticated else None
-        return date and date >= datetime.now()
+        auth = user.is_authenticated
+        date = user.expiration_date - timezone.now()
+        return auth and date
     
     def handle_no_permission(self):
         return HttpResponseRedirect(reverse('account:login'))
     
     def get_queryset(self):
         qs = super().get_queryset()
-        
+        q = Q()
+
         # Session이 값이 있을 경우
         if 'name_en' in self.request.session:
             name_en = self.request.session['name_en']
@@ -40,14 +50,13 @@ class SearchView(UserPassesTestMixin, ListView):
             max = self.request.session['max']            
             
             for condition, min_data, max_data in zip(name_en, min, max):
-                self.q &= Q(**{condition+'__range': (Decimal(min_data), Decimal(max_data))})
-            qs = qs.filter(self.q)
+                q &= Q(**{condition+'__range': (Decimal(min_data), Decimal(max_data))})
+            qs = qs.filter(q)
             return qs
         else:
             return qs
 
     def get_context_data(self, **kwargs):
-        self.object_list = self.get_queryset()
         context = super().get_context_data(**kwargs)
         rsi_list_lower = ['per', 'pbr', 'psr', 'ev_ebitda', 'ev_per_ebitda', 'eps', 'bps', 'roe', 'dps']
         rsi_list_upper = [word.upper() for word in rsi_list_lower]
@@ -59,7 +68,7 @@ class SearchView(UserPassesTestMixin, ListView):
             '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', '총부채', '총자산', \
                 '총자본', '총차입금', '액면가']
         
-        fs_list_en = [field.name for field in fs._meta.get_fields()]
+        fs_list_en = [field.name for field in FS._meta.get_fields()]
         remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'month']
         
         for field in remove_field:
@@ -86,7 +95,7 @@ class SearchView(UserPassesTestMixin, ListView):
         name_ko = []
         min = []
         max = []
-        fields = [field.name for field in fs._meta.get_fields()]
+        fields = [field.name for field in FS._meta.get_fields()]
         remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'month']
         condition_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
         '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', 'PER', 'PBR', 'PSR',\
@@ -111,5 +120,6 @@ class SearchView(UserPassesTestMixin, ListView):
         request.session['min'] = min
         request.session['max'] = max
         
+        self.object_list = self.get_queryset()
         context = self.get_context_data()
         return render(request, 'services/search_view.html', context)
