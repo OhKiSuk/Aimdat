@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load get_attr %}
 {% block style %}
 <link rel="stylesheet" href="{% static 'css/search_view.css' %}">
 {% endblock %}
@@ -7,18 +8,15 @@
 <div class="container">
     <div class="header d-flex align-items-center my-3">
         <span class="mr-3">검색결과</span><span class="mx-2" style="font-size:14px;"><b>총 {{paginator.count}}건</b></span>
-        <!-- 적용된 조건 출력 -->
         <div class="applied_filter_list">
             {% for data in applied_filter_list%}
             <span class="{{data.0}} applied_filter">{{data.1}}:{{data.2}}~{{data.3}}</span>
             {% endfor %}
         </div>
-        <button type="button" class="btn ms-auto filter_set" data-bs-toggle="modal" data-bs-target="#filter-modal">필터설정</button>
     </div>
     <div class="table-responsive">
-        <table class="table">
+        <table class="table" id="table">
             <thead>
-                <!-- 검색 항목 출력 -->
                 <tr>
                     <th>No.</th>
                     <th>회사명</th>
@@ -28,47 +26,28 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- 검색 데이터 출력 -->
-                {% for data in object_list %}
-                <tr>
+                <form method="POST">
+                    {% csrf_token %}
+                    {% for obj in object_list %}
+                    <tr>
                     <td>{{page_obj.start_index|add:forloop.counter0}}</td>
                     <td>
-                        <a href="{% url 'services:detail' data.corp_id.id %}">{{data.corp_id.corp_name}}</a></br>
-                        <a>{{data.corp_id.corp_country}}</a>|<a>{{data.corp_id.corp_market}}</a>|<a>{{data.corp_id.corp_sectors}}</a>
+                        <input id="tooltip" type="checkbox" name="checked_corp" value="{{obj.corp_id}}, {{obj.year}}, {{obj.month}}" data-toggle="tooltip" data-placement="top" title="비교할 기업을 선택하세요."><a href="{% url 'services:detail' obj.corp_id %}">{{obj.corp_id_id__corp_name}}</a></br>
+                        <a>{{obj.corp_id_id__corp_country}}</a>|<a>{{obj.corp_id_id__corp_market}}</a>|<a>{{obj.corp_id_id__corp_sectors}}</a>
                     </td>
-                    <td>{{data.revenue}}</td>
-                    <td>{{data.operating_profit}}</td>
-                    <td>{{data.net_profit}}</td>
-                    <td>{{data.operating_margin}}</td>
-                    <td>{{data.net_profit_margin}}</td>
-                    <td>{{data.debt_ratio}}</td>
-                    <td>{{data.cost_of_sales_ratio}}</td>
-                    <td>{{data.quick_ratio}}</td>
-                    <td>{{data.dividend}}</td>
-                    <td>{{data.total_dividend}}</td>
-                    <td>{{data.dividend_yield}}</td>
-                    <td>{{data.dividend_payout_ratio}}</td>
-                    <td>{{data.dividend_ratio}}</td>
-                    <td>{{data.per}}</td>
-                    <td>{{data.pbr}}</td>
-                    <td>{{data.psr}}</td>
-                    <td>{{data.ev_ebitda}}</td>
-                    <td>{{data.ev_per_ebitda}}</td>
-                    <td>{{data.eps}}</td>
-                    <td>{{data.bps}}</td>
-                    <td>{{data.roe}}</td>
-                    <td>{{data.dps}}</td>
-                    <td>{{data.total_dept}}</td>
-                    <td>{{data.total_asset}}</td>
-                    <td>{{data.total_capital}}</td>
-                    <td>{{data.borrow_debt}}</td>
-                    <td>{{data.face_value}}</td>
-                </tr>
-                {% endfor %}
+                    {% for field in fields %}
+                    <td>{{obj|get_attr:field}}
+                    {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    <div class="d-flex flex-row-reverse">
+                        <button type="button" class="filter_set btn mx-2" data-bs-toggle="modal" data-bs-target="#filter-modal">필터설정</button>
+                        <button type="submit" class="btn mx-2">기업비교</button>
+                    </div>
+                </form>
             </tbody>
         </table>
     </div>
-    <!-- 페이징 기능 -->
     <div class="paging m-3">
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
@@ -105,8 +84,6 @@
         </ul>
     </div>
 </div>
-
-<!-- 필터 모달 -->
 <div class="modal modal-lg" id="filter-modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
     <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -114,8 +91,7 @@
             <div class="modal-title">필터설정</div>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="setting_filter_list">
-        </div>
+        <div class="setting_filter_list"></div>
         <div class="modal-body d-flex">
             <div class="modal-side col-3">
                 <ul class="tab_style" role="tablist">
@@ -136,7 +112,6 @@
                     </li>
                 </ul>
                 <div class="tab-content" id="content">
-                    <!-- 조건 항목 -->
                     <div class="tab-pane active" id="item_fs" role="tabpanel" aria-labelledby="fs_tab">
                         <ul class="filter_items">
                             {% for data in filter_item_fs %}
@@ -144,7 +119,7 @@
                             {% endfor %}
                         </ul>
                     </div>
-                    <div class="tab-pane fade" id="item_rsi" role="tabpanel" aria-labelledby="rsi_tab">
+                    <div class="tab-pane" id="item_rsi" role="tabpanel" aria-labelledby="rsi_tab">
                         <ul class="filter_items">
                             {% for data in filter_item_rsi %}
                             <li class="{{data.1}} filter_item">{{data.0}}</li>
@@ -153,9 +128,33 @@
                     </div>
                 </div>
             </div>
-            <!-- 조건 form -->
-            <form method="post" class="fitler_data col-9 d-flex align-items-center">
+            <form method="POST" class="fitler_data col-9 d-flex flex-wrap align-items-center">
                 {% csrf_token %}
+                <div class="d-flex align-items-center col-12">
+                    <div class="col-3">검색기간</div>
+                    <div class="input-group">
+                        <input type="text" id="year" name="year" class="form-control col-3" aria-label="Text input with dropdown button" placeholder="년도">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                        <ul class="dropdown-menu dropdown-menu-end year">
+                            <li><a class="dropdown-item" data-value="2020" href="#">2020</a></li>
+                            <li><a class="dropdown-item" data-value="2021" href="#">2021</a></li>
+                            <li><a class="dropdown-item" data-value="2022" href="#">2022</a></li>
+                            <li><a class="dropdown-item" data-value="2023" href="#">2023</a></li>
+                        </ul>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="quarter" name="quarter" class="form-control col-3" aria-label="Text input with dropdown button" placeholder="분기">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                        <ul class="dropdown-menu dropdown-menu-end quarter">
+                            <li><a class="dropdown-item" data-value="3" href="#">1분기</a></li>
+                            <li><a class="dropdown-item" data-value="6" href="#">2분기</a></li>
+                            <li><a class="dropdown-item" data-value="9" href="#">3분기</a></li>
+                            <li><a class="dropdown-item" data-value="12" href="#">4분기</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-9">
+                </div>
                 {% for data in input_item_fs %}
                 <div class="{{data.0}}_toggle input_data">
                     <div class="d-flex col-12 align-items-center">
@@ -202,6 +201,14 @@ $(document).ready(function() {
     });
     $('.setting_filter_list').append(set_filter);
     {% endfor %}
+
+    {% if year %}
+    $('#year').val('{{year}}')
+    {% endif %}
+
+    {% if quarter %}
+    $('#quarter').val('{{quarter}}')
+    {% endif %}
 });
 </script>
 {% endblock %}

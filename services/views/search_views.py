@@ -7,20 +7,20 @@
 
 @modified at 2023.03.28
 @author JSU in Aimdat Team
+
+@modified at 2023.03.30
+@author JSU in Aimdat Team
 """
 
+from datetime import datetime
 from decimal import Decimal
 
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db.models import Max, OuterRef, Q, Subquery
-from django.db.models.functions import Coalesce
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.urls import reverse
+from django.db.models import Q
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.generic.list import ListView
 
-from ..models.corp_id import CorpId
 from ..models.corp_summary_financial_statements import \
     CorpSummaryFinancialStatements as FS
 
@@ -29,41 +29,48 @@ class SearchView(UserPassesTestMixin, ListView):
     model = FS
     template_name = 'services/search_view.html'
     paginate_by = 100
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+        return redirect('account:login')
     
     def test_func(self):
-        user = self.request.user
-        auth = user.is_authenticated
-        date = user.expiration_date - timezone.now()
+        auth = self.request.user.is_authenticated
+        date = self.request.user.expiration_date.date() >= timezone.now().date()
         return auth and date
     
     def handle_no_permission(self):
-        return HttpResponseRedirect(reverse('account:login'))
+        return redirect('account:login')
     
     def get_queryset(self):
-        qs = super().get_queryset()
+        queryset = super().get_queryset()
         q = Q()
 
-        # Session이 값이 있을 경우
-        if 'name_en' in self.request.session:
+        if 'year' in self.request.session:
+            q &= (Q(year=self.request.session['year']))
+        if 'quarter' in self.request.session:
+            q &= (Q(month=self.request.session['quarter']))
+
+        # Session에 조건 값이 있을 경우
+        if 'name_en' in self.request.session and len(self.request.session['name_en']):
             name_en = self.request.session['name_en']
             min = self.request.session['min']
             max = self.request.session['max']            
             
             for condition, min_data, max_data in zip(name_en, min, max):
                 q &= Q(**{condition+'__range': (Decimal(min_data), Decimal(max_data))})
-            qs = qs.filter(q)
-            return qs
+            queryset = queryset.filter(q).values('corp_id', 'year', 'month', *name_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+            return queryset
         else:
-            return qs
+            name_en = ['revenue', 'operating_profit', 'operating_margin', 'net_profit', 'dividend', 'dividend_ratio']
+            queryset = queryset.filter(q).values('corp_id', 'year', 'month', *name_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+            return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         rsi_list_lower = ['per', 'pbr', 'psr', 'ev_ebitda', 'ev_per_ebitda', 'eps', 'bps', 'roe', 'dps']
         rsi_list_upper = [word.upper() for word in rsi_list_lower]
-        condition_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
-        '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', 'PER', 'PBR', 'PSR',\
-            'EV_EBITDA', 'EV_PER_EBITDA', 'EPS', 'BPS', 'ROE', 'DPS', '총부채', '총자산', '총자본',\
-                '총차입금', '액면가']
         fs_list_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
             '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', '총부채', '총자산', \
                 '총자본', '총차입금', '액면가']
@@ -77,17 +84,24 @@ class SearchView(UserPassesTestMixin, ListView):
         for field in rsi_list_lower:
             fs_list_en.remove(field)
         
-        context['table_column'] = condition_ko
+        context['table_column'] = ['매출액' ,'영업이익', '영업이익률', '당기순이익', '배당금', '배당률']
+        context['fields'] = ['revenue', 'operating_profit', 'operating_margin', 'net_profit', 'dividend', 'dividend_ratio']
         context['input_item_fs'] = zip(fs_list_en, fs_list_ko)
         context['input_item_rsi'] = zip(rsi_list_upper, rsi_list_lower)
         context['filter_item_fs'] = zip(fs_list_en, fs_list_ko)
         context['filter_item_rsi'] = zip(rsi_list_upper, rsi_list_lower)
         
-        # Session이 값이 있을 경우
-        if 'name_en' in self.request.session:
+        # Session에 조건 값이 있을 경우
+        if 'name_en' in self.request.session and len(self.request.session['name_en']):
+            context['table_column'] = self.request.session['name_ko']
+            context['fields'] = [*self.request.session['name_en']]
             context['applied_filter_list'] = zip(self.request.session['name_en'], self.request.session['name_ko'], self.request.session['min'], self.request.session['max'])
             context['applied_filter_modal'] = zip(self.request.session['name_en'], self.request.session['name_ko'], self.request.session['min'], self.request.session['max'])
             context['applied_input_data'] = zip(self.request.session['name_en'], self.request.session['min'], self.request.session['max'])
+        if 'year' in self.request.session:
+            context['year'] = self.request.session['year']
+        if 'quarter' in self.request.session:
+            context['quarter'] = self.request.session['quarter']
         return context
     
     def post(self, request):
@@ -105,7 +119,7 @@ class SearchView(UserPassesTestMixin, ListView):
         for field in remove_field:
             fields.remove(field)
         
-        # 조건 데이터 추출
+        # 조건 데이터
         for en, ko in zip(fields, condition_ko):
             if request.POST.get(en+'_max'):
                 min_data = request.POST.get(en+'_min')
@@ -119,7 +133,13 @@ class SearchView(UserPassesTestMixin, ListView):
         request.session['name_ko'] = name_ko
         request.session['min'] = min
         request.session['max'] = max
+
+        # 연, 분기
+        if request.POST.get('year'):
+            request.session['year'] = request.POST.get('year')
+        if request.POST.get('quarter'):
+            request.session['quarter'] = request.POST.get('quarter')
         
         self.object_list = self.get_queryset()
         context = self.get_context_data()
-        return render(request, 'services/search_view.html', context)
+        return render(request, 'services/search_view.html', context=context)

@@ -101,3 +101,23 @@ $('.filter_item').on('click', function() {
     $('.submit').show();
 });
 
+// 툴팁 출력
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+
+    $('[data-toggle="tooltip"]').on('click', function () {
+        $(this).tooltip('hide');
+    });
+})
+
+$('.year').on('click', function(e) {
+    const target = e.target;
+    const value = $(target).data('value');
+    $('#year').val(value);
+});
+
+$('.quarter').on('click', function(e) {
+    const target = e.target;
+    const value = $(target).data('value');
+    $('#quarter').val(value);
+});
