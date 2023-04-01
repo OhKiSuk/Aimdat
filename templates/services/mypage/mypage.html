@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-5">
+    <div class="col flex-grow-0">
+        <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-white" style="min-width: 200px;">
+            <ul class="nav nav-pills flex-column mb-auto font-sm">
+                <li class="nav-item">
+                    <a href="" class="nav-link active">회원정보</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'account:password_change' %}" class="nav-link">비밀번호 변경</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="col flex-grow-1">
+        <div class="mt-2 font-lg fw-bold">회원정보</div>
+        <div class="mt-3 font-md">
+            <span class="fw-bold">이메일:</span> <span>{{ request.user.email }}</span>
+            {% if request.user.user_classify == 'N' %} 
+            <img src="{% static 'image/social/naver_button.png' %}" height="20px">
+            {% elif request.user.user_classify == 'K' %}
+            <img src="{% static 'image/social/kakao_button.png' %}" height="20px">
+            {% elif request.user.user_classify == 'G' %}
+            <img src="{% static 'image/social/google_button.png' %}" height="20px">
+            {% endif %}
+            <br>
+            <span class="fw-bold">계정 만료일:</span> <span>{{ request.user.expiration_date|date:'Y-m-d' }}</span>
+        </div>
+
+        {% include 'includes/footer.html' %}
+    </div>
+</div>
+{% endblock %}
