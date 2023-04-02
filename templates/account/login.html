@@ -7,14 +7,14 @@
         {% include 'includes/form_errors.html' %}
         {% csrf_token %}
         <div class="mt-3 form-floating">
-            <input type="text" class="form-control" name="username" id="username"
+            <input type="text" class="form-control" name="username" id="id_username"
                     value="" placeholder="E-mail">
-            <label for="username">E-mail</label>
+            <label for="id_username">이메일</label>
         </div>
         <div class="mt-3 form-floating">
-            <input type="password" class="form-control" name="password" id="password"
+            <input type="password" class="form-control" name="password" id="id_password"
                     value="" placeholder="Password">
-            <label for="password">Password</label>
+            <label for="id_password">비밀번호</label>
         </div>
         <span id="id_check_capslock" class="font-sm fw-bold text-danger" style="display: none;">
             <i class="bi bi-exclamation-circle"></i>
