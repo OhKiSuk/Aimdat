@@ -2,18 +2,42 @@
 @created at 2023.02.27
 @author OKS in Aimdat Team
 
-@modified at 2023.03.30
+@modified at 2023.04.02
 @author OKS in Aimdat Team
 """
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views.signup_views import SignUpView, SendPinView
+from .views.delete_account_views import DeleteAccountView
+from .views.google_login_views import (
+    GoogleLoginView, 
+    GoogleCallbackView,
+    GoogleLinkOffView
+)
+from .views.kakao_login_views import (
+    KakaoLoginView, 
+    KakaoCallbackView,
+    KakaoLinkOffView
+)
 from .views.login_views import ServiceLoginView
-from .views.kakao_login_views import KakaoLoginView, KakaoCallbackView
-from .views.naver_login_views import NaverLoginView, NaverCallbackView
-from .views.google_login_views import GoogleLoginView, GoogleCallbackView
-from .views.password_reset_views import CustomPasswordResetView, CustomPasswordResetDoneView, CustomPasswordConfirmView, CustomPasswordResetCompleteView
-from .views.password_change_views import CustomPasswordChangeView, CustomPasswordChangeDoneView
+from .views.naver_login_views import (
+    NaverLoginView, 
+    NaverCallbackView,
+    NaverLinkOffView
+)
+from .views.password_reset_views import (
+    CustomPasswordResetView, 
+    CustomPasswordResetDoneView, 
+    CustomPasswordConfirmView, 
+    CustomPasswordResetCompleteView
+)
+from .views.password_change_views import (
+    CustomPasswordChangeView, 
+    CustomPasswordChangeDoneView
+)
+from .views.signup_views import (
+    SignUpView, 
+    SendPinView
+)
 
 app_name = 'account'
 
@@ -28,6 +52,11 @@ urlpatterns = [
     path('kakao/login', KakaoLoginView.as_view(), name='kakao_login'),
     path('kakao/login/callback/', KakaoCallbackView.as_view(), name='kakao_login_callback'),
 
+    #소셜계정 연동 해제
+    path("naver/login/linkoff", NaverLinkOffView.as_view(), name="naver_login_linkoff"),
+    path("kakao/login/linkoff", KakaoLinkOffView.as_view(), name="kakao_login_linkoff"),
+    path("google/login/linkoff", GoogleLinkOffView.as_view(), name="google_login_linkoff"),
+
     #회원가입
     path('signup/', SignUpView.as_view(), name='signup'),
     path('signup/send/', SendPinView.as_view(), name='send_pin'),
@@ -41,4 +70,7 @@ urlpatterns = [
     #비밀번호 변경
     path('password/change/', CustomPasswordChangeView.as_view(), name='password_change'),
     path('password/change/done/', CustomPasswordChangeDoneView.as_view(), name='password_change_done'),
+
+    #계정 탈퇴
+    path('delete/', DeleteAccountView.as_view(), name='delete_account'),
 ]

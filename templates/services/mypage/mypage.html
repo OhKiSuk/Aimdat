@@ -11,6 +11,26 @@
                 <li class="nav-item">
                     <a href="{% url 'account:password_change' %}" class="nav-link">비밀번호 변경</a>
                 </li>
+                <li class="nav-item">
+                    <a href="" class="nav-link bg-danger text-white fw-bold" data-bs-toggle="modal" data-bs-target="#delete_account">회원 탈퇴하기</a>
+                    <div class="modal fade text-black" id="delete_account" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                <h1 class="modal-title fs-6">회원 탈퇴</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                정말 탈퇴하시겠습니까? 탈퇴한 계정은 탈퇴 즉시 삭제되며, 복구할 수 없습니다.
+                                </div>
+                                <div class="modal-footer">
+                                    <button id="id_delete_account" type="button" class="btn btn-sm btn-danger" data-bs-dismiss="modal">확인</button>
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal" aria-label="Close">취소</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
             </ul>
         </div>
     </div>
@@ -33,4 +53,23 @@
         {% include 'includes/footer.html' %}
     </div>
 </div>
+{% endblock %}
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('#id_delete_account').on('click', function() {
+            $.ajax({
+                url: "{% url 'account:delete_account' %}",
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                },
+                success: function(data) {
+                    alert('회원탈퇴가 완료되었습니다.')
+                    window.location.href = "{% url 'account:login' %}";
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

@@ -2,19 +2,26 @@
 @created at 2023.03.02
 @author OKS in Aimdat Team
 
-@modified at 2023.03.07
+@modified at 2023.04.02
 @author OKS in Aimdat Team
 """
+import json
 import requests
 
 from config.settings.base import get_secret
-from django.contrib.auth import login
-from django.http import HttpResponseBadRequest
+from django.contrib.auth import (
+    login,
+    logout
+)
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseServerError
+)
 from django.middleware import csrf
 from django.shortcuts import redirect
 from django.views.generic import View
 
-from account.models import User
+from ..models import User
 
 class KakaoLoginView(View):
     """
@@ -71,11 +78,13 @@ class KakaoCallbackView(View):
             user.user_classify = "K"
             user.terms_of_use_agree = True
             user.terms_of_privacy_agree = True
+            user.is_not_teen = True
+            user.refresh_token = response_to_json.get('refresh_token')
             user.set_unusable_password()
             user.save()
 
         login(request, user, backend='account.backends.EmailBackend')
-        return redirect('account:signup')
+        return redirect('index')
     
     def get_kakao_profile(self):
         """
@@ -88,3 +97,47 @@ class KakaoCallbackView(View):
         response = requests.get(url, headers=headers)
 
         return response.json()
+    
+class KakaoLinkOffView(View):
+    """
+    카카오 연동 해제 뷰(회원 탈퇴)
+    """
+    def get(self, request):
+        #토큰 재발급
+        url = 'https://kauth.kakao.com/oauth/token'
+        params = {
+            'grant_type': 'refresh_token',
+            'client_id': get_secret("kakao_rest_api_key"),
+            'client_secret': get_secret("kakao_client_secret"),
+            'refresh_token': request.user.refresh_token
+        }
+        response = requests.post(url, params=params)
+        token_to_json = json.loads(response.text)
+        self.access_token = token_to_json.get('access_token')
+
+        #카카오 연동 해제
+        linkoff = self.__linkoff()
+        if linkoff == None :
+            return HttpResponseServerError()
+        else:
+            #로그아웃
+            email = request.user.email
+            logout(request)
+            User.objects.get(email=email).delete()
+
+            #세션 제거
+            self.request.session.flush()
+            return redirect('account:login')
+
+    def __linkoff(self):
+        """
+        카카오 연동 해제
+        """
+        url = 'https://kapi.kakao.com/v1/user/unlink'
+        headers = {
+            'Authorization': f'Bearer {self.access_token}'
+        }
+        response = requests.post(url, headers=headers)
+        response_to_json = json.loads(response.text)
+
+        return response_to_json.get('id')

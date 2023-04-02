@@ -1,10 +1,12 @@
 """
-@modified at 2023.03.28
+@modified at 2023.04.02
 @author OKS in Aimdat Team
 """
+from django.contrib.auth.models import (
+    AbstractBaseUser, 
+    BaseUserManager
+)
 from django.db import models
-
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
 class UserManager(BaseUserManager):
@@ -46,10 +48,11 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
-    terms_of_use_agree = models.BooleanField(default=False)
-    terms_of_privacy_agree = models.BooleanField(default=False)
+    refresh_token = models.TextField(null=True, blank=True) #소셜로그인 사용자의 토큰 갱신을 위한 field
     created_at = models.DateTimeField(auto_now_add=True)
     expiration_date = models.DateTimeField(null=True, blank=True)
+    terms_of_use_agree = models.BooleanField(default=False)
+    terms_of_privacy_agree = models.BooleanField(default=False)
     is_not_teen = models.BooleanField(default=False) #만 14세 이하인지 확인(만 14세 이하의 경우 서비스 이용 불가)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
