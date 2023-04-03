@@ -1,6 +1,9 @@
 """
 @created at 2023.04.03
 @author OKS in Aimdat Team
+
+@modified at 2023.04.03
+@author OKS in Aimdat Team
 """
 from account.models import User
 from admin_dashboard.models import InquiryAnswer
@@ -22,6 +25,9 @@ class InquiryView(UserPassesTestMixin, TemplateView):
     redirect_field_name=None
 
     def test_func(self):
+        if self.request.user.is_admin:
+            return False
+
         return self.request.user.is_authenticated
 
     def get(self, request, *args, **kwargs):
@@ -43,6 +49,9 @@ class InquiryDetailView(UserPassesTestMixin, TemplateView):
     redirect_field_name=None
 
     def test_func(self):
+        if self.request.user.is_admin:
+            return False
+
         return self.request.user.is_authenticated
     
     def get(self, request, id, *args, **kwargs):
@@ -63,7 +72,13 @@ class AddInquiryView(UserPassesTestMixin, CreateView):
     login_url = reverse_lazy('account:login')
     redirect_field_name=None
 
+    def get(self, request, *args: str, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def test_func(self):
+        if self.request.user.is_admin:
+            return False
+
         return self.request.user.is_authenticated
 
     def form_valid(self, form):
