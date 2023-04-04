@@ -2,39 +2,32 @@
 @created at 2023.03.04
 @author OKS in Aimdat Team
 
-@modified at 2023.03.29
+@modified at 2023.04.04
 @author OKS in Aimdat Team
 """
 from django import forms
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth.forms import (
+    PasswordResetForm, 
+    SetPasswordForm
+)
 from django.core.exceptions import ValidationError
+
 from ..models import User
 
 class CustomPasswordResetForm(PasswordResetForm):
     """
     패스워드 초기화 페이지 폼
     """
-    email = forms.EmailField(required=True, error_messages={'required': '이메일을 입력하세요.'})
+    email = forms.EmailField(required=True, widget=forms.EmailInput)
     
     class Meta:
         fields = ('email')
-
-    def clean_username(self):
-        email = self.cleaned_data.get('email')
-
-        if not User.objects.filter(email=email).exists():
-            raise ValidationError('가입된 이메일이 아닙니다. 관리자에게 문의하세요.')
-        return email
-    
-    def clean(self):
-        email = self.cleaned_data.get('email')
-        
-        if not User.objects.filter(email=email).exists():
-            raise ValidationError('가입된 이메일이 아닙니다. 관리자에게 문의하세요.')
         
     def get_users(self, email=''):
+        email = self.cleaned_data.get('email')
+
         active_users = User.objects.filter(**{
-            'email__iexact': self.cleaned_data.get('email'),
+            'email__iexact': email,
             'is_active': True
         })
 

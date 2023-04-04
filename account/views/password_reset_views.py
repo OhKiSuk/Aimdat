@@ -2,16 +2,31 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.03.29
+@modified at 2023.04.04
 @author OKS in Aimdat Team
 """
 import secrets
-from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView, PasswordResetCompleteView, PasswordResetDoneView
+
+from django.contrib.auth.views import (
+    PasswordResetView, 
+    PasswordResetConfirmView, 
+    PasswordResetCompleteView,
+      PasswordResetDoneView
+)
 from django.http import BadHeaderError
-from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.core.signing import (
+    BadSignature, 
+    SignatureExpired, 
+    TimestampSigner
+)
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from ..forms.password_reset_forms import CustomPasswordResetForm, CustomSetPasswordForm
+
+from ..forms.password_reset_forms import (
+    CustomPasswordResetForm, 
+    CustomSetPasswordForm
+)
+from ..models import User
 
 class CustomPasswordResetView(PasswordResetView):
     """
@@ -32,6 +47,17 @@ class CustomPasswordResetView(PasswordResetView):
         signer = TimestampSigner()
         self.request.session['reset_token'] = signer.sign(random_token)
         return reverse_lazy('account:password_reset_done')
+    
+    def form_valid(self, form):
+        if not User.objects.filter(email=form.cleaned_data.get('email')).exists():
+            form.add_error('email', '존재하지 않는 이메일입니다.')
+            return super().form_invalid(form)
+
+        if User.objects.get(email=form.cleaned_data.get('email')).user_classify != 'U':
+            form.add_error('email', '소셜 로그인 이용자는 해당 이메일 제공자가 관리하는 페이지에서 비밀번호를 변경하셔야 합니다.')
+            return super().form_invalid(form)
+
+        return super().form_valid(form)
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     """
