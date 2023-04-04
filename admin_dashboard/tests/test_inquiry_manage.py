@@ -28,7 +28,6 @@ class InquiryManageTest(TestCase):
         self.factory = RequestFactory()
         self.inquiry = Inquiry.objects.create(
             user = self.user,
-            email='testuser@naver.com',
             title='test',
             inquiry_category='test',
             content='test'
