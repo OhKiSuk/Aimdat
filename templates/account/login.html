@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load get_first_message %}
 {% block content %}
 <div class="mt-5 login">
     <div class="text-center font-lg fw-bold">로그인</div>
@@ -65,4 +66,11 @@
         }
     });
 </script>
+{% if messages %}
+<script>
+    $(function() {
+        alert('{{ messages|get_first_message }}');
+    });
+</script>
+{% endif %}
 {% endblock %}

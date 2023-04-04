@@ -7,6 +7,7 @@
 """
 import random
 
+from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.mail import send_mail
 from django.http import (
@@ -68,6 +69,7 @@ class SignUpView(UserPassesTestMixin, FormView):
 
         if session_pin and pin and session_pin == pin:
             form.save()
+            messages.success(self.request, '회원 가입이 완료되었습니다.')
             return redirect('account:login')
 
         del self.request.session['pin']

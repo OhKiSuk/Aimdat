@@ -55,6 +55,7 @@ class SignUpViewTest(TestCase):
         response = self.client.post(reverse('account:signup'), data=user_data, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(User.objects.filter(email=user_data['email']).exists())
+        self.assertContains(response, "회원 가입이 완료되었습니다.")
 
     def test_send_pin_success_with_valid_eamil(self):
         """
