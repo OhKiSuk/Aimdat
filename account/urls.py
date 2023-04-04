@@ -2,7 +2,7 @@
 @created at 2023.02.27
 @author OKS in Aimdat Team
 
-@modified at 2023.04.02
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
 from django.urls import path
@@ -34,10 +34,7 @@ from .views.password_change_views import (
     CustomPasswordChangeView, 
     CustomPasswordChangeDoneView
 )
-from .views.signup_views import (
-    SignUpView, 
-    SendPinView
-)
+from .views.signup_views import SignUpView
 
 app_name = 'account'
 
@@ -59,7 +56,6 @@ urlpatterns = [
 
     #회원가입
     path('signup/', SignUpView.as_view(), name='signup'),
-    path('signup/send/', SendPinView.as_view(), name='send_pin'),
 
     #비밀번호 재설정
     path('password/reset/', CustomPasswordResetView.as_view(), name='password_reset'),

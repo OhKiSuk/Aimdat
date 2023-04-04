@@ -2,7 +2,7 @@
 @created at 2023.02.28
 @author OKS in Aimdat Team
 
-@modified at 2023.03.28
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
 from django import forms
@@ -10,15 +10,6 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from ..models import User
-
-class SendPinForm(forms.Form):
-    """
-    PIN 전송 폼
-    """
-    email = forms.EmailField(required=True)
-    
-    class Meta:
-        fields = ('email')
 
 class UserCreationForm(UserCreationForm):
     """
