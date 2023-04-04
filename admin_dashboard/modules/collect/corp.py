@@ -98,13 +98,13 @@ def _save_id_and_info(df, corp_list, is_crawl):
                 info_data = CorpInfo.objects.get(corp_id=id_data.pk)
                 info_data.corp_ceo_name = corp_ceo_name
                 info_data.corp_homepage_url = corp_homepage_url
-                info_data.corp_settlement_date = corp_settlement_month   
+                info_data.corp_settlement_month = corp_settlement_month   
             except CorpInfo.DoesNotExist:
                 info_data = CorpInfo(
                 corp_id = id_data,
                 corp_ceo_name = corp_ceo_name,
                 corp_homepage_url = corp_homepage_url,
-                corp_settlement_date = corp_settlement_month,
+                corp_settlement_month = corp_settlement_month,
                 corp_summary = None
             )
         except CorpId.DoesNotExist:
@@ -119,13 +119,13 @@ def _save_id_and_info(df, corp_list, is_crawl):
                 info_data = CorpInfo.objects.get(corp_id=id_data.pk)
                 info_data.corp_ceo_name = corp_ceo_name
                 info_data.corp_homepage_url = corp_homepage_url
-                info_data.corp_settlement_date = corp_settlement_month   
+                info_data.corp_settlement_month = corp_settlement_month   
             except CorpInfo.DoesNotExist:
                 info_data = CorpInfo(
                 corp_id = id_data,
                 corp_ceo_name = corp_ceo_name,
                 corp_homepage_url = corp_homepage_url,
-                corp_settlement_date = corp_settlement_month,
+                corp_settlement_month = corp_settlement_month,
                 corp_summary = None
             )
         info_data.save()
