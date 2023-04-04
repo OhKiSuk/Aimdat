@@ -2,27 +2,35 @@
 @created at 2023.02.27
 @author OKS in Aimdat Team
 
-@modified at 2023.03.28
+@modified at 2023.04.04
 @author OKS in Aimdat Team
 """
 import random
-from account.forms.signup_forms import SendPinForm
-from account.forms.signup_forms import UserCreationForm
-from django.core.exceptions import PermissionDenied
+
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.mail import send_mail
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import FormView
 
-class SignUpView(FormView):
+from ..forms.signup_forms import (
+    SendPinForm,
+    UserCreationForm
+)
+class SignUpView(UserPassesTestMixin, FormView):
     template_name = 'account/signup.html'
     form_class = UserCreationForm
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('index')
-        else:
-            return super().dispatch(request, *args, **kwargs)
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+
+        return not self.request.user.is_authenticated
+    
+    def handle_no_permission(self):
+        return HttpResponseRedirect(reverse_lazy('index'))
 
     def form_valid(self, form):
         """
@@ -38,15 +46,16 @@ class SignUpView(FormView):
         del self.request.session['pin']
         return super().form_valid(form)
 
-class SendPinView(FormView):
+class SendPinView(UserPassesTestMixin, FormView):
     form_class = SendPinForm
     success_url = reverse_lazy('account:signup')
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            raise PermissionDenied()
-        else:
-            return super().dispatch(request, *args, **kwargs)
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+
+        return not self.request.user.is_authenticated
 
     def form_valid(self, form):
         """

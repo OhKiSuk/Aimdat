@@ -7,19 +7,22 @@
 """
 import secrets
 
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.views import (
     PasswordResetView, 
     PasswordResetConfirmView, 
     PasswordResetCompleteView,
       PasswordResetDoneView
 )
-from django.http import BadHeaderError
 from django.core.signing import (
     BadSignature, 
     SignatureExpired, 
     TimestampSigner
 )
-from django.shortcuts import redirect
+from django.http import (
+    BadHeaderError,
+    HttpResponseRedirect
+)
 from django.urls import reverse_lazy
 
 from ..forms.password_reset_forms import (
@@ -28,7 +31,7 @@ from ..forms.password_reset_forms import (
 )
 from ..models import User
 
-class CustomPasswordResetView(PasswordResetView):
+class CustomPasswordResetView(UserPassesTestMixin, PasswordResetView):
     """
     서비스 패스워드 초기화 페이지 뷰
     """
@@ -36,11 +39,17 @@ class CustomPasswordResetView(PasswordResetView):
     email_template_name= 'account/password_reset_email.html'
     form_class = CustomPasswordResetForm
 
-    def dispatch(self, request, *args, **kwargs):
+    def test_func(self):
         if self.request.user.is_authenticated:
-            return redirect('account:login')
+            if self.request.user.is_admin:
+                return False
 
-        return super().dispatch(request, *args, **kwargs)
+            return False
+        
+        return not self.request.user.is_authenticated
+    
+    def handle_no_permission(self):                
+        return HttpResponseRedirect(reverse_lazy('index'))
     
     def get_success_url(self):
         random_token = secrets.token_hex()
@@ -59,16 +68,25 @@ class CustomPasswordResetView(PasswordResetView):
 
         return super().form_valid(form)
 
-class CustomPasswordResetDoneView(PasswordResetDoneView):
+class CustomPasswordResetDoneView(UserPassesTestMixin, PasswordResetDoneView):
     """
     서비스 패스워드 초기화 메일 전송 뷰
     """
     template_name = 'account/password_reset_done.html'
 
-    def dispatch(self, request, *args, **kwargs):
+    def test_func(self):
         if self.request.user.is_authenticated:
-            return redirect('account:login')
+            if self.request.user.is_admin:
+                return False
+
+            return False
         
+        return not self.request.user.is_authenticated
+    
+    def handle_no_permission(self):                
+        return HttpResponseRedirect(reverse_lazy('index'))
+    
+    def get(self, request):
         reset_token = self.request.session.get('reset_token')
         if not reset_token:
             raise BadHeaderError('잘못된 접근입니다.')
@@ -82,31 +100,52 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
             raise BadHeaderError('잘못된 접근입니다.')
 
         del self.request.session['reset_token']
-        return super().dispatch(request, *args, **kwargs)
+        return super().get(request)
 
-class CustomPasswordConfirmView(PasswordResetConfirmView):
+class CustomPasswordConfirmView(UserPassesTestMixin, PasswordResetConfirmView):
     """
     서비스 패스워드 재설정 뷰
     """
     template_name = 'account/password_reset_confirm.html'
     form_class = CustomSetPasswordForm
 
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+            
+            return False
+        
+        return not self.request.user.is_authenticated
+    
+    def handle_no_permission(self):
+        return HttpResponseRedirect(reverse_lazy('index'))
+
     def get_success_url(self):
         random_token = secrets.token_hex()
         signer = TimestampSigner()
         self.request.session['reset_token'] = signer.sign(random_token)
-
         return reverse_lazy('account:password_reset_complete')
+    
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     """
     패스워드 초기화 완료 후 로그인 뷰
     """
     template_name = 'account/password_reset_complete.html'
 
-    def dispatch(self, request, *args, **kwargs):
+    def test_func(self):
         if self.request.user.is_authenticated:
-            return redirect('account:login')
+            if self.request.user.is_admin:
+                return False
+
+            return False
         
+        return not self.request.user.is_authenticated
+    
+    def handle_no_permission(self):
+        return HttpResponseRedirect(reverse_lazy('index'))
+    
+    def get(self, request):
         reset_token = self.request.session.get('reset_token')
         if not reset_token:
             raise BadHeaderError('잘못된 접근입니다.')
@@ -120,4 +159,5 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
             raise BadHeaderError('잘못된 접근입니다.')
 
         del self.request.session['reset_token']
-        return super().dispatch(request, *args, **kwargs)
+
+        return super().get(request)
