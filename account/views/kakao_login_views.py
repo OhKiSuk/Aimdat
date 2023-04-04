@@ -2,7 +2,7 @@
 @created at 2023.03.02
 @author OKS in Aimdat Team
 
-@modified at 2023.04.02
+@modified at 2023.04.04
 @author OKS in Aimdat Team
 """
 import json
@@ -13,6 +13,7 @@ from django.contrib.auth import (
     login,
     logout
 )
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseServerError
@@ -23,10 +24,17 @@ from django.views.generic import View
 
 from ..models import User
 
-class KakaoLoginView(View):
+class KakaoLoginView(UserPassesTestMixin, View):
     """
     카카오 로그인 뷰
     """
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+
+        return not self.request.user.is_authenticated
+
     def get(self, request):
         #CSRF 방지를 위한 token 생성
         request.session['state'] = csrf.get_token(request)
@@ -42,10 +50,17 @@ class KakaoLoginView(View):
 
         return redirect(login_url)
     
-class KakaoCallbackView(View):
+class KakaoCallbackView(UserPassesTestMixin, View):
     """
     카카오 로그인 후 콜백
     """
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+
+        return not self.request.user.is_authenticated
+
     def get(self, request):
         if request.GET.get('state') != request.session.get('state'):
             return HttpResponseBadRequest()
@@ -98,10 +113,20 @@ class KakaoCallbackView(View):
 
         return response.json()
     
-class KakaoLinkOffView(View):
+class KakaoLinkOffView(UserPassesTestMixin, View):
     """
     카카오 연동 해제 뷰(회원 탈퇴)
     """
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+            
+            if self.request.user.user_classify != 'K':
+                return False
+
+        return self.request.user.is_authenticated
+
     def get(self, request):
         #토큰 재발급
         url = 'https://kauth.kakao.com/oauth/token'

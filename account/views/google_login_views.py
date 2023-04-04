@@ -2,7 +2,7 @@
 @created at 2023.03.02
 @author OKS in Aimdat Team
 
-@modified at 2023.04.02
+@modified at 2023.04.04
 @author OKS in Aimdat Team
 """
 import json
@@ -13,6 +13,7 @@ from django.contrib.auth import (
     login,
     logout
 )
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseServerError
@@ -24,10 +25,17 @@ from urllib.parse import urlencode
 
 from ..models import User
 
-class GoogleLoginView(View):
+class GoogleLoginView(UserPassesTestMixin, View):
     """
     구글 로그인 뷰
     """
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+
+        return not self.request.user.is_authenticated
+    
     def get(self, request):
         #CSRF 방지
         request.session['state'] = csrf.get_token(request)
@@ -45,6 +53,14 @@ class GoogleLoginView(View):
         return redirect(f'{url}?{urlencode(params)}')
     
 class GoogleCallbackView(View):
+
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+
+        return not self.request.user.is_authenticated
+    
     def get(self, request):
         if request.GET.get('state') != request.session.get('state'):
             return HttpResponseBadRequest()
@@ -101,6 +117,16 @@ class GoogleLinkOffView(View):
     """
     구글 연동 해제 뷰(회원 탈퇴)
     """
+    def test_func(self):
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
+
+            if self.request.user.user_classify != 'G':
+                return False
+
+        return self.request.user.is_authenticated
+    
     def get(self, request):
         #토큰 재발급
         url = 'https://oauth2.googleapis.com/token'

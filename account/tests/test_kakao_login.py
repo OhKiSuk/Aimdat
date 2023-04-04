@@ -62,7 +62,7 @@ class KakaoLoginLinkOffTest(TestCase):
             terms_of_privacy_agree=True,
             is_not_teen=True
         )
-        self.user.user_classify = 'G'
+        self.user.user_classify = 'K'
         self.user.expiration_date = timezone.now() + timedelta(days=30)
         self.user.refresh_token = 'refresh_token'
         self.user.save()
