@@ -47,7 +47,7 @@ class CustomSetPasswordForm(SetPasswordForm):
         'password_requirements': ("비밀번호는 8자리 이상, 영어 소문자, 대문자, 숫자, 특수문자가 포함되어야 합니다.")
     }
 
-    def clean_password1(self):
+    def clean_new_password1(self):
         new_password1 = self.cleaned_data.get('new_password1')
         if len(new_password1) < 8 or \
                 not any(char.isdigit() for char in new_password1) or \
@@ -57,7 +57,7 @@ class CustomSetPasswordForm(SetPasswordForm):
             raise forms.ValidationError(self.error_messages['password_requirements'])
         return new_password1
     
-    def clean_password2(self):
+    def clean_new_password2(self):
         new_password1 = self.cleaned_data.get("new_password1")
         new_password2 = self.cleaned_data.get("new_password2")
         if new_password1 and new_password2 and new_password1 != new_password2:

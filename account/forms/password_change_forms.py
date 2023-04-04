@@ -31,7 +31,7 @@ class CustomPasswordChangeForm(PasswordChangeForm):
             raise ValidationError(self.error_messages['password_incorrect'])
         return old_password
 
-    def clean_password1(self):
+    def clean_new_password1(self):
         """
         비밀번호 규칙을 준수하는 지 검증
         """
@@ -44,7 +44,7 @@ class CustomPasswordChangeForm(PasswordChangeForm):
             raise forms.ValidationError(self.error_messages['password_requirements'])
         return new_password1
     
-    def clean_password2(self):
+    def clean_new_password2(self):
         """
         비밀번호 및 비밀번호 확인 값이 일치하는 지 검증
         """
