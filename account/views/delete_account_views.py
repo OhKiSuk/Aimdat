@@ -10,7 +10,6 @@ from ..models import User
 
 class DeleteAccountView(DeleteView):
     model = User
-    success_url = reverse_lazy('index')
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -26,8 +25,8 @@ class DeleteAccountView(DeleteView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
-        return self.request.user.id
+        return self.request.user
 
     def get_success_url(self):
         self.request.session.flush()
-        return redirect(self.success_url)
+        return reverse_lazy('index')

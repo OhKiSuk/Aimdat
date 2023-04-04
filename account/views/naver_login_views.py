@@ -115,7 +115,7 @@ class NaverLinkOffView(View):
         self.access_token = token_to_json.get('access_token')
 
         #네이버 연동 해제
-        linkoff = self.__linkoff()
+        linkoff = self.linkoff()
         if linkoff != 'success':
             return HttpResponseServerError()
         else:
@@ -128,7 +128,7 @@ class NaverLinkOffView(View):
             self.request.session.flush()
             return redirect(reverse_lazy('account:login'))
 
-    def __linkoff(self):
+    def linkoff(self):
         """
         네이버 연동 해제
         """

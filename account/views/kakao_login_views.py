@@ -116,7 +116,7 @@ class KakaoLinkOffView(View):
         self.access_token = token_to_json.get('access_token')
 
         #카카오 연동 해제
-        linkoff = self.__linkoff()
+        linkoff = self.linkoff()
         if linkoff == None :
             return HttpResponseServerError()
         else:
@@ -129,7 +129,7 @@ class KakaoLinkOffView(View):
             self.request.session.flush()
             return redirect('account:login')
 
-    def __linkoff(self):
+    def linkoff(self):
         """
         카카오 연동 해제
         """

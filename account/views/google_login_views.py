@@ -115,7 +115,7 @@ class GoogleLinkOffView(View):
         self.access_token = token_to_json.get('access_token')
 
         #구글 연동 해제
-        linkoff = self.__linkoff()
+        linkoff = self.linkoff()
         if linkoff != 200:
             return HttpResponseServerError()
         else:
@@ -128,7 +128,7 @@ class GoogleLinkOffView(View):
             self.request.session.flush()
             return redirect('account:login')
 
-    def __linkoff(self):
+    def linkoff(self):
         """
         구글 연동 해제
         """
