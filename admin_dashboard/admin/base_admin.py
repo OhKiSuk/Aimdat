@@ -1,23 +1,54 @@
 """
-@modified at 2023.03.22
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
+from account.forms.login_forms import CustomAuthenticationForm
 from account.models import User
 from admin_dashboard.admin.user_admin import AccountManageAdmin
-from axes.models import AccessFailureLog, AccessLog, AccessAttempt
-from datetime import datetime, timedelta
+from axes.models import (
+    AccessFailureLog, 
+    AccessLog, 
+    AccessAttempt
+)
+from datetime import (
+    datetime, 
+    timedelta
+)
 from django.contrib.admin import AdminSite
 from django.db.models import Count
-from django.db.models.functions import TruncMonth, TruncYear, TruncDay
+from django.db.models.functions import (
+    TruncMonth, 
+    TruncYear, 
+    TruncDay
+)
 from django.urls import path
 from services.models.inquiry import Inquiry
-from .axes_admin import AccessAttemptAdmin, AccessFailureAdmin, AccessSuccessAdmin
-from ..views.collect_data_views import CollectCorpInfoView, CollectStockPriceView, CollectFinancialStatementView
-from ..views.corp_manage_views import CorpManageView, CorpIdChangeView, CorpInfoChangeView, CorpSummaryFinancialStatementsChangeView
-from ..views.inquiry_manage_views import InquiryListView, InquiryAddAnswerView
+
+from .axes_admin import (
+    AccessAttemptAdmin, 
+    AccessFailureAdmin, 
+    AccessSuccessAdmin
+)
+from ..views.collect_data_views import (
+    CollectCorpInfoView, 
+    CollectStockPriceView, 
+    CollectFinancialStatementView
+)
+from ..views.corp_manage_views import (
+    CorpManageView, 
+    CorpIdChangeView, 
+    CorpInfoChangeView, 
+    CorpSummaryFinancialStatementsChangeView
+)
+from ..views.inquiry_manage_views import (
+    InquiryListView, 
+    InquiryAddAnswerView
+)
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin_dashboard/index.html'
+    login_template = 'admin_dashboard/admin_login.html'
+    login_form = CustomAuthenticationForm
 
     def get_urls(self):
         urls = super().get_urls()
