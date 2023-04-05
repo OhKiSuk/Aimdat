@@ -8,6 +8,7 @@ import sys
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 
 dir_collect = os.path.dirname(__file__)
 dir_modules = os.path.dirname(dir_collect)
@@ -19,7 +20,7 @@ from services.models.corp_id import CorpId
 from services.models.corp_info import CorpInfo
 
 def _crawl_corp_list_files(year, crawl_time=2, download_time=5):
-    driver = webdriver.Chrome(r'E:\chromedriver_win32\chromedriver.exe') # 윈도우
+    driver = webdriver.Chrome(ChromeDriverManager().install())
     # download 상장법인목록.xls
     url = 'https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage'
     driver.get(url)
@@ -76,7 +77,9 @@ def _save_id_and_info(df, corp_list, is_crawl):
         ret = df.loc[df['회사명']==name, ['회사명', '종목코드', '업종', '결산월', '대표자명', '홈페이지']]
         ret = ret.values.tolist()
         corp_name, stock_code, corp_sectors, corp_settlement_month, corp_ceo_name, corp_homepage_url = ret[0]
-        
+        stock_code = str(stock_code)
+        n = len(stock_code)
+        stock_code = '0'*(6-n)+stock_code
         try:
             id_data = CorpId.objects.get(stock_code=stock_code)
             id_data.corp_name = corp_name
@@ -149,13 +152,15 @@ def collect_corp(year=2022, operate_system='win'):
     df1 = pd.read_html(file_krx_list)[0]
     df1_corp_name = df1['회사명'].unique()
     df1_corp_name = pd.DataFrame(df1_corp_name)
-    
+
     df2 = pd.read_csv(file_dart_fs_list, sep='\t', encoding='cp949')
     df2_corp_name = df2['회사명'].unique()
     df2_corp_name = pd.DataFrame(df2_corp_name)
- 
+
     # merge
     df3 = pd.merge(df1_corp_name, df2_corp_name, how='outer', indicator=True)
+    df3.columns = ['회사명', '_merge']
+    
     # crawl list
     X = df3[ df3['_merge'] == 'left_only']
     _save_id_and_info(df1, X, True) 
