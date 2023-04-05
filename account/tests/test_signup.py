@@ -47,7 +47,13 @@ class SignUpViewTest(TestCase):
         }
 
         self.client.post(reverse('account:signup'), data={'email': 'testsuccess@aimdat.com'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        match = re.search(r'\d{6}', mail.outbox[0].body)
+
+        #PIN 번호 획득을 위한 html 태그 제거
+        html_tags = re.compile(r'<.*?>')
+        mail_content = mail.outbox[0].alternatives[0][0]
+        remove_tags_content = html_tags.sub('', mail_content)
+
+        match = re.search(r'\s*(\d{6})', remove_tags_content)
         pin = match.group()
 
         user_data['pin'] = pin
