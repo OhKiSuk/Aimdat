@@ -44,13 +44,7 @@ class CustomPasswordResetView(UserPassesTestMixin, PasswordResetView):
     template_name = 'account/password_reset/password_reset.html'
 
     def test_func(self):
-        if self.request.user.is_authenticated:
-            if self.request.user.is_admin:
-                return False
-
-            return False
-        
-        return not self.request.user.is_authenticated
+        return self.request.user.is_anonymous
     
     def handle_no_permission(self):                
         return HttpResponseRedirect(reverse_lazy('index'))
@@ -79,13 +73,7 @@ class CustomPasswordResetDoneView(UserPassesTestMixin, PasswordResetDoneView):
     template_name = 'account/password_reset/password_reset_done.html'
 
     def test_func(self):
-        if self.request.user.is_authenticated:
-            if self.request.user.is_admin:
-                return False
-
-            return False
-        
-        return not self.request.user.is_authenticated
+        return self.request.user.is_anonymous
     
     def handle_no_permission(self):                
         return HttpResponseRedirect(reverse_lazy('index'))
@@ -115,12 +103,13 @@ class CustomPasswordConfirmView(UserPassesTestMixin, PasswordResetConfirmView):
 
     def test_func(self):
         if self.request.user.is_authenticated:
-            if self.request.user.is_admin:
+            if self.request.user.user_classify is not 'U':
                 return False
             
-            return False
+            if self.request.user.is_admin:
+                return False
         
-        return not self.request.user.is_authenticated
+        return self.request.user.is_authenticated
     
     def handle_no_permission(self):
         return HttpResponseRedirect(reverse_lazy('index'))
@@ -141,10 +130,8 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
         if self.request.user.is_authenticated:
             if self.request.user.is_admin:
                 return False
-
-            return False
         
-        return not self.request.user.is_authenticated
+        return self.request.user.is_authenticated
     
     def handle_no_permission(self):
         return HttpResponseRedirect(reverse_lazy('index'))
