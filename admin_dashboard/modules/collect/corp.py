@@ -1,12 +1,13 @@
-
-from selenium import webdriver
-import pandas as pd
-import time
-from selenium.webdriver.common.by import By
-import win32com.client as win32
+"""
+@modified at 2023.04.05
+@author cslee in Aimdat Team
+"""
 import os
+import pandas as pd
 import sys
-import pythoncom
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 
 dir_collect = os.path.dirname(__file__)
 dir_modules = os.path.dirname(dir_collect)
@@ -16,9 +17,6 @@ sys.path.append(dir_aimdat)
 
 from services.models.corp_id import CorpId
 from services.models.corp_info import CorpInfo
-from services.models.corp_summary_financial_statements import CorpSummaryFinancialStatements
-from services.models.stock_price import StockPrice
-
 
 def _crawl_corp_list_files(year, crawl_time=2, download_time=5):
     driver = webdriver.Chrome(r'E:\chromedriver_win32\chromedriver.exe') # 윈도우
@@ -45,15 +43,7 @@ def _crawl_corp_list_files(year, crawl_time=2, download_time=5):
     btn_1Q_BS.click()
     time.sleep(crawl_time)
 
-    time.sleep(download_time)
-
-def _convert_excel(fname):
-    pythoncom.CoInitialize()
-    excel = win32.gencache.EnsureDispatch('Excel.Application')
-    wb = excel.Workbooks.Open(fname)
-    wb.SaveAs(fname+'x', FileFormat = 51) # 51 : xlsx
-    wb.Close()
-    excel.Application.Quit()    
+    time.sleep(download_time)  
 
 def _unzip(path, year, operate_system):
     # unzip
@@ -150,23 +140,20 @@ def _remove_file(file_path, operate_system, folder=False):
 
 def collect_corp(year=2022, operate_system='win'):
     _crawl_corp_list_files(year)
-    path = r'C:\Users\80ckd\Downloads'
-    fname = r'상장법인목록.xls'
+    path = r'C:\Users\80ckd\Downloads' 
+    fname = '상장법인목록.xls'
     file_krx_list = path +'\\'+ fname
-    _convert_excel(file_krx_list)
-    _remove_file(file_krx_list, operate_system)
 
-    file_krx_list += 'x'
     file_dart_fs_list, zip_path, folder_path = _unzip(path, year, operate_system) 
     # read file
-    df1 = pd.read_excel(file_krx_list, dtype=object)
-    df1_corp_name = df1['회사명']
+    df1 = pd.read_html(file_krx_list)[0]
+    df1_corp_name = df1['회사명'].unique()
     df1_corp_name = pd.DataFrame(df1_corp_name)
     
     df2 = pd.read_csv(file_dart_fs_list, sep='\t', encoding='cp949')
     df2_corp_name = df2['회사명'].unique()
     df2_corp_name = pd.DataFrame(df2_corp_name)
-    df2_corp_name.columns = ['회사명']
+ 
     # merge
     df3 = pd.merge(df1_corp_name, df2_corp_name, how='outer', indicator=True)
     # crawl list
