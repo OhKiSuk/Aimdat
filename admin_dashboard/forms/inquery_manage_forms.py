@@ -1,11 +1,18 @@
 """
 @created at 2023.03.12
 @author OKS in Aimdat Team
+
+@modified at 2023.04.05
+@author OKS in Aimdat Team
 """
-from admin_dashboard.models import InquiryAnswer
 from bleach.sanitizer import Cleaner
-from django.forms import CharField, ModelForm
+from django.forms import (
+    CharField, 
+    ModelForm
+)
 from tinymce.widgets import TinyMCE
+
+from ..models.inquiry_answer import InquiryAnswer
 
 class InquiryAnswerForm(ModelForm):
     content = CharField(label='', widget=TinyMCE(attrs={'selector': 'textarea#id_content'}))

@@ -3,10 +3,11 @@
 @author OKS in Aimdat Team
 """
 from account.models import User
-from admin_dashboard.models import InquiryAnswer
 from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from services.models.inquiry import Inquiry
+
+from ..models.inquiry_answer import InquiryAnswer
 
 class InquiryManageTest(TestCase):
     

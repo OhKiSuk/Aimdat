@@ -6,7 +6,7 @@
 @author OKS in Aimdat Team
 """
 from account.models import User
-from admin_dashboard.models import InquiryAnswer
+from admin_dashboard.models.inquiry_answer import InquiryAnswer
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404

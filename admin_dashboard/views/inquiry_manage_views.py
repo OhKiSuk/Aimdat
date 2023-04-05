@@ -1,6 +1,9 @@
 """
 @created at 2023.03.20
 @author OKS in Aimdat Team
+
+@modified at 2023.04.05
+@author OKS in Aimdat Team
 """
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
@@ -9,7 +12,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView
 from services.models.inquiry import Inquiry
 from ..forms.inquery_manage_forms import InquiryAnswerForm
-from ..models import InquiryAnswer
+from ..models.inquiry_answer import InquiryAnswer
 
 class InquiryListView(TemplateView):
     template_name = 'admin_dashboard/inquiry_manage/inquiry_list.html'
