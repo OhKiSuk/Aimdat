@@ -2,7 +2,7 @@
 @created at 2023.03.05
 @author OKS in Aidmat Team
 
-@modified at 2023.04.04
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
 import secrets
@@ -29,7 +29,7 @@ class CustomPasswordChangeView(UserPassesTestMixin, PasswordChangeView):
     """
     비밀번호 변경 뷰
     """
-    template_name = 'account/password_change.html'
+    template_name = 'account/password_change/password_change.html'
     form_class = CustomPasswordChangeForm
 
     def test_func(self):
@@ -52,7 +52,7 @@ class CustomPasswordChangeDoneView(UserPassesTestMixin, PasswordChangeDoneView):
     """
     비밀번호 변경 완료 뷰
     """
-    template_name = 'account/password_change_done.html'
+    template_name = 'account/password_change/password_change_done.html'
 
     def test_func(self):
         if self.request.user.is_authenticated:

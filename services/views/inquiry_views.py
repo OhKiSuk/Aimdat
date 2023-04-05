@@ -2,7 +2,7 @@
 @created at 2023.04.03
 @author OKS in Aimdat Team
 
-@modified at 2023.04.03
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
 from account.models import User
@@ -20,7 +20,7 @@ from ..forms.inquiry_forms import AddInquiryForm
 from ..models.inquiry import Inquiry
 
 class InquiryView(UserPassesTestMixin, TemplateView):
-    template_name = 'services/mypage/inquiry.html'
+    template_name = 'services/mypage/inquiry/inquiry.html'
     login_url = reverse_lazy('account:login')
     redirect_field_name=None
 
@@ -44,7 +44,7 @@ class InquiryView(UserPassesTestMixin, TemplateView):
         return super().get(request, *args, **kwargs)
     
 class InquiryDetailView(UserPassesTestMixin, TemplateView):
-    template_name = 'services/mypage/inquiry_detail.html'
+    template_name = 'services/mypage/inquiry/inquiry_detail.html'
     login_url = reverse_lazy('account:login')
     redirect_field_name=None
 
@@ -67,7 +67,7 @@ class InquiryDetailView(UserPassesTestMixin, TemplateView):
 class AddInquiryView(UserPassesTestMixin, CreateView):
     form_class = AddInquiryForm
     model = Inquiry
-    template_name = 'services/mypage/add_inquiry_form.html'
+    template_name = 'services/mypage/inquiry/add_inquiry_form.html'
     success_url = reverse_lazy('services:mypage')
     login_url = reverse_lazy('account:login')
     redirect_field_name=None

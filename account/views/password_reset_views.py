@@ -2,7 +2,7 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.04.04
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
 import secrets
@@ -35,8 +35,8 @@ class CustomPasswordResetView(UserPassesTestMixin, PasswordResetView):
     """
     서비스 패스워드 초기화 페이지 뷰
     """
-    template_name = 'account/password_reset.html'
-    email_template_name= 'account/password_reset_email.html'
+    template_name = 'account/password_reset/password_reset.html'
+    email_template_name= 'account/password_reset/password_reset_email.html'
     form_class = CustomPasswordResetForm
 
     def test_func(self):
@@ -72,7 +72,7 @@ class CustomPasswordResetDoneView(UserPassesTestMixin, PasswordResetDoneView):
     """
     서비스 패스워드 초기화 메일 전송 뷰
     """
-    template_name = 'account/password_reset_done.html'
+    template_name = 'account/password_reset/password_reset_done.html'
 
     def test_func(self):
         if self.request.user.is_authenticated:
@@ -106,7 +106,7 @@ class CustomPasswordConfirmView(UserPassesTestMixin, PasswordResetConfirmView):
     """
     서비스 패스워드 재설정 뷰
     """
-    template_name = 'account/password_reset_confirm.html'
+    template_name = 'account/password_reset/password_reset_confirm.html'
     form_class = CustomSetPasswordForm
 
     def test_func(self):
@@ -131,7 +131,7 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     """
     패스워드 초기화 완료 후 로그인 뷰
     """
-    template_name = 'account/password_reset_complete.html'
+    template_name = 'account/password_reset/password_reset_complete.html'
 
     def test_func(self):
         if self.request.user.is_authenticated:
