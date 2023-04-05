@@ -29,15 +29,19 @@ from ..forms.password_reset_forms import (
     CustomPasswordResetForm, 
     CustomSetPasswordForm
 )
+
 from ..models import User
 
 class CustomPasswordResetView(UserPassesTestMixin, PasswordResetView):
     """
     서비스 패스워드 초기화 페이지 뷰
     """
-    template_name = 'account/password_reset/password_reset.html'
-    email_template_name= 'account/password_reset/password_reset_email.html'
+    email_template_name = 'account/password_reset/password_reset_email.html'
+    html_email_template_name = 'account/password_reset/password_reset_email.html'
     form_class = CustomPasswordResetForm
+    from_email = 'no-reply@aimdat.com'
+    subject_template_name = 'emails/subjects/password_reset_subject.txt'
+    template_name = 'account/password_reset/password_reset.html'
 
     def test_func(self):
         if self.request.user.is_authenticated:

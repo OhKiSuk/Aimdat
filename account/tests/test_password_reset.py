@@ -2,13 +2,16 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.03.28
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
+import re
+
 from django.core import mail
 from django.http import HttpRequest
 from django.test import TestCase, Client
 from django.urls import reverse
+
 from ..models import User
 
 class CustomPasswordResetViewTest(TestCase):
@@ -73,7 +76,13 @@ class CustomPasswordConfirmViewTest(TestCase):
         )
         self.response = self.client.post(reverse('account:password_reset'), {'email': self.user.email})
 
-        self.email_url = mail.outbox[0].body
+        # 비밀번호 재설정 페이지 링크 획득을 위한 html 태그 제거
+        html_tags = re.compile(r'<.*?>')
+        mail_content = mail.outbox[0].alternatives[0][0]
+        remove_tags_content = html_tags.sub('', mail_content)
+
+        match = re.search(r'http://testserver/account/password/reset/[A-Z0-9]+/[a-z0-9-]+/', remove_tags_content)
+        self.email_url = match.group()
 
     def tearDown(self):
         User.objects.all().delete()
