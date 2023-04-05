@@ -9,12 +9,12 @@ from account.models import User
 from admin_dashboard.models import InquiryAnswer
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
     TemplateView
 )
-from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
 
 from ..forms.inquiry_forms import AddInquiryForm
 from ..models.inquiry import Inquiry
@@ -25,8 +25,9 @@ class InquiryView(UserPassesTestMixin, TemplateView):
     redirect_field_name=None
 
     def test_func(self):
-        if self.request.user.is_admin:
-            return False
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
 
         return self.request.user.is_authenticated
 
@@ -49,8 +50,9 @@ class InquiryDetailView(UserPassesTestMixin, TemplateView):
     redirect_field_name=None
 
     def test_func(self):
-        if self.request.user.is_admin:
-            return False
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
 
         return self.request.user.is_authenticated
     
@@ -72,12 +74,10 @@ class AddInquiryView(UserPassesTestMixin, CreateView):
     login_url = reverse_lazy('account:login')
     redirect_field_name=None
 
-    def get(self, request, *args: str, **kwargs):
-        return super().get(request, *args, **kwargs)
-
     def test_func(self):
-        if self.request.user.is_admin:
-            return False
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
 
         return self.request.user.is_authenticated
 

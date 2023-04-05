@@ -2,7 +2,7 @@
 @created at 2023.04.01
 @author OKS in Aimdat Team
 
-@modified at 2023.04.03
+@modified at 2023.04.05
 @author OKS in Aimdat Team
 """
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -15,7 +15,8 @@ class MyPageView(UserPassesTestMixin, TemplateView):
     redirect_field_name=None
 
     def test_func(self):
-        if self.request.user.is_admin:
-            return False
+        if self.request.user.is_authenticated:
+            if self.request.user.is_admin:
+                return False
 
         return self.request.user.is_authenticated
