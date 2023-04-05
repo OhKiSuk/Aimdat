@@ -15,6 +15,7 @@ from django.http import (
     HttpResponseBadRequest
 )
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.views.generic import FormView
 
@@ -49,12 +50,20 @@ class SignUpView(UserPassesTestMixin, FormView):
             email = self.request.POST.get('email')
             self.request.session['pin'] = pin
 
+            #이메일 템플릿
+            email_template = 'account/signup_email.html'
+            email_context = {
+                'pin': pin
+            }
+            html_message = render_to_string(email_template, email_context)
+
             send_mail(
                 '[Aimdat] 회원가입 PIN 번호 발송 안내',
-                '회원가입 시 입력하셔야 할 PIN 번호는 {} 입니다.'.format(pin),
+                '',
                 'no-reply@aimdat.com',
                 [email],
-                fail_silently=False
+                fail_silently=False,
+                html_message=html_message
             )
             self.request.session.set_expiry(1800)
 

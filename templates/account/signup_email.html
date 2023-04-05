@@ -1,0 +1,51 @@
+{% extends 'email_base.html' %}
+{% block content %}
+<table class="table table-borderless">
+    <thead style="background-color: #044FBF;">
+        <tr>
+            <td width="100%" colspan="3" style="height: 20px;"></td>
+        </tr>
+        <tr>
+            <td width="6%"></td>
+            <td width="88%" class="fs-3 fw-bold text-white">Aimdat</td>
+            <td width="6%"></td>
+        </tr>
+        <tr>
+            <td width="100%" colspan="3" style="height: 20px;"></td>
+        </tr>
+    </thead>
+    <tbody class="bg-white">
+        <tr>
+            <td width="100%" colspan="3" style="height: 15px;"></td>
+        </tr>
+        <tr class="px-4">
+            <td width="6%"></td>
+            <td width="88%">Aimdat 서비스 회원가입을 위해 다음의 PIN 번호를 입력해주세요.</td>
+            <td width="6%"></td>
+        </tr>
+        <tr class="px-4">
+            <td width="6%"></td>
+            <td class="fs-4 fw-bold" width="88%">{{ pin }}</td>
+            <td width="6%"></td>
+        </tr>
+        <tr class="px-4">
+            <td width="6%"></td>
+            <td width="88%">30분 내에 입력하셔야 가입이 완료됩니다.</td>
+            <td width="6%"></td>
+        </tr>
+        <tr>
+            <td width="3%"></td>
+            <td width="96%" style="height: 10px; border-bottom: 1px solid #EEEEEE;"></td>
+            <td width="3%"></td>
+        </tr>
+        <tr class="px-4">
+            <td width="6%"></td>
+            <td width="88%" style="color: #A1A1A1; font-size: 12px;">ⓒ 2023 Aimdat Team</td>
+            <td width="6%"></td>
+        </tr>
+        <tr>
+            <td width="100%" colspan="3" style="height: 10px;"></td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}
