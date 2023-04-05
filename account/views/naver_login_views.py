@@ -87,6 +87,8 @@ class NaverCallbackView(UserPassesTestMixin, View):
         #회원가입 여부 확인
         if User.objects.filter(email=email).exists():
             user = User.objects.get(email=email)
+            user.email = email
+            user.save()
         else:
             user = User.objects.create_user(email=email, password='')
             user.user_classify = "N"
