@@ -52,7 +52,7 @@ class GoogleLoginView(UserPassesTestMixin, View):
 
         return redirect(f'{url}?{urlencode(params)}')
     
-class GoogleCallbackView(View):
+class GoogleCallbackView(UserPassesTestMixin, View):
 
     def test_func(self):
         if self.request.user.is_authenticated:
@@ -113,7 +113,7 @@ class GoogleCallbackView(View):
 
         return response.json()
     
-class GoogleLinkOffView(View):
+class GoogleLinkOffView(UserPassesTestMixin, View):
     """
     구글 연동 해제 뷰(회원 탈퇴)
     """
