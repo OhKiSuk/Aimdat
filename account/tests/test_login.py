@@ -2,13 +2,22 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.03.19
+@modified at 2023.04.07
 @author OKS in Aimdat Team
 """
-from datetime import datetime, timedelta
-from django.test import Client, RequestFactory, TestCase
+from axes.models import AccessAttempt
+from datetime import (
+    datetime, 
+    timedelta
+)
+from django.test import (
+    Client, 
+    RequestFactory, 
+    TestCase
+)
 from django.test.utils import override_settings
 from django.urls import reverse
+
 from ..models import User
 
 class ServiceLoginViewTest(TestCase):
@@ -26,6 +35,7 @@ class ServiceLoginViewTest(TestCase):
 
     def tearDown(self):
         User.objects.all().delete()
+        AccessAttempt.objects.all().delete()
     
     @override_settings(AUTHENTICATION_BACKENDS=['account.backends.EmailBackend'])
     def test_service_login_with_valid_data(self):
@@ -52,4 +62,20 @@ class ServiceLoginViewTest(TestCase):
         request = self.factory.get(reverse('account:login'))
         login_failure = self.client.login(request=request, username=email, password=password)
         self.assertFalse(login_failure)
-        
+
+    @override_settings(AUTHENTICATION_BACKENDS=['account.backends.EmailBackend'])
+    def test_service_login_failure_more_than_five_times(self):
+        """
+        로그인이 5회 이상 연속으로 실패했을 경우 계정이 잠기는지 확인 테스트
+        """
+        email = 'test@aimdat.com'
+        password = 'wrongpassword'
+
+        request = self.factory.get(reverse('account:login'))
+
+        for _ in range(0, 5):
+            self.client.login(request=request, username=email, password=password)
+
+        login_failure = self.client.login(request=request, username=email, password=password)
+        self.assertFalse(login_failure)
+        self.assertTrue(AccessAttempt.objects.filter(username='test@aimdat.com', failures_since_start=6).exists())
