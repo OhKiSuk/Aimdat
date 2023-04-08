@@ -2,17 +2,18 @@
 @created at 2023.03.15
 @author OKS in Aimdat Team
 
-@modified at 2023.03.19
+@modified at 2023.04.08
 @author JSU in Aimdat Team
 """
 from django.db import models
+
 from .corp_id import CorpId
 
 class CorpSummaryFinancialStatements(models.Model):
     corp_id = models.ForeignKey(CorpId, on_delete=models.CASCADE, related_name='corp_summary')
     disclosure_date = models.DateField() #공시일
     year = models.CharField(max_length=4) #년도
-    month = models.CharField(max_length=2) #월
+    quarter = models.CharField(max_length=2) #분기
     revenue = models.DecimalField(max_digits=19, decimal_places=2, null=True) #매출액
     operating_profit = models.DecimalField(max_digits=19, decimal_places=2, null=True) #영업이익
     net_profit = models.DecimalField(max_digits=19, decimal_places=2, null=True) #당기순이익
@@ -30,7 +31,6 @@ class CorpSummaryFinancialStatements(models.Model):
     pbr = models.DecimalField(max_digits=19, decimal_places=2, null=True) #주가순자산비율
     psr = models.DecimalField(max_digits=19, decimal_places=2, null=True) #주가매출비율
     ev_ebitda = models.DecimalField(max_digits=19, decimal_places=2, null=True) #주식 시가총액+순부채/이자비용, 법인세, 유무형자산 감가상각비를 반영하기 전의 이익
-    ev_per_ebitda = models.DecimalField(max_digits=19, decimal_places=2, null=True)
     eps = models.DecimalField(max_digits=19, decimal_places=2, null=True) #주당 순이익
     bps = models.DecimalField(max_digits=19, decimal_places=2, null=True) #주당 장부가치
     roe = models.DecimalField(max_digits=19, decimal_places=2, null=True) #자기자본이익률
