@@ -5,7 +5,7 @@
 <link rel="style" href="{% static 'js/jquery-ui.min.css' %}">
 {% endblock %}
 {% block content %}
-<form method="POST">
+<form method="POST" class="p-0 m-0">
     {% csrf_token %}
     <div class="d-flex justify-content-between align-items-center my-5 py-3">
         <div class="d-flex col-10">
@@ -98,15 +98,15 @@
                 <div class="modal-side col-3 my-3">
                     <ul class="list-group" role="tablist" style="list-style: none;">
                         <li class="dropdown text-center" role="presentation">
-                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">지표선택</button>
-                            <ul class="dropdown-menu">
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3"  aria-expanded="false" style="width: 160px;">지표선택 </button>
+                            <ul class="dropdown-menu text-center">
                                 <li class="drop-item">
-                                    <button class="dropdown-item active" id="fs_tab" data-bs-toggle="tab" data-bs-target="#item_fs" type="button" role="tab" aria-controls="fs_item" aria-selected="true" tabindex="0">
+                                    <button class="dropdown-item active font-sm" id="fs_tab" data-bs-toggle="tab" data-bs-target="#item_fs" type="button" role="tab" aria-controls="fs_item" aria-selected="true" tabindex="0">
                                     재무지표
                                     </button>
                                 </li>
                                 <li class="drop-item">
-                                    <button class="dropdown-item" id="rsi_tab" data-bs-toggle="tab" data-bs-target="#item_rsi" type="button" role="tab" aria-controls="rsi_item" aria-selected="false" tabindex="1">
+                                    <button class="dropdown-item font-sm" id="rsi_tab" data-bs-toggle="tab" data-bs-target="#item_rsi" type="button" role="tab" aria-controls="rsi_item" aria-selected="false" tabindex="1">
                                     투자지표
                                     </button>
                                 </li>
@@ -135,26 +135,26 @@
                     <div class="d-flex align-items-center col-12">
                         <div class="d-flex mx-4">
                             <div class="input-group">
-                                <input type="text" id="year" name="year" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="년도">
-                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
-                                <ul class="dropdown-menu dropdown-menu-end year">
-                                    <li><a class="dropdown-item" data-value="2020" href="#">2020</a></li>
-                                    <li><a class="dropdown-item" data-value="2021" href="#">2021</a></li>
-                                    <li><a class="dropdown-item" data-value="2022" href="#">2022</a></li>
-                                    <li><a class="dropdown-item" data-value="2023" href="#">2023</a></li>
+                                <input type="text" id="year" name="year" class="form-control text-center font-sm" aria-label="Text input with dropdown button" placeholder="년도">
+                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="-2,3" aria-expanded="false" ></button>
+                                <ul class="dropdown-menu dropdown-menu-end text-center year">
+                                    <li><a class="dropdown-item font-sm" data-value="2020" href="#">2020</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="2021" href="#">2021</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="2022" href="#">2022</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="2023" href="#">2023</a></li>
                                 </ul>
                             </div>
                             <div class="input-group mx-2">
-                                <input type="text" id="quarter" name="quarter" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="분기">
-                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
-                                <ul class="dropdown-menu dropdown-menu-end quarter">
-                                    <li><a class="dropdown-item" data-value="3" href="#">1분기</a></li>
-                                    <li><a class="dropdown-item" data-value="6" href="#">2분기</a></li>
-                                    <li><a class="dropdown-item" data-value="9" href="#">3분기</a></li>
-                                    <li><a class="dropdown-item" data-value="12" href="#">4분기</a></li>
+                                <input type="text" id="quarter" name="quarter" class="form-control text-center font-sm" aria-label="Text input with dropdown button" placeholder="분기">
+                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="-2,3" aria-expanded="false"></button>
+                                <ul class="dropdown-menu dropdown-menu-end text-center quarter">
+                                    <li><a class="dropdown-item font-sm" data-value="3" href="#">1분기</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="6" href="#">2분기</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="9" href="#">3분기</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="12" href="#">4분기</a></li>
                                 </ul>
                             </div>
-                            <input class="form-control text-center" id="search_input" name="corp" type="text" placeholder="기업명">
+                            <input class="form-control text-center font-sm" id="search_input" name="corp" type="text" placeholder="기업명">
                             <div id="search_results"></div>
                         </div>
                     </div>

@@ -12,8 +12,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 @modified at 2023.03.02
 @author OKS in Aimdat Team
+
+@modified at 2023.04.05
+@author JSU in Aimdat Team
 """
-import os, json
+import json
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -48,8 +52,9 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
+    'django.contrib.humanize',
     'django.contrib.messages',
+    'django.contrib.sessions',
     'django.contrib.staticfiles',
     'django_bleach',
     'tinymce',

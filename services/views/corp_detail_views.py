@@ -1,13 +1,15 @@
 """
 @created at 2023.03.22
 @author JSU in Aimdat Team
+
+@modified at 2023.04.07
+@author JSU in Aimdat Team
 """
 
 from datetime import timedelta
 
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.generic import DetailView
 
@@ -22,47 +24,47 @@ class CorpDetailView(UserPassesTestMixin, DetailView):
     model = CorpId
     template_name = 'services/corp_detail_view.html'
     context_object_name = 'corp_id'
+    pk_url_kwarg = 'id'
     
     def test_func(self):
-        user = self.request.user
-        date = user.expiration_date if user.is_authenticated else None
-        return date and date >= timezone.now()
+        auth = self.request.user.is_authenticated
+        if auth:
+            date = self.request.user.expiration_date.date() >= timezone.now().date()
+            return auth and date
+        return False
     
     def handle_no_permission(self):
-        return HttpResponseRedirect(reverse('account:login'))
+        return redirect('account:login')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        pk = self.kwargs.get('pk')
-        context['corp_info'] = CorpInfo.objects.get(corp_id=pk)
-        context['stock_price'] = StockPrice.objects.filter(corp_id=pk).latest('trade_date')
-        context['price_graph_data'] = StockPrice.objects.filter(corp_id=pk).values('trade_date', 'open_price', 'high_price', 'low_price', 'close_price')
-        context['trade_graph_data'] = StockPrice.objects.filter(corp_id=pk).values('trade_date', 'trade_quantity')
-        context['report_data'] = self.recent_report(pk)
+        id = self.kwargs.get(self.pk_url_kwarg)
+        context['corp_info'] = CorpInfo.objects.get(corp_id=id)
+        context['stock_price'] = StockPrice.objects.filter(corp_id=id).latest('trade_date')
+        context['price_graph_data'] = StockPrice.objects.filter(corp_id=id).values('trade_date', 'open_price', 'high_price', 'low_price', 'close_price')
+        context['trade_graph_data'] = StockPrice.objects.filter(corp_id=id).values('trade_date', 'trade_quantity')
+        context['report_data'] = self.recent_report(id)
         return context
 
     #데이터 추출(사업보고서, 분기보고서)
-    def recent_report(self, pk):
-        y_count = 0
-        q_count = 0
+    def recent_report(self, id):
         y_data = []
         q_data = []
         
         for y in range(1, 5):
+            if len(y_data) == 3:
+                break
             year = (timezone.now() - timedelta(days=365 * y)).year
-            obj = FS.objects.filter(corp_id=pk, year=year, month=12)
+            obj = FS.objects.filter(corp_id=id, year=year, month=12)
             if obj:
                 y_data.append(obj)
-                y_count += 1
-            if y_count == 3:
-                break
-            if q_count == 3:
-                continue
+
             for q in [12, 9, 6, 3]:
-                obj = FS.objects.filter(corp_id=pk, year=year, month=q)
+                if len(q_data) == 3:
+                    break
+                obj = FS.objects.filter(corp_id=id, year=year, month=q)
                 if obj:
                     q_data.append(obj)
-                    q_count += 1
         
         # 최신 값을 뒤로 정렬
         y_data.reverse()

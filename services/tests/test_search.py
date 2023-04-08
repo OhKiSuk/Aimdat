@@ -27,7 +27,6 @@ from services.models.corp_summary_financial_statements import \
 
 
 class SearchTest(TestCase):
-
     @override_settings(AUTHENTICATION_BACKENDS=['account.backends.EmailBackend'])
     def setUp(self):
             self.client = Client()
