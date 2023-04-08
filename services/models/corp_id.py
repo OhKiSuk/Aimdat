@@ -12,3 +12,12 @@ class CorpId(models.Model):
     stock_code = models.CharField(max_length=255, null=True) #종목 코드
     corp_sectors = models.CharField(max_length=255, null=True) #소속 섹터(예: 제조업, 서비스업 등)
     is_crawl = models.BooleanField(null=True, default=False) # True 크롤링 대상, False API 대상
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['corp_name', 'corp_isin', 'stock_code'],
+                name='unique corp'
+            )
+        ]
+        

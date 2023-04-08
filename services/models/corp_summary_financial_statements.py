@@ -40,3 +40,11 @@ class CorpSummaryFinancialStatements(models.Model):
     total_capital = models.DecimalField(max_digits=19, decimal_places=2, null=True) #총 자본
     borrow_debt = models.DecimalField(max_digits=19, decimal_places=2, null=True) # 총 차입금
     face_value = models.DecimalField(max_digits=19, decimal_places=2, null=True) # 액면가
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['corp_id', 'year', 'quarter'],
+                name='unique summaryfs'
+            )
+        ]
