@@ -95,8 +95,12 @@ function remove_corp() {
 }
 
 $('.filter_item').on('click', function() {
-    var toggle_condition = $(this).attr('class').split(' ')[0];
     $('.input_data').hide();
+    $('.filter_item').removeClass('active');
+
+    $(this).addClass('active');
+
+    var toggle_condition = $(this).attr('class').split(' ')[0];
     $('.'+toggle_condition+'_toggle').show();
     $('.submit').show();
 });

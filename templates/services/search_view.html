@@ -5,11 +5,11 @@
 <link rel="style" href="{% static 'js/jquery-ui.min.css' %}">
 {% endblock %}
 {% block content %}
-<form method="POST" class="p-0 m-0">
+<form method="POST" action="{% url 'services:analysis' %}" class="p-0 m-0">
     {% csrf_token %}
     <div class="d-flex justify-content-between align-items-center my-5 py-3">
         <div class="d-flex col-10">
-            <b class="d-flex align-items-center" style="width:15%;"><span class="font-md">검색결과</span><span class="mx-2 font-sm">총 {{paginator.count}}건</span></b>
+            <b class="d-flex align-items-center" style="width:23%;"><span class="font-lg">검색결과</span><span class="mx-2 font-md">총 {{paginator.count}}건</span></b>
             <div class="applied_filter_list d-flex align-items-center" style="overflow-x: auto; white-space: nowrap;">
                 {% if corp %}
                 <span class="badge text-bg-primary mx-1">기업명:{{corp}}</span>
@@ -20,13 +20,13 @@
             </div>
         </div>
         <div>
-            <button type="submit" class="btn btn-primary btn-sm mx-1">기업비교</button>
-            <button type="button" class="filter_set btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#filter-modal">필터설정</button>
+            <button type="submit" class="btn btn-primary mx-1">기업분석</button>
+            <button type="button" class="filter_set btn btn-primary" data-bs-toggle="modal" data-bs-target="#filter-modal">필터설정</button>
         </div>
     </div>
     <table class="table table-hover align-middle font-sm text-center" id="table">
         <thead>
-            <tr>
+            <tr class="bg-sub fw-bold" style="color: white;">
                 <th style="width:5%">No.</th>
                 <th style="width:15%">회사명</th>
                 {% for data in table_column %}
@@ -38,9 +38,11 @@
             {% for obj in object_list %}
             <tr>
                 <td>{{page_obj.start_index|add:forloop.counter0}}</td>
-                <td class="text-center">
-                    <div class="d-flex flex-wrap align-items-center justify-content-center col-12"><input id="tooltip" type="checkbox" name="checked_corp" value="{{obj.corp_id}}, {{obj.year}}, {{obj.month}}" data-toggle="tooltip" data-placement="top" title="비교할 기업을 선택하세요."><a href="{% url 'services:detail' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{obj.corp_id_id__corp_name}}</a></div>
-                    <a>{{obj.corp_id_id__corp_country}}</a>|<a>{{obj.corp_id_id__corp_market}}</a>|<a>{{obj.corp_id_id__corp_sectors}}</a>
+                <td class="d-flex flex-wrap justify-content-start">
+                    <div class="d-flex align-items-center col-12"><input id="tooltip" type="checkbox" name="checked_corp" value="{{obj.corp_id}}, {{obj.year}}, {{obj.month}}" data-toggle="tooltip" data-placement="top" title="비교할 기업을 선택하세요."><a href="{% url 'services:detail' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{obj.corp_id_id__corp_name}}</a></div>
+                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{obj.corp_id_id__corp_country}}</span>
+                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{obj.corp_id_id__corp_market}}</span>
+                    <span class="badge text-bg-primary">{{obj.corp_id_id__corp_sectors}}</span>
                 </td>
                 {% for field in fields %}
                 <td>{{obj|get_attr:field}}</td>
@@ -51,7 +53,7 @@
     </table>
 </form>
 <div class="paging m-3">
-    <ul class="pagination justify-content-center">
+    <ul class="pagination justify-content-center pagination-sm">
         {% if page_obj.has_previous %}
         <li class="page-item">
             <a class="page-link" href="?page={{ page_obj.previous_page_number }}">이전</a>
@@ -85,6 +87,7 @@
         {% endif %}
     </ul>
 </div>
+{% include 'includes/footer.html' %}
 </div>
 <div class="modal modal-lg" id="filter-modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
     <div class="modal-dialog modal-dialog-centered">
@@ -101,12 +104,12 @@
                             <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3"  aria-expanded="false" style="width: 160px;">지표선택 </button>
                             <ul class="dropdown-menu text-center">
                                 <li class="drop-item">
-                                    <button class="dropdown-item active font-sm" id="fs_tab" data-bs-toggle="tab" data-bs-target="#item_fs" type="button" role="tab" aria-controls="fs_item" aria-selected="true" tabindex="0">
+                                    <button class="dropdown-item active font-sm py-2" id="fs_tab" data-bs-toggle="tab" data-bs-target="#item_fs" type="button" role="tab" aria-controls="fs_item" aria-selected="true" tabindex="0">
                                     재무지표
                                     </button>
                                 </li>
                                 <li class="drop-item">
-                                    <button class="dropdown-item font-sm" id="rsi_tab" data-bs-toggle="tab" data-bs-target="#item_rsi" type="button" role="tab" aria-controls="rsi_item" aria-selected="false" tabindex="1">
+                                    <button class="dropdown-item font-sm py-2" id="rsi_tab" data-bs-toggle="tab" data-bs-target="#item_rsi" type="button" role="tab" aria-controls="rsi_item" aria-selected="false" tabindex="1">
                                     투자지표
                                     </button>
                                 </li>
@@ -115,16 +118,16 @@
                     </ul>
                     <div class="tab-content my-3" id="content" style="overflow-y: scroll; height: 150px;">
                         <div class="tab-pane active" id="item_fs" role="tabpanel" aria-labelledby="fs_tab">
-                            <ul class="filter_items list-group text-center" style="list-style: none;">
+                            <ul class="filter_items list-group text-center" style="list-style: none; width: 85%; margin-left: auto; margin-right: auto;">
                                 {% for data in filter_item_fs %}
-                                <li class="{{data.0}} filter_item list-group-item-action my-1">{{data.1}}</li>
+                                <li class="{{data.0}} filter_item list-group-item list-group-item-action mx-1" >{{data.1}}</li>
                                 {% endfor %}
                             </ul>
                         </div>
                         <div class="tab-pane" id="item_rsi" role="tabpanel" aria-labelledby="rsi_tab">
-                            <ul class="filter_items list-group text-center" style="list-style: none;">
+                            <ul class="filter_items list-group text-center" style="list-style: none; width: 85%; margin-left: auto; margin-right: auto;">
                                 {% for data in filter_item_rsi %}
-                                <li class="{{data.1}} filter_item list-group-item-action my-1">{{data.0}}</li>
+                                <li class="{{data.1}} filter_item list-group-item list-group-item-action mx-1">{{data.0}}</li>
                                 {% endfor %}
                             </ul>
                         </div>
@@ -148,10 +151,10 @@
                                 <input type="text" id="quarter" name="quarter" class="form-control text-center font-sm" aria-label="Text input with dropdown button" placeholder="분기">
                                 <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="-2,3" aria-expanded="false"></button>
                                 <ul class="dropdown-menu dropdown-menu-end text-center quarter">
-                                    <li><a class="dropdown-item font-sm" data-value="3" href="#">1분기</a></li>
-                                    <li><a class="dropdown-item font-sm" data-value="6" href="#">2분기</a></li>
-                                    <li><a class="dropdown-item font-sm" data-value="9" href="#">3분기</a></li>
-                                    <li><a class="dropdown-item font-sm" data-value="12" href="#">4분기</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="1분기" href="#">1분기</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="2분기" href="#">2분기</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="3분기" href="#">3분기</a></li>
+                                    <li><a class="dropdown-item font-sm" data-value="4분기" href="#">4분기</a></li>
                                 </ul>
                             </div>
                             <input class="form-control text-center font-sm" id="search_input" name="corp" type="text" placeholder="기업명">
@@ -197,7 +200,7 @@ $('#year').val('{{year}}')
 {% endif %}
 
 {% if quarter %}
-$('#quarter').val('{{quarter}}')
+$('#quarter').val('{{quarter}}분기')
 {% endif %}
 
 {% for data in applied_input_data %}

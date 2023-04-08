@@ -13,6 +13,9 @@
 
 @modified at 2023.04.05
 @author JSU in Aimdat Team
+
+@modified at 2023.04.07
+@author JSU in Aimdat Team
 """
 
 from decimal import Decimal
@@ -153,7 +156,15 @@ class SearchView(UserPassesTestMixin, ListView):
         else:
             request.session.pop('year', None)
         if request.POST.get('quarter'):
-            request.session['quarter'] = request.POST.get('quarter')
+            quarter = request.POST.get('quarter')
+            if '1분기' in quarter:
+                request.session['quarter'] = 1
+            if '2분기' in quarter:
+                request.session['quarter'] = 2
+            if '3분기' in quarter:
+                request.session['quarter'] = 3
+            if '4분기' in quarter:
+                request.session['quarter'] = 4
         else:
             request.session.pop('quarter', None)
 
