@@ -7,9 +7,13 @@
 
 @modified at 2023.04.07
 @author JSU in Aimdat Team
+
+@modified at 2023.04.09
+@author JSU in Aimdat Team
 """
 from django.urls import path
 
+from .views.analysis_views import AnalysisView
 from .views.corp_detail_views import CorpDetailView
 from .views.faq_views import FaqView
 from .views.inquiry_views import AddInquiryView, InquiryDetailView, InquiryView
@@ -23,6 +27,7 @@ app_name = 'services'
 urlpatterns = [
     path('', SearchView.as_view(), name='search'),
     path('<int:id>/', CorpDetailView.as_view(), name="detail"),
+    path('analysis/', AnalysisView.as_view(), name='analysis'),
 
     #약관
     path('terms/use/', TermsOfUseView.as_view(), name='terms_of_use'),

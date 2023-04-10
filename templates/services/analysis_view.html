@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load get_attr %}
+{% block style %}
+{% endblock %}
+{% block content %}
+<div class="my-5 py-3">
+    <div class="font-lg fw-bold">기업분석</div>
+    <div class="mt-5" style="overflow-x: auto; white-space: nowrap;">
+        {% for obj in object_list %}
+        <span class="badge text-bg-primary" style="margin-right: 0.3%; font-size:14px;">
+            분석기업{{forloop.counter}} : 
+            {{obj.0.corp_id_id__corp_name}}({{obj.0.year}}.{{obj.0.quarter}}분기)
+        </span>
+        {% endfor %}
+    </div>
+</div>
+<hr>
+<div class="d-flex justify-content-end my-5">
+    <button type="button" class="btn btn-primary filter_set" data-bs-toggle="modal" data-bs-target="#filter-modal">항목선택</button>
+</div>
+<canvas id="chart" class="mb-5"></canvas>
+{% include 'includes/footer.html' %}
+<div class="modal" id="filter-modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+        <div class="modal-header font-md fw-bold m-3">
+            <div class="my-3">항목선택</div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST" class="p-0 m-0">
+            {% csrf_token %}
+            <div class="d-flex flex-wrap align-items-center align-content-between font-sm m-3">
+                <div class="d-flex align-items-center col-12">
+                    <div class="input-group">
+                        <input type="text" id="year" name="year" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="년도">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false" ></button>
+                        <ul class="dropdown-menu dropdown-menu-end text-center year">
+                            <li><a class="dropdown-item font-sm" data-value="2020" href="#">2020</a></li>
+                            <li><a class="dropdown-item font-sm" data-value="2021" href="#">2021</a></li>
+                            <li><a class="dropdown-item font-sm" data-value="2022" href="#">2022</a></li>
+                            <li><a class="dropdown-item font-sm" data-value="2023" href="#">2023</a></li>
+                        </ul>
+                    </div>
+                    <div class="input-group mx-2">
+                        <input type="text" id="quarter" name="quarter" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="분기">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false"></button>
+                        <ul class="dropdown-menu dropdown-menu-end text-center quarter">
+                            <li><a class="dropdown-item font-sm" data-value="1분기" href="#">1분기</a></li>
+                            <li><a class="dropdown-item font-sm" data-value="2분기" href="#">2분기</a></li>
+                            <li><a class="dropdown-item font-sm" data-value="3분기" href="#">3분기</a></li>
+                            <li><a class="dropdown-item font-sm" data-value="4분기" href="#">4분기</a></li>
+                        </ul>
+                    </div>
+                    <input class="form-control" id="search_input" type="text" placeholder="기업명 검색">
+                    <div id="search_results"></div>
+                </div>
+                <div class="fw-semibold font-md col-12 my-2 p-1" style="overflow-x: auto; white-space: nowrap;">분석기업</div>
+                <div id="modal_checked_corp" class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
+                </div>
+                <div class="fw-semibold font-md col-12 my-2 p-1">재무지표</div>
+                <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
+                {% for data in check_item_fs %}
+                    <input id="{{data.0}}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{data.0}}, {{data.1}}">
+                    <label class="btn btn-outline-primary m-1" for="{{data.0}}_check" style="border-radius: 0px;">{{data.1}}</label>
+                {% endfor %}
+                </div>
+                <div class="fw-semibold font-md col-12 my-2 p-1">투자지표</div>
+                <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
+                {% for data in check_item_rsi %}
+                    <input id="{{data.1}}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{data.1}}, {{data.0}}">
+                    <label class="btn btn-outline-primary m-1" for="{{data.1}}_check" style="border-radius: 0px;">{{data.0}}</label>
+                {% endfor %}
+                </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-primary btn-sm submit m-4" type="submit">완료</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/jquery-ui.min.js' %}"></script>
+<script>
+{% for obj in object_list %}
+$('#modal_checked_corp').append("<input id='{{obj.0.corp_id_id__corp_name}}{{obj.0.year}}{{obj.0.quarter}}분기_check' class='btn-check' type='checkbox' name='checked_corp' value='{{obj.0.corp_id_id}}, {{obj.0.year}}, {{obj.0.quarter}}분기' checked><label class='btn btn-outline-primary m-1' for='{{obj.0.corp_id_id__corp_name}}{{obj.0.year}}{{obj.0.quarter}}분기_check' style='border-radius: 0px;'>{{obj.0.corp_id_id__corp_name}}({{obj.0.year}}.{{obj.0.quarter}}분기)</label>");
+{% endfor %}
+
+{% if year %}
+$('#year').val('{{year}}')
+{% endif %}
+
+{% if quarter %}
+$('#quarter').val('{{quarter}}')
+{% endif %}
+
+{% for data in graph_fields%}
+$('#{{data}}_check').prop('checked', true)
+{% endfor %}
+
+$('.year').on('click', function(e) {
+    const target = e.target;
+    const value = $(target).data('value');
+    $('#year').val(value);
+});
+
+$('.quarter').on('click', function(e) {
+    const target = e.target;
+    const value = $(target).data('value');
+    $('#quarter').val(value);
+});
+
+const ctx = document.getElementById('chart');
+
+var chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [
+        {% for data in graph_item %}
+        '{{data}}',
+        {% endfor %}
+        ],
+        datasets: [
+        {% for obj in object_list %}
+            {
+                label: '{{obj.0.corp_id_id__corp_name}}({{obj.0.year}}.{{obj.0.quarter}}분기)',
+                data: [
+                    {% for field in graph_fields %}
+                    {{obj.0|get_attr:field}},
+                    {% endfor %}
+                ],
+            },
+        {% endfor %}
+        ]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+            }
+        }
+    }
+});
+
+var max_data = 0;
+chart.data.datasets.forEach(function(dataset) {
+    let datasetMax = Math.max.apply(Math, dataset.data);
+    if (datasetMax > max_data) {
+        max_data = datasetMax;
+    }
+});
+
+max_data = max_data + max_data / 2;
+
+chart.options.scales.y.suggestedMax = max_data;
+chart.update();
+
+
+{% with corp_name as name %}
+var corp_list = {{corp_list|safe}};
+var selected_number = null;
+    $("#search_input").autocomplete({
+        source: {{name|safe}},
+        appendTo: "#search_results",
+        messages: {
+            noResults: '',
+            results: function() {}
+        },
+        focus: function(event, ui) {
+            $("#search_input").val(ui.item.label);
+            return false;
+        },
+        select: function(event, ui) {
+            $("#search_input").val(ui.item.label);
+            return false;
+        },
+    }).autocomplete("instance")._renderItem = function(ul, item) {
+        return $("<li>")
+            .addClass("dropdown-item select_corp")
+            .append("<div>" + item.label + "</div>")
+            .appendTo(ul)
+            .on("mouseenter", function() {
+                $(this).siblings().removeClass("ui-state-active");
+                $(this).addClass("ui-state-active");
+            })
+            .on("click", function() {
+                $(this).addClass("ui-state-active");
+                $(this).parent().siblings("input").val($(this).text());
+                var year = $('#year').val();
+                var quarter = $('#quarter').val();
+                var selected_number = corp_list[item.label];
+
+                if ( year == '') {
+                    $('#year').val('2022');
+                    year = '2022';
+                }
+                if ( quarter == '') {
+                    $('#quarter').val('4분기');
+                    quarter = '4분기';
+                }
+                if ($("#modal_checked_corp").find("[value='" + selected_number + ", " + year + ", " + quarter + "']").length > 0) {
+                    alert('이미 추가된 기업입니다.')
+                } else {
+                    $("#modal_checked_corp").append("<input id='" + item.label + year + quarter + "_check' class='btn-check' type='checkbox' name='checked_corp' value='" + selected_number + ", " + year + ", " + quarter + "' checked><label class='btn btn-outline-primary m-1' for='" + item.label + year + quarter + "_check' style='border-radius: 0px;'>" + item.label + "("+ year + "." + quarter +")</label>");
+                }
+            });
+    };
+    
+    $("#search_input").autocomplete("instance").menu.element.addClass("dropdown-menu");
+{% endwith %}
+</script>
+{% endblock %}
