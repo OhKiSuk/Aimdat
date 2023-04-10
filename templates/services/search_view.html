@@ -39,7 +39,7 @@
             <tr>
                 <td>{{page_obj.start_index|add:forloop.counter0}}</td>
                 <td class="d-flex flex-wrap justify-content-start">
-                    <div class="d-flex align-items-center col-12"><input id="tooltip" type="checkbox" name="checked_corp" value="{{obj.corp_id}}, {{obj.year}}, {{obj.month}}" data-toggle="tooltip" data-placement="top" title="비교할 기업을 선택하세요."><a href="{% url 'services:detail' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{obj.corp_id_id__corp_name}}</a></div>
+                    <div class="d-flex align-items-center col-12"><input id="tooltip" type="checkbox" name="checked_corp" value="{{obj.corp_id}}, {{obj.year}}, {{obj.quarter}}" data-toggle="tooltip" data-placement="top" title="비교할 기업을 선택하세요."><a href="{% url 'services:detail' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{obj.corp_id_id__corp_name}}</a></div>
                     <span class="badge text-bg-primary" style="margin-right: 1%;">{{obj.corp_id_id__corp_country}}</span>
                     <span class="badge text-bg-primary" style="margin-right: 1%;">{{obj.corp_id_id__corp_market}}</span>
                     <span class="badge text-bg-primary">{{obj.corp_id_id__corp_sectors}}</span>

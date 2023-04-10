@@ -16,6 +16,9 @@
 
 @modified at 2023.04.07
 @author JSU in Aimdat Team
+
+@modified at 2023.04.09
+@author JSU in Aimdat Team
 """
 
 from decimal import Decimal
@@ -58,7 +61,7 @@ class SearchView(UserPassesTestMixin, ListView):
         if 'year' in self.request.session:
             q &= Q(year=self.request.session['year'])
         if 'quarter' in self.request.session:
-            q &= Q(month=self.request.session['quarter'])
+            q &= Q(quarter=self.request.session['quarter'])
 
         # Session에 조건 값이 있을 경우
         if 'name_en' in self.request.session and len(self.request.session['name_en']):
@@ -68,23 +71,23 @@ class SearchView(UserPassesTestMixin, ListView):
             
             for condition, min_data, max_data in zip(name_en, min, max):
                 q &= Q(**{condition+'__range': (Decimal(min_data), Decimal(max_data))})
-            queryset = queryset.filter(q).values('corp_id', 'year', 'month', *name_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+            queryset = queryset.filter(q).values('corp_id', 'year', 'quarter', *name_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
             return queryset
         else:
             name_en = ['revenue', 'operating_profit', 'operating_margin', 'net_profit', 'dividend', 'dividend_ratio']
-            queryset = queryset.filter(q).values('corp_id', 'year', 'month', *name_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+            queryset = queryset.filter(q).values('corp_id', 'year', 'quarter', *name_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
             return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        rsi_list_lower = ['per', 'pbr', 'psr', 'ev_ebitda', 'ev_per_ebitda', 'eps', 'bps', 'roe', 'dps']
+        rsi_list_lower = ['per', 'pbr', 'psr', 'ev_ebitda', 'eps', 'bps', 'roe', 'dps']
         rsi_list_upper = [word.upper() for word in rsi_list_lower]
         fs_list_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
             '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', '총부채', '총자산', \
                 '총자본', '총차입금', '액면가']
         
         fs_list_en = [field.name for field in FS._meta.get_fields()]
-        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'month']
+        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
         
         for field in remove_field:
             fs_list_en.remove(field)
@@ -126,7 +129,7 @@ class SearchView(UserPassesTestMixin, ListView):
         min = []
         max = []
         fields = [field.name for field in FS._meta.get_fields()]
-        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'month']
+        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
         condition_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
         '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', 'PER', 'PBR', 'PSR',\
             'EV_EBITDA', 'EV_PER_EBITDA', 'EPS', 'BPS', 'ROE', 'DPS', '총부채', '총자산', '총자본',\
@@ -156,15 +159,7 @@ class SearchView(UserPassesTestMixin, ListView):
         else:
             request.session.pop('year', None)
         if request.POST.get('quarter'):
-            quarter = request.POST.get('quarter')
-            if '1분기' in quarter:
-                request.session['quarter'] = 1
-            if '2분기' in quarter:
-                request.session['quarter'] = 2
-            if '3분기' in quarter:
-                request.session['quarter'] = 3
-            if '4분기' in quarter:
-                request.session['quarter'] = 4
+            request.session['quarter'] = request.POST.get('quarter')[0]
         else:
             request.session.pop('quarter', None)
 
