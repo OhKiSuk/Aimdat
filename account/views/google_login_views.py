@@ -2,13 +2,15 @@
 @created at 2023.03.02
 @author OKS in Aimdat Team
 
-@modified at 2023.04.04
+@modified at 2023.04.11
 @author OKS in Aimdat Team
 """
 import json
 import requests
 
 from config.settings.base import get_secret
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth import (
     login,
     logout
@@ -95,6 +97,7 @@ class GoogleCallbackView(UserPassesTestMixin, View):
             user.terms_of_privacy_agree = True
             user.is_not_teen = True
             user.refresh_token = response_to_json.get('refresh_token')
+            user.expiration_date = datetime(2023, 4, 24) + relativedelta(months=3)
             user.set_unusable_password()
             user.save()
 
