@@ -35,7 +35,7 @@
     padding-right: 20%;
 }
 
-.footer a, .footer div {
+.footer a, .footer div, .footer span {
     text-decoration-line:none !important;
     color: #A1A1A1;
 }
