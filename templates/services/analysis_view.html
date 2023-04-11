@@ -8,9 +8,9 @@
     <div class="font-lg fw-bold">기업분석</div>
     <div class="mt-5" style="overflow-x: auto; white-space: nowrap;">
         {% for obj in object_list %}
-        <span class="badge text-bg-primary" style="margin-right: 0.3%; font-size:14px;">
-            분석기업{{forloop.counter}} : 
-            {{obj.0.corp_id_id__corp_name}}({{obj.0.year}}.{{obj.0.quarter}}분기)
+        <span class="badge text-bg-primary" style="margin-right: 0.3%; font-size:20px;">
+            분석기업{{ forloop.counter }} : 
+            {{ obj.0.corp_id_id__corp_name }}({{ obj.0.year }}.{{ obj.0.quarter }}분기)
         </span>
         {% endfor %}
     </div>
@@ -23,60 +23,61 @@
 {% include 'includes/footer.html' %}
 <div class="modal" id="filter-modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
     <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-        <div class="modal-header font-md fw-bold m-3">
-            <div class="my-3">항목선택</div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header font-md fw-bold m-3">
+                <div class="my-3">항목선택</div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" class="p-0 m-0">
+                {% csrf_token %}
+                <div class="d-flex flex-wrap align-items-center align-content-between font-sm m-3">
+                    <div class="d-flex align-items-center col-12">
+                        <div class="input-group">
+                            <input type="text" id="year" name="year" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="년도">
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false" ></button>
+                            <ul class="dropdown-menu dropdown-menu-end text-center year">
+                                <li><a class="dropdown-item font-sm" data-value="2020" href="#">2020</a></li>
+                                <li><a class="dropdown-item font-sm" data-value="2021" href="#">2021</a></li>
+                                <li><a class="dropdown-item font-sm" data-value="2022" href="#">2022</a></li>
+                                <li><a class="dropdown-item font-sm" data-value="2023" href="#">2023</a></li>
+                            </ul>
+                        </div>
+                        <div class="input-group mx-2">
+                            <input type="text" id="quarter" name="quarter" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="분기">
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false"></button>
+                            <ul class="dropdown-menu dropdown-menu-end text-center quarter">
+                                <li><a class="dropdown-item font-sm" data-value="1분기" href="#">1분기</a></li>
+                                <li><a class="dropdown-item font-sm" data-value="2분기" href="#">2분기</a></li>
+                                <li><a class="dropdown-item font-sm" data-value="3분기" href="#">3분기</a></li>
+                                <li><a class="dropdown-item font-sm" data-value="4분기" href="#">4분기</a></li>
+                            </ul>
+                        </div>
+                        <input class="form-control" id="search_input" type="text" placeholder="기업명 검색">
+                        <div id="search_results"></div>
+                    </div>
+                    <div class="fw-semibold font-md col-12 my-2 p-1" style="overflow-x: auto; white-space: nowrap;">분석기업</div>
+                    <div id="modal_checked_corp" class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
+                    </div>
+                    <div class="fw-semibold font-md col-12 my-2 p-1">재무지표</div>
+                    <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
+                    {% for data in check_item_fs %}
+                        <input id="{{ data.0 }}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{ data.0 }}, {{ data.1 }}">
+                        <label class="btn btn-outline-primary m-1" for="{{ data.0 }}_check" style="border-radius: 0px;">{{ data.1 }}</label>
+                    {% endfor %}
+                    </div>
+                    <div class="fw-semibold font-md col-12 my-2 p-1">투자지표</div>
+                    <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
+                    {% for data in check_item_rsi %}
+                        <input id="{{ data }}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{ data }}, {{ data|upper }}">
+                        <label class="btn btn-outline-primary m-1" for="{{ data }}_check" style="border-radius: 0px;">{{ data|upper }}</label>
+                    {% endfor %}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary btn-sm submit m-4" type="submit">완료</button>
+                </div>
+            </form>
         </div>
-        <form method="POST" class="p-0 m-0">
-            {% csrf_token %}
-            <div class="d-flex flex-wrap align-items-center align-content-between font-sm m-3">
-                <div class="d-flex align-items-center col-12">
-                    <div class="input-group">
-                        <input type="text" id="year" name="year" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="년도">
-                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false" ></button>
-                        <ul class="dropdown-menu dropdown-menu-end text-center year">
-                            <li><a class="dropdown-item font-sm" data-value="2020" href="#">2020</a></li>
-                            <li><a class="dropdown-item font-sm" data-value="2021" href="#">2021</a></li>
-                            <li><a class="dropdown-item font-sm" data-value="2022" href="#">2022</a></li>
-                            <li><a class="dropdown-item font-sm" data-value="2023" href="#">2023</a></li>
-                        </ul>
-                    </div>
-                    <div class="input-group mx-2">
-                        <input type="text" id="quarter" name="quarter" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="분기">
-                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false"></button>
-                        <ul class="dropdown-menu dropdown-menu-end text-center quarter">
-                            <li><a class="dropdown-item font-sm" data-value="1분기" href="#">1분기</a></li>
-                            <li><a class="dropdown-item font-sm" data-value="2분기" href="#">2분기</a></li>
-                            <li><a class="dropdown-item font-sm" data-value="3분기" href="#">3분기</a></li>
-                            <li><a class="dropdown-item font-sm" data-value="4분기" href="#">4분기</a></li>
-                        </ul>
-                    </div>
-                    <input class="form-control" id="search_input" type="text" placeholder="기업명 검색">
-                    <div id="search_results"></div>
-                </div>
-                <div class="fw-semibold font-md col-12 my-2 p-1" style="overflow-x: auto; white-space: nowrap;">분석기업</div>
-                <div id="modal_checked_corp" class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
-                </div>
-                <div class="fw-semibold font-md col-12 my-2 p-1">재무지표</div>
-                <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
-                {% for data in check_item_fs %}
-                    <input id="{{data.0}}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{data.0}}, {{data.1}}">
-                    <label class="btn btn-outline-primary m-1" for="{{data.0}}_check" style="border-radius: 0px;">{{data.1}}</label>
-                {% endfor %}
-                </div>
-                <div class="fw-semibold font-md col-12 my-2 p-1">투자지표</div>
-                <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
-                {% for data in check_item_rsi %}
-                    <input id="{{data.1}}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{data.1}}, {{data.0}}">
-                    <label class="btn btn-outline-primary m-1" for="{{data.1}}_check" style="border-radius: 0px;">{{data.0}}</label>
-                {% endfor %}
-                </div>
-            </div>
-            <div class="d-flex justify-content-end">
-                <button class="btn btn-primary btn-sm submit m-4" type="submit">완료</button>
-            </div>
-        </form>
     </div>
 </div>
 {% endblock %}
@@ -85,19 +86,14 @@
 <script src="{% static 'js/jquery-ui.min.js' %}"></script>
 <script>
 {% for obj in object_list %}
-$('#modal_checked_corp').append("<input id='{{obj.0.corp_id_id__corp_name}}{{obj.0.year}}{{obj.0.quarter}}분기_check' class='btn-check' type='checkbox' name='checked_corp' value='{{obj.0.corp_id_id}}, {{obj.0.year}}, {{obj.0.quarter}}분기' checked><label class='btn btn-outline-primary m-1' for='{{obj.0.corp_id_id__corp_name}}{{obj.0.year}}{{obj.0.quarter}}분기_check' style='border-radius: 0px;'>{{obj.0.corp_id_id__corp_name}}({{obj.0.year}}.{{obj.0.quarter}}분기)</label>");
+$('#modal_checked_corp').append("<input id='{{ obj.0.corp_id_id__corp_name }}{{ obj.0.year }}{{ obj.0.quarter }}분기_check'" +
+    " class='btn-check' type='checkbox' name='checked_corp' value='{{ obj.0.corp_id_id }}, {{ obj.0.year }}, {{ obj.0.quarter }}분기' checked>" +
+        "<label class='btn btn-outline-primary m-1' for='{{ obj.0.corp_id_id__corp_name }}{{ obj.0.year }}{{ obj.0.quarter }}분기_check' style='border-radius: 0px;'>" +
+            "{{ obj.0.corp_id_id__corp_name }}({{ obj.0.year }}.{{ obj.0.quarter }}분기)</label>");
 {% endfor %}
 
-{% if year %}
-$('#year').val('{{year}}')
-{% endif %}
-
-{% if quarter %}
-$('#quarter').val('{{quarter}}')
-{% endif %}
-
-{% for data in graph_fields%}
-$('#{{data}}_check').prop('checked', true)
+{% for data in analysis_data %}
+$('#{{ data }}_check').prop('checked', true)
 {% endfor %}
 
 $('.year').on('click', function(e) {
@@ -118,17 +114,17 @@ var chart = new Chart(ctx, {
     type: 'bar',
     data: {
         labels: [
-        {% for data in graph_item %}
-        '{{data}}',
+        {% for data in graph_fields %}
+        '{{ data }}',
         {% endfor %}
         ],
         datasets: [
         {% for obj in object_list %}
             {
-                label: '{{obj.0.corp_id_id__corp_name}}({{obj.0.year}}.{{obj.0.quarter}}분기)',
+                label: '{{ obj.0.corp_id_id__corp_name }}({{ obj.0.year }}.{{ obj.0.quarter }}분기)',
                 data: [
-                    {% for field in graph_fields %}
-                    {{obj.0|get_attr:field}},
+                    {% for field in analysis_data %}
+                    {{ obj.0|get_attr:field }},
                     {% endfor %}
                 ],
             },
@@ -145,24 +141,25 @@ var chart = new Chart(ctx, {
 });
 
 var max_data = 0;
+
 chart.data.datasets.forEach(function(dataset) {
     let datasetMax = Math.max.apply(Math, dataset.data);
+
     if (datasetMax > max_data) {
         max_data = datasetMax;
     }
 });
 
-max_data = max_data + max_data / 2;
+max_data = max_data + max_data / 4;
 
 chart.options.scales.y.suggestedMax = max_data;
 chart.update();
 
-
 {% with corp_name as name %}
-var corp_list = {{corp_list|safe}};
+var corp_list = {{ corp_list|safe }};
 var selected_number = null;
     $("#search_input").autocomplete({
-        source: {{name|safe}},
+        source: {{ name|safe }},
         appendTo: "#search_results",
         messages: {
             noResults: '',
