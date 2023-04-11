@@ -8,27 +8,21 @@
     <hr style="background-color: blue; border-color: blue">
     <span class="font-md">
         <p>
-            yyyy.mm.dd
-            <div style="text-align: right;">
-              
-                <button id="collect" style="background-color: blue; color: white;" href>
-                    <a class="collect_btn" href="?tab=collect">수집</a>
-                </button>
-                <button id="cancel" style="background-color: red; color: white;">
-                    <a class="cancel_btn" href="?tab=cancel">취소</a>
-                </button>
-            </div>
-        </p>        
+            {{last_corp_collect_date}}
+        <div style="text-align: right;">
+
+            <button id="collect" style="background-color: blue; color: white;" href>
+                <a class="collect_btn" href="?tab=collect">수집</a>
+            </button>
+            
+        </div>
+        </p>
     </span>
-    <p>
-        <textarea rows="10" cols="80" style="background-color: white; border-color: blue" readonly>
-            결과 및 변동사항
-        </textarea>
-        <textarea rows="10" cols="80" style="background-color: white; border-color: red" readonly>
-            실패 결과
-        </textarea>
-    </p>
-   
+
+    <textarea rows="10" cols="80" style="background-color: white; border-color: blue" readonly >
+           
+    </textarea>
+
 </div>
 
 {% endblock %}

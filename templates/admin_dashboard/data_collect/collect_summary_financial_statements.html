@@ -8,7 +8,7 @@
     <hr style="background-color: blue; border-color: blue">
     <span class="font-md">
         <p>
-            yyyy.mm.dd
+            {{last_summaryfs_collect_date}}
         <div style="text-align: right;">
             <form method="post" action="{% url 'admin:collect_summary_financial_statements' %}">
                 {% csrf_token %}
@@ -29,21 +29,13 @@
                 <button type="submit" id="collect" style="background-color: blue; color: white;" href>
                     <a class="collect_btn">수집</a>
                 </button>
-                <button id="cancel" style="background-color: red; color: white;">
-                    <a class="cancel_btn" href="?tab=cancel">취소</a>
-                </button>
             </form>
         </div>
         </p>
     </span>
-    <p>
-        <textarea rows="10" cols="80" style="background-color: white; border-color: blue" readonly>
-            결과 및 변동사항
-        </textarea>
-        <textarea rows="10" cols="80" style="background-color: white; border-color: red" readonly>
-            실패 결과
-        </textarea>
-    </p>
+    <textarea rows="10" cols="80" style="background-color: white; border-color: blue" readonly >
+           
+    </textarea>
 
 </div>
 
