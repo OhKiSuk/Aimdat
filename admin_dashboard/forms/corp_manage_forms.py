@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author OKS in Aimdat Team
 
-@modified at 2023.03.20
+@modified at 2023.04.11
 @author OKS in Aimdat Team
 """
 from django import forms
@@ -74,7 +74,7 @@ class CorpSummaryFinancialStatementsChangeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['disclosure_date'].label = '공시일'
         self.fields['year'].label = '년도'
-        self.fields['month'].label = '월'
+        self.fields['quarter'].label = '분기'
         self.fields['revenue'].label = '매출액'
         self.fields['operating_profit'].label = '영업이익'
         self.fields['net_profit'].label = '당기순이익'
@@ -92,7 +92,6 @@ class CorpSummaryFinancialStatementsChangeForm(forms.ModelForm):
         self.fields['pbr'].label = 'PBR'
         self.fields['psr'].label = 'PSR'
         self.fields['ev_ebitda'].label = 'EV/EVITDA'
-        self.fields['ev_per_ebitda'].label = 'EV/PER_EBITDA'
         self.fields['eps'].label = 'EPS'
         self.fields['bps'].label = 'BPS'
         self.fields['roe'].label = 'ROE'
