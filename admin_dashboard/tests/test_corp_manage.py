@@ -2,7 +2,7 @@
 @created at 2023.03.16
 @author OKS in Aimdat Team
 
-@modified at 2023.03.24
+@modified at 2023.04.11
 @author OKS in Aidmat Team
 """
 from account.models import User
@@ -41,7 +41,7 @@ class CorpManageTest(TestCase):
             corp_id = self.corp_id,
             disclosure_date = '2000-12-31',
             year = '9999',
-            month = '12',
+            quarter = '1',
             revenue = 00.00,
             operating_profit = 00.00,
             net_profit = 00.00,
@@ -59,7 +59,6 @@ class CorpManageTest(TestCase):
             pbr = 00.00,
             psr = 00.00,
             ev_ebitda = 00.00,
-            ev_per_ebitda = 00.00,
             eps = 00.00,
             bps = 00.00,
             roe = 00.00,
