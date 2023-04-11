@@ -59,9 +59,9 @@ class SignUpView(UserPassesTestMixin, FormView):
 
             send_mail(
                 '[Aimdat] 회원가입 PIN 번호 발송 안내',
-                '',
-                'no-reply@aimdat.com',
-                [email],
+                message=None,
+                recipient_list=[email],
+                from_email=None,
                 fail_silently=False,
                 html_message=html_message
             )
