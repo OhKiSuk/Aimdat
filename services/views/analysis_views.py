@@ -35,7 +35,7 @@ class AnalysisView(UserPassesTestMixin, ListView):
     
     def get_queryset(self):
         queryset = super().get_queryset()
-
+        
         # 분석 기업 선택 시
         if 'corp_id_list' in self.request.session:
             checked_corp_data = []
@@ -49,14 +49,13 @@ class AnalysisView(UserPassesTestMixin, ListView):
                 field = self.request.session['condition_en_list']
 
             for corp_id, corp_year, corp_quarter in zip(corp_id_list, corp_year_list, corp_quarter_list):
-                checked_corp_data.append(queryset.filter(Q(corp_id = corp_id) & Q(year = corp_year) & Q(quarter = corp_quarter)).values('corp_id_id', 'corp_id_id__corp_name', 'year', 'quarter', *field))
+                result = queryset.filter(Q(corp_id_id = corp_id) & Q(year = corp_year) & Q(quarter = corp_quarter)).values('corp_id_id', 'corp_id_id__corp_name', 'year', 'quarter', *field)
+                if result:
+                    checked_corp_data.append(result)
 
             return checked_corp_data
         else:
-            queryset = []
-
-            return queryset
-        
+            return None
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -75,7 +74,7 @@ class AnalysisView(UserPassesTestMixin, ListView):
             fs_list_en.remove(field)
         
         corp_data = super().get_queryset().values_list('corp_id_id__corp_name', 'corp_id_id')
-        corp_dict = {item[0]: item[1] for item in corp_data}
+        corp_dict = { item[0]: item[1] for item in corp_data }
 
         context['corp_list'] = corp_dict
         context['corp_name'] = list(set(super().get_queryset().values_list('corp_id_id__corp_name', flat=True)))
@@ -118,5 +117,5 @@ class AnalysisView(UserPassesTestMixin, ListView):
         
         self.object_list = self.get_queryset()
         context = self.get_context_data()
-        
+
         return render(request, 'services/analysis_view.html', context=context)

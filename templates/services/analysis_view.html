@@ -85,6 +85,10 @@
 <script src="{% static 'js/chart.umd.min.js' %}"></script>
 <script src="{% static 'js/jquery-ui.min.js' %}"></script>
 <script>
+{% if not object_list %}
+alert('검색된 정보가 없습니다.');
+{% endif %}
+
 {% for obj in object_list %}
 $('#modal_checked_corp').append("<input id='{{ obj.0.corp_id_id__corp_name }}{{ obj.0.year }}{{ obj.0.quarter }}분기_check'" +
     " class='btn-check' type='checkbox' name='checked_corp' value='{{ obj.0.corp_id_id }}, {{ obj.0.year }}, {{ obj.0.quarter }}분기' checked>" +
