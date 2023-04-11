@@ -13,11 +13,13 @@ from .views.google_login_views import (
     GoogleCallbackView,
     GoogleLinkOffView
 )
+"""
 from .views.kakao_login_views import (
     KakaoLoginView, 
     KakaoCallbackView,
     KakaoLinkOffView
 )
+"""
 from .views.login_views import ServiceLoginView
 from .views.naver_login_views import (
     NaverLoginView, 
@@ -46,12 +48,12 @@ urlpatterns = [
     path('google/login/callback/', GoogleCallbackView.as_view(), name='google_login_callback'),
     path('naver/login', NaverLoginView.as_view(), name='naver_login'),
     path('naver/login/callback/', NaverCallbackView.as_view(), name='naver_login_callback'),
-    path('kakao/login', KakaoLoginView.as_view(), name='kakao_login'),
-    path('kakao/login/callback/', KakaoCallbackView.as_view(), name='kakao_login_callback'),
+    #path('kakao/login', KakaoLoginView.as_view(), name='kakao_login'),
+    #path('kakao/login/callback/', KakaoCallbackView.as_view(), name='kakao_login_callback'),
 
     #소셜계정 연동 해제
     path("naver/login/linkoff", NaverLinkOffView.as_view(), name="naver_login_linkoff"),
-    path("kakao/login/linkoff", KakaoLinkOffView.as_view(), name="kakao_login_linkoff"),
+    #path("kakao/login/linkoff", KakaoLinkOffView.as_view(), name="kakao_login_linkoff"),
     path("google/login/linkoff", GoogleLinkOffView.as_view(), name="google_login_linkoff"),
 
     #회원가입

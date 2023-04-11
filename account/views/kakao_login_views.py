@@ -5,6 +5,7 @@
 @modified at 2023.04.04
 @author OKS in Aimdat Team
 """
+"""
 import json
 import requests
 
@@ -25,9 +26,7 @@ from django.views.generic import View
 from ..models import User
 
 class KakaoLoginView(UserPassesTestMixin, View):
-    """
-    카카오 로그인 뷰
-    """
+    #카카오 로그인 뷰
     def test_func(self):
         if self.request.user.is_authenticated:
             if self.request.user.is_admin:
@@ -51,9 +50,7 @@ class KakaoLoginView(UserPassesTestMixin, View):
         return redirect(login_url)
     
 class KakaoCallbackView(UserPassesTestMixin, View):
-    """
-    카카오 로그인 후 콜백
-    """
+    #카카오 로그인 후 콜백
     def test_func(self):
         if self.request.user.is_authenticated:
             if self.request.user.is_admin:
@@ -102,9 +99,7 @@ class KakaoCallbackView(UserPassesTestMixin, View):
         return redirect('index')
     
     def get_kakao_profile(self):
-        """
-        카카오 프로필 값을 가져오는 함수
-        """
+        #카카오 프로필 값을 가져오는 함수
         headers = {
             'Authorization': f'Bearer {self.access_token}'
         }
@@ -114,9 +109,7 @@ class KakaoCallbackView(UserPassesTestMixin, View):
         return response.json()
     
 class KakaoLinkOffView(UserPassesTestMixin, View):
-    """
-    카카오 연동 해제 뷰(회원 탈퇴)
-    """
+    #카카오 연동 해제 뷰(회원 탈퇴)
     def test_func(self):
         if self.request.user.is_authenticated:
             if self.request.user.is_admin:
@@ -155,9 +148,7 @@ class KakaoLinkOffView(UserPassesTestMixin, View):
             return redirect('account:login')
 
     def linkoff(self):
-        """
-        카카오 연동 해제
-        """
+        #카카오 연동 해제
         url = 'https://kapi.kakao.com/v1/user/unlink'
         headers = {
             'Authorization': f'Bearer {self.access_token}'
@@ -166,3 +157,4 @@ class KakaoLinkOffView(UserPassesTestMixin, View):
         response_to_json = json.loads(response.text)
 
         return response_to_json.get('id')
+"""
