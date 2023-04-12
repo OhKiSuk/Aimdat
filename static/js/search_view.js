@@ -1,3 +1,6 @@
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
 $('.add-filter').on('click', function() {
     var add_condition = $(this).attr('class').split(' ')[0];
     var text = $(this).siblings().eq(0).text();
@@ -14,7 +17,7 @@ $('.add-filter').on('click', function() {
             if (input_max == '') {
                 $('.'+add_condition+'_max').val('0');
             }
-            if ( Number(input_min) < 0 && Number(input_max) < 0) {
+            if (Number(input_min) < 0 && Number(input_max) < 0) {
                 if (Number(input_min) > Number(input_max)) {
                     var set_filter = $('<span>', {
                         class: add_condition + ' setting_filter badge text-bg-primary mx-1',
@@ -94,9 +97,9 @@ function remove_corp() {
     $('#search_input').val('');
 }
 
-$('.filter_item').on('click', function() {
+$('.list-group-item').on('click', function() {
     $('.input_data').hide();
-    $('.filter_item').removeClass('active');
+    $('.list-group-item').removeClass('active');
 
     $(this).addClass('active');
 
@@ -104,14 +107,6 @@ $('.filter_item').on('click', function() {
     $('.'+toggle_condition+'_toggle').show();
     $('.submit').show();
 });
-
-$(function () {
-    $('[data-toggle="tooltip"]').tooltip();
-
-    $('[data-toggle="tooltip"]').on('click', function () {
-        $(this).tooltip('hide');
-    });
-})
 
 $('.year').on('click', function(e) {
     const target = e.target;

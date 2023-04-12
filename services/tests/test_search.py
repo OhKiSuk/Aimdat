@@ -2,12 +2,6 @@
 @created at 2023.03.20
 @author JSU in Aimdat Team
 
-@modified at 2023.03.26
-@author JSU in Aimdat Team
-
-@modified at 2023.03.31
-@author JSU in Aimdat Team
-
 @modified at 2023.04.05
 @author JSU in Aimdat Team
 """
@@ -52,7 +46,7 @@ class SearchTest(TestCase):
                     corp_id = CorpId.objects.get(corp_name=f'testcorp{i}'),
                     disclosure_date = timezone.now(),
                     year = '2022',
-                    month = '12',
+                    quarter = '4',
                     revenue = Decimal(i),
                     net_profit = Decimal(i)
                 )

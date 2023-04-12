@@ -2,22 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.03.20
-@author JSU in Aimdat Team
-
-@modified at 2023.03.28
-@author JSU in Aimdat Team
-
-@modified at 2023.03.30
-@author JSU in Aimdat Team
-
-@modified at 2023.04.05
-@author JSU in Aimdat Team
-
-@modified at 2023.04.07
-@author JSU in Aimdat Team
-
-@modified at 2023.04.09
+@modified at 2023.04.12
 @author JSU in Aimdat Team
 """
 
@@ -39,10 +24,15 @@ class SearchView(UserPassesTestMixin, ListView):
     paginate_by = 100
     
     def test_func(self):
+        if self.request.user.is_admin:
+            return False
+        
         auth = self.request.user.is_authenticated
+
         if auth:
             date = self.request.user.expiration_date.date() >= timezone.now().date()
             return auth and date
+        
         return False
     
     def handle_no_permission(self):
@@ -80,28 +70,26 @@ class SearchView(UserPassesTestMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        rsi_list_lower = ['per', 'pbr', 'psr', 'ev_ebitda', 'eps', 'bps', 'roe', 'dps']
-        rsi_list_upper = [word.upper() for word in rsi_list_lower]
+        rsi_list = ['per', 'pbr', 'psr', 'ev_ebitda', 'eps', 'bps', 'roe', 'dps']
         fs_list_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
             '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', '총부채', '총자산', \
                 '총자본', '총차입금', '액면가']
-        
-        fs_list_en = [field.name for field in FS._meta.get_fields()]
+
+        # 필요 없는 필드 제거
+        fs_list_en = [ field.name for field in FS._meta.get_fields() ]   
         remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
-        
+
         for field in remove_field:
-            fs_list_en.remove(field)
-            
-        for field in rsi_list_lower:
+            fs_list_en.remove(field) 
+        for field in rsi_list:
             fs_list_en.remove(field)
         
         context['corp_name'] = list(set(super().get_queryset().values_list('corp_id_id__corp_name', flat=True)))
         context['table_column'] = ['매출액' ,'영업이익', '영업이익률', '당기순이익', '배당금', '배당률']
         context['fields'] = ['revenue', 'operating_profit', 'operating_margin', 'net_profit', 'dividend', 'dividend_ratio']
-        context['input_item_fs'] = zip(fs_list_en, fs_list_ko)
-        context['input_item_rsi'] = zip(rsi_list_upper, rsi_list_lower)
-        context['filter_item_fs'] = zip(fs_list_en, fs_list_ko)
-        context['filter_item_rsi'] = zip(rsi_list_upper, rsi_list_lower)
+        context['ul_fs_items'] = zip(fs_list_en, fs_list_ko)
+        context['input_fs_items'] = zip(fs_list_en, fs_list_ko)
+        context['rsi_items'] = rsi_list
 
         # Session에 기업명 값이 있을 경우
         if 'corp' in self.request.session:
@@ -128,13 +116,15 @@ class SearchView(UserPassesTestMixin, ListView):
         name_ko = []
         min = []
         max = []
-        fields = [field.name for field in FS._meta.get_fields()]
-        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
         condition_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
         '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', 'PER', 'PBR', 'PSR',\
             'EV_EBITDA', 'EV_PER_EBITDA', 'EPS', 'BPS', 'ROE', 'DPS', '총부채', '총자산', '총자본',\
                 '총차입금', '액면가']
         
+        # 필요 없는 필드 제거
+        fields = [ field.name for field in FS._meta.get_fields() ]
+        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
+
         for field in remove_field:
             fields.remove(field)
         
@@ -169,7 +159,7 @@ class SearchView(UserPassesTestMixin, ListView):
         else:
             request.session.pop('corp', None)
 
-        
         self.object_list = self.get_queryset()
         context = self.get_context_data()
+        
         return render(request, 'services/search_view.html', context=context)

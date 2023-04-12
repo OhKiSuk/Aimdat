@@ -2,22 +2,23 @@
 {% load static %}
 {% load get_attr %}
 {% block style %}
-<link rel="style" href="{% static 'js/jquery-ui.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/datatables.min.css' %}">
 {% endblock %}
 {% block content %}
 <form method="POST" action="{% url 'services:analysis' %}" class="p-0 m-0">
     {% csrf_token %}
-    <div class="d-flex justify-content-between align-items-center my-5 py-3">
-        <div class="d-flex col-10">
-            <b class="d-flex align-items-center" style="width:23%;"><span class="font-lg">검색결과</span><span class="mx-2 font-md">총 {{paginator.count}}건</span></b>
-            <div class="applied_filter_list d-flex align-items-center" style="overflow-x: auto; white-space: nowrap;">
-                {% if corp %}
-                <span class="badge text-bg-primary mx-1">기업명:{{corp}}</span>
-                {% endif %}
-                {% for data in applied_filter_list%}
-                <span class="badge text-bg-primary mx-1">{{data.1}}:{{data.2}}~{{data.3}}</span>
-                {% endfor %}
-            </div>
+    <div class="mt-5 py-3">
+        <span class="font-lg fw-bold">검색결과</span>
+        <span class="font-md fw-semibold">총 {{ paginator.count }}건</span>
+    </div>
+    <div class="d-flex justify-content-between mb-3">
+        <div class="applied_filter_list d-flex align-items-center col-10 mt-3" style="overflow-x: auto; white-space: nowrap;">
+            {% if corp %}
+            <span class="badge text-bg-primary" style="margin-right:5px;">기업명:{{ corp }}</span>
+            {% endif %}
+            {% for data in applied_filter_list%}
+            <span class="badge text-bg-primary" style="margin-right:5px;">{{ data.1 }}:{{ data.2 }}~{{ data.3 }}</span>
+            {% endfor %}
         </div>
         <div>
             <button type="submit" class="btn btn-primary mx-1">기업분석</button>
@@ -27,25 +28,28 @@
     <table class="table table-hover align-middle font-sm text-center" id="table">
         <thead>
             <tr class="bg-sub fw-bold" style="color: white;">
-                <th style="width:5%">No.</th>
-                <th style="width:15%">회사명</th>
+                <th class="text-center" style="width:5%">No.</th>
+                <th class="text-center" style="width:15%">회사명</th>
                 {% for data in table_column %}
-                <th>{{data}}</th>
+                <th class="text-center">{{ data }}</th>
                 {% endfor %}
             </tr>
         </thead>
         <tbody>
             {% for obj in object_list %}
             <tr>
-                <td>{{page_obj.start_index|add:forloop.counter0}}</td>
+                <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
                 <td class="d-flex flex-wrap justify-content-start">
-                    <div class="d-flex align-items-center col-12"><input id="tooltip" type="checkbox" name="checked_corp" value="{{obj.corp_id}}, {{obj.year}}, {{obj.quarter}}" data-toggle="tooltip" data-placement="top" title="비교할 기업을 선택하세요."><a href="{% url 'services:detail' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{obj.corp_id_id__corp_name}}</a></div>
-                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{obj.corp_id_id__corp_country}}</span>
-                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{obj.corp_id_id__corp_market}}</span>
-                    <span class="badge text-bg-primary">{{obj.corp_id_id__corp_sectors}}</span>
+                    <div class="d-flex align-items-center col-12">
+                        <input type="checkbox" name="checked_corp" value="{{ obj.corp_id }}, {{ obj.year }}, {{ obj.quarter }}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="분석할 기업을 선택하세요.">
+                        <a href="{% url 'services:detail' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{ obj.corp_id_id__corp_name }}</a>
+                    </div>
+                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{ obj.corp_id_id__corp_country }}</span>
+                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{ obj.corp_id_id__corp_market }}</span>
+                    <span class="badge text-bg-primary">{{ obj.corp_id_id__corp_sectors }}</span>
                 </td>
                 {% for field in fields %}
-                <td>{{obj|get_attr:field}}</td>
+                <td>{{ obj|get_attr:field }}</td>
                 {% endfor %}
             </tr>
             {% endfor %}
@@ -93,8 +97,8 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header d-flex mx-3">
-                <div class="modal-title font-md my-3"><b>필터설정</b></div>
-                <div class="setting_filter_list mx-3"></div>
+                <div class="modal-title font-md fw-semibold my-3" style="width: 80px;">필터설정</div>
+                <div class="setting_filter_list col-10 mx-1" style="overflow-x: auto; white-space: nowrap;"></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body font-sm d-flex">
@@ -104,12 +108,12 @@
                             <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3"  aria-expanded="false" style="width: 160px;">지표선택 </button>
                             <ul class="dropdown-menu text-center">
                                 <li class="drop-item">
-                                    <button class="dropdown-item active font-sm py-2" id="fs_tab" data-bs-toggle="tab" data-bs-target="#item_fs" type="button" role="tab" aria-controls="fs_item" aria-selected="true" tabindex="0">
+                                    <button class="dropdown-item active font-sm py-2" id="fs_tab" data-bs-toggle="tab" data-bs-target="#fs_items" type="button" role="tab" aria-controls="fs_item" aria-selected="true" tabindex="0">
                                     재무지표
                                     </button>
                                 </li>
                                 <li class="drop-item">
-                                    <button class="dropdown-item font-sm py-2" id="rsi_tab" data-bs-toggle="tab" data-bs-target="#item_rsi" type="button" role="tab" aria-controls="rsi_item" aria-selected="false" tabindex="1">
+                                    <button class="dropdown-item font-sm py-2" id="rsi_tab" data-bs-toggle="tab" data-bs-target="#rsi_items" type="button" role="tab" aria-controls="rsi_item" aria-selected="false" tabindex="1">
                                     투자지표
                                     </button>
                                 </li>
@@ -117,17 +121,17 @@
                         </li>
                     </ul>
                     <div class="tab-content my-3" id="content" style="overflow-y: scroll; height: 150px;">
-                        <div class="tab-pane active" id="item_fs" role="tabpanel" aria-labelledby="fs_tab">
-                            <ul class="filter_items list-group text-center" style="list-style: none; width: 85%; margin-left: auto; margin-right: auto;">
-                                {% for data in filter_item_fs %}
-                                <li class="{{data.0}} filter_item list-group-item list-group-item-action mx-1" >{{data.1}}</li>
+                        <div class="tab-pane active" id="fs_items" role="tabpanel" aria-labelledby="fs_tab">
+                            <ul class="list-group text-center" style="list-style: none; width: 85%; margin-left: auto; margin-right: auto;">
+                                {% for en, ko in ul_fs_items %}
+                                <li class="{{ en }} list-group-item list-group-item-action mx-1" >{{ ko }}</li>
                                 {% endfor %}
                             </ul>
                         </div>
-                        <div class="tab-pane" id="item_rsi" role="tabpanel" aria-labelledby="rsi_tab">
-                            <ul class="filter_items list-group text-center" style="list-style: none; width: 85%; margin-left: auto; margin-right: auto;">
-                                {% for data in filter_item_rsi %}
-                                <li class="{{data.1}} filter_item list-group-item list-group-item-action mx-1">{{data.0}}</li>
+                        <div class="tab-pane" id="rsi_items" role="tabpanel" aria-labelledby="rsi_tab">
+                            <ul class="list-group text-center" style="list-style: none; width: 85%; margin-left: auto; margin-right: auto;">
+                                {% for data in rsi_items %}
+                                <li class="{{ data }} list-group-item list-group-item-action mx-1">{{ data|upper }}</li>
                                 {% endfor %}
                             </ul>
                         </div>
@@ -161,25 +165,25 @@
                             <div id="search_results"></div>
                         </div>
                     </div>
-                    {% for data in input_item_fs %}
-                    <div class="{{data.0}}_toggle input_data" style="display: none;">
+                    {% for en, ko in input_fs_items %}
+                    <div class="{{ en }}_toggle input_data" style="display: none;">
                         <div class="d-flex col-12 align-items-center mt-4">
-                            <div class="{{data.0}} text-center" style="width:170px;">{{data.1}}</div>
-                            <input type="text" name="{{data.0}}_min" class="{{data.0}}_min form-control form-control-sm text-center" style="width:130px;">
+                            <div class="{{ en }} text-center" style="width:170px;">{{ ko }}</div>
+                            <input type="text" name="{{ en }}_min" class="{{ en }}_min form-control form-control-sm text-center" style="width:130px;">
                             <span class="mx-3"> ~ </span>
-                            <input type="text" name="{{data.0}}_max" class="{{data.0}}_max form-control form-control-sm text-center" style="width:130px;">
-                            <button type="button" class="{{data.0}} btn btn-primary btn-sm add-filter mx-3">추가</button>
+                            <input type="text" name="{{ en }}_max" class="{{ en }}_max form-control form-control-sm text-center" style="width:130px;">
+                            <button type="button" class="{{ en }} btn btn-primary btn-sm add-filter mx-3">추가</button>
                         </div>
                     </div>
                     {% endfor %}
-                    {% for data in input_item_rsi %}
-                    <div class="{{data.1}}_toggle input_data" style="display: none;">
+                    {% for data in rsi_items %}
+                    <div class="{{ data }}_toggle input_data" style="display: none;">
                         <div class="d-flex col-12 align-items-center mt-4">
-                            <span class="{{data.1}} text-center" style="width:170px;">{{data.0}}</span>
-                            <input type="text" name="{{data.1}}_min" class="{{data.1}}_min form-control form-control-sm text-center" style="width:130px;">
+                            <span class="{{ data }} text-center" style="width:170px;">{{ data|upper }}</span>
+                            <input type="text" name="{{ data }}_min" class="{{ data }}_min form-control form-control-sm text-center" style="width:130px;">
                             <span class="mx-3"> ~ </span>
-                            <input type="text" name="{{data.1}}_max" class="{{data.1}}_max form-control form-control-sm text-center" style="width:130px;">
-                            <button type="button" class="{{data.1}} btn btn-primary btn-sm add-filter mx-3">추가</button>
+                            <input type="text" name="{{ data }}_max" class="{{ data }}_max form-control form-control-sm text-center" style="width:130px;">
+                            <button type="button" class="{{ data }} btn btn-primary btn-sm add-filter mx-3">추가</button>
                         </div>
                     </div>
                     {% endfor %}
@@ -196,40 +200,40 @@
 <script src="{% static 'js/jquery-ui.min.js' %}"></script>
 <script>
 {% if year %}
-$('#year').val('{{year}}')
+$('#year').val('{{ year }}')
 {% endif %}
 
 {% if quarter %}
-$('#quarter').val('{{quarter}}분기')
+$('#quarter').val('{{ quarter }}분기')
 {% endif %}
 
-{% for data in applied_input_data %}
-$('.{{data.0}}_min').val('{{data.1}}');
-$('.{{data.0}}_max').val('{{data.2}}');
+{% for en, min, max in applied_input_data %}
+$('.{{ en }}_min').val('{{ min }}');
+$('.{{ en }}_max').val('{{ max }}');
 {% endfor %}
 
 {% if corp %}
 var set_filter = $('<span>', {
     name: 'corp',
-    value: '{{corp}}',
+    value: '{{ corp }}',
     class: 'setting_filter badge text-bg-primary mx-1',
-    text: '기업명:{{corp}}',
+    text: '기업명:{{ corp }}',
     click: remove_corp
 });
+
 $(".setting_filter_list").append(set_filter);
-$("#search_input").val('{{corp}}')
+$("#search_input").val('{{ corp }}')
 {% endif %}
 
-{% for data in applied_filter_modal%}
+{% for en, ko, min, max in applied_filter_modal %}
 var set_filter = $('<span>', {
-    class: '{{data.0}} setting_filter badge text-bg-primary mx-1',
-    text: '{{data.1}}:{{data.2}}~{{data.3}}',
+    class: '{{ en }} setting_filter badge text-bg-primary mx-1',
+    text: '{{ ko }}:{{ min }}~{{ max }}',
     click: remove_filter
 });
+
 $('.setting_filter_list').append(set_filter);
 {% endfor %}
-
-
 
 $('#table').DataTable({
     searching: false,
