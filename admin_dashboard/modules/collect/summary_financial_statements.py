@@ -338,7 +338,6 @@ def _calc_and_update_fs(fs_data:CorpSummaryFinancialStatements, stock_price, mar
 def collect_summary_finaicial_statements(year:int, quarter:int):
     logs = []
     corp_list = _get_corp_list()
-    corp_list = ['005930'] # test
     crawl_result, logs_crawl = _crawl_dart(corp_list, year, quarter, sleep_time=2) # [stock_code, disclosure_date, df_fs_list, df_dividend_list]
     logs += logs_crawl
 
