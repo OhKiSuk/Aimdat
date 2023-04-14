@@ -1,39 +1,37 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
-{% block style %}
-{% endblock %}
 {% block content %}
 <div class="d-flex mt-5 py-3">
     <div class="d-flex flex-wrap col-2">
         <div class="col-12">
-            <span class="font-md fw-bold">{{corp_id.corp_name}}</span>
+            <span class="font-md fw-bold">{{ corp_id.corp_name }}</span>
             <span class="font-sm fw-semibold align-middle">
-                ({{corp_id.stock_code}})
+                ({{ corp_id.stock_code }})
                 <div class="btn-group dropend">
                     <button type="button" class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     </button>
                     <ul class="dropdown-menu">
-                        <div class="font-min p-1">
-                            정보기준월 : {{corp_info.corp_settlement_month}}</br>
-                            CEO : {{corp_info.corp_ceo_name}}</br>
-                            ISIN:{{corp_id.corp_isin}}
+                        <div class="font-min px-3">
+                            정보기준월 : {{ corp_info.corp_settlement_month }}</br>
+                            CEO : {{ corp_info.corp_ceo_name }}</br>
+                            ISIN:{{ corp_id.corp_isin }}
                         </div>
                     </ul>
                 </div>
             </span>
         </div>
         <div class="font-sm fw-semibold my-1">
-            <span>{{corp_id.corp_market}}</span>
-            <span class="font-sm fw-semibold">({{corp_id.corp_country}})</span>
+            <span>{{ corp_id.corp_market }}</span>
+            <span class="font-sm fw-semibold">({{ corp_id.corp_country }})</span>
             <a href="{{corp_info.corp_homepage_url}}" target="_blank" class="badge px-0" style="color:black;">Go to site</a>
         </div>
         <div class="d-flex flex-wrap col-12 font-sm">
-            <span class="fw-semibold" style="overflow-x: auto; white-space: nowrap;">분류 : {{corp_id.corp_sectors}}</span>
+            <span class="fw-semibold" style="overflow-x: auto; white-space: nowrap;">분류 : {{ corp_id.corp_sectors }}</span>
         </div>
     </div>
     <div class="corp_summary text-start" style="width: 1080px; max-height:80px; overflow: auto;">
-        <span class="font-min fw-lighter lh-base">{{corp_info.corp_summary}}</span>
+        <span class="font-min fw-lighter lh-base">{{ corp_info.corp_summary }}</span>
     </div>
 </div>
 <hr>
@@ -42,31 +40,31 @@
         <div class="font-md fw-semibold">주식정보</div>
         <div class="font-min fw-light text-end">(단위: 원, 주)</div>
         <div class="d-flex justify-content-between align-items-center fw-bold mb-1 ">
-            종가 : {{stock_price.close_price|intcomma}}
+            종가 : {{ latest_stock_info.close_price|intcomma }}
         </div>
         <div class="d-flex justify-content-between my-1 fw-semibold">
             <div>전일종가대비금액/비율</div>
-            <div class="color"><span id="price">{{stock_price.change_price|intcomma}}</span>/{{stock_price.change_rate|intcomma}}%</div>
+            <div class="color"><span id="price">{{ latest_stock_info.change_price|intcomma }}</span>/{{ latest_stock_info.change_rate|intcomma }}%</div>
         </div>
         <div class="d-flex justify-content-between my-1 fw-semibold">
             <div>52주 최고/최저</div>
-            <div><span style="color: #ff3545;">{{stock_price.high_price|intcomma}}</span>/<span style="color: #1058ca;">{{stock_price.low_price|intcomma}}</span></div>
+            <div><span style="color: #ff3545;">{{ latest_stock_info.high_price|intcomma }}</span>/<span style="color: #1058ca;">{{ latest_stock_info.low_price|intcomma }}</span></div>
         </div>
         <div class="d-flex justify-content-between my-1">
             <div>거래량</div>
-            <div>{{stock_price.trade_quantity|intcomma}}</div>
+            <div>{{ latest_stock_info.trade_quantity|intcomma }}</div>
         </div>
         <div class="d-flex justify-content-between my-1">
             <div>거래대금</div>
-            <div>{{stock_price.trade_price|intcomma}}</div>
+            <div>{{ latest_stock_info.trade_price|intcomma }}</div>
         </div>
         <div class="d-flex justify-content-between my-1">
             <div>시가총액</div>
-            <div>{{stock_price.market_capitalization|intcomma}}</div>
+            <div>{{ latest_stock_info.market_capitalization|intcomma }}</div>
         </div>
         <div class="d-flex justify-content-between my-1">
             <div>상장주식수</div>
-            <div>{{stock_price.total_stock|intcomma}}</div>
+            <div>{{ latest_stock_info.total_stock|intcomma }}</div>
         </div>
     </div>
     <div class="col-6">
@@ -83,9 +81,9 @@
                 {% if page_obj %}
                 {% for data in page_obj %}
                 <tr>
-                    <td>{{page_obj.start_index|add:forloop.counter0}}</td>
-                    <td><a href="https://dart.fss.or.kr/dsaf001/main.do?rcpNo={{data.2}}" target="_blank">{{data.0}}</a></td>
-                    <td>{{data.1|date:"Y.m.d."}}</td>
+                    <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    <td><a href="https://dart.fss.or.kr/dsaf001/main.do?rcpNo={{data.2}}" target="_blank">{{ data.0 }}</a></td>
+                    <td>{{ data.1|date:"Y.m.d." }}</td>
                 </tr>
                 {% endfor %}
                 {% else %}
@@ -144,17 +142,17 @@
             <td colspan="4">최근분기실적</td>
             <tr class="fw-semibold">
                 {% for data in report_data.0 %}
-                {% if ' ' in data %}
-                <td style="width: 10%;"> . </td>
+                {% if data %}
+                <td style="width: 10%;">{{ data.0.year }}.{{ data.0.quarter }}분기</td>
                 {% else %}
-                <td style="width: 10%;">{{data.0.year}}.{{data.0.quarter}}분기</td>
+                <td style="width: 10%;">N/A</td>
                 {% endif %}
                 {% endfor %}
                 {% for data in report_data.1 %}
-                {% if ' ' in data %}
-                <td style="width: 10%;"> . </td>
+                {% if data %}
+                <td style="width: 10%;">{{ data.0.year }}.{{ data.0.quarter }}분기</td>
                 {% else %}
-                <td style="width: 10%;">{{data.0.year}}.{{data.0.quarter}}분기</td>
+                <td style="width: 10%;">N/A</td>
                 {% endif %}
                 {% endfor %}
             </tr>
@@ -165,7 +163,7 @@
             <td class="fw-semibold">매출액</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.revenue}}</td>
+            <td>{{ obj.0.revenue }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -173,7 +171,7 @@
             <td class="fw-semibold">영업이익</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.operating_profit}}</td>
+            <td>{{ obj.0.operating_profit }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -181,7 +179,7 @@
             <td class="fw-semibold">당기순이익</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.net_profit}}</td>
+            <td>{{ obj.0.net_profit }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -189,7 +187,7 @@
             <td class="fw-semibold">영업이익률</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.operating_margin}}</td>
+            <td>{{ obj.0.operating_margin }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -197,7 +195,7 @@
             <td class="fw-semibold">순이익률</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.net_profit_margin}}</td>
+            <td>{{ obj.0.net_profit_margin }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -205,7 +203,7 @@
             <td class="fw-semibold">부채비율</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.debt_ratio }}</td>
+            <td>{{ obj.0.debt_ratio }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -213,7 +211,7 @@
             <td class="fw-semibold">매출원가율</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.cost_of_sales_ratio}}</td>
+            <td>{{ obj.0.cost_of_sales_ratio }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -221,7 +219,7 @@
             <td class="fw-semibold">당좌비율</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.quick_ratio}}</td>
+            <td>{{ obj.0.quick_ratio }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -229,7 +227,7 @@
             <td class="fw-semibold">배당금</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.dividend }}</td>
+            <td>{{ obj.0.dividend }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -237,7 +235,7 @@
             <td class="fw-semibold">총배당금</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.total_dividend}}</td>
+            <td>{{ obj.0.total_dividend }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -245,7 +243,7 @@
             <td class="fw-semibold">배당수익률</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.dividend_yield}}</td>
+            <td>{{ obj.0.dividend_yield }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -253,7 +251,7 @@
             <td class="fw-semibold">배당지급률</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.dividend_payout_ratio}}</td>
+            <td>{{ obj.0.dividend_payout_ratio }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -261,7 +259,7 @@
             <td class="fw-semibold">배당률</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.dividend_ratio}}</td>
+            <td>{{ obj.0.dividend_ratio }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -269,7 +267,7 @@
             <td class="fw-semibold">PER</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.per}}</td>
+            <td>{{ obj.0.per }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -277,7 +275,7 @@
             <td class="fw-semibold">PBR</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.pbr}}</td>
+            <td>{{ obj.0.pbr }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -285,7 +283,7 @@
             <td class="fw-semibold">PSR</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.psr}}</td>
+            <td>{{ obj.0.psr }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -293,7 +291,7 @@
             <td class="fw-semibold">EV_EBITDA</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.ev_ebitda}}</td>
+            <td>{{ obj.0.ev_ebitda }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -301,7 +299,7 @@
             <td class="fw-semibold">EPS</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.eps}}</td>
+            <td>{{ obj.0.eps }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -309,7 +307,7 @@
             <td class="fw-semibold">BPS</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.bps}}</td>
+            <td>{{ obj.0.bps }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -317,7 +315,7 @@
             <td class="fw-semibold">ROE</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.roe}}</td>
+            <td>{{ obj.0.roe }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -325,15 +323,15 @@
             <td class="fw-semibold">DPS</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.dps}}</td>
+            <td>{{ obj.0.dps }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
         <tr>
             <td class="fw-semibold">총부채</td>
             {% for data in report_data %}
-            {% for obj in total_debt %}
-            <td>{{obj.0.bps}}</td>
+            {% for obj in data %}
+            <td>{{ obj.0.total_debt }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -341,7 +339,7 @@
             <td class="fw-semibold">총자산</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.total_asset}}</td>
+            <td>{{ obj.0.total_asset }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -349,7 +347,7 @@
             <td class="fw-semibold">총자본</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.total_capital}}</td>
+            <td>{{ obj.0.total_capital }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -357,7 +355,7 @@
             <td class="fw-semibold">총차입금</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.borrow_debt }}</td>
+            <td>{{ obj.0.borrow_debt }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -365,7 +363,7 @@
             <td class="fw-semibold">액면가</td>
             {% for data in report_data %}
             {% for obj in data %}
-            <td>{{obj.0.face_value}}</td>
+            <td>{{ obj.0.face_value }}</td>
             {% endfor %}
             {% endfor %}
         </tr>
@@ -381,6 +379,7 @@
             textColor: 'black', background: { type: 'solid', color: 'white' }
         },
     };
+
     const chart = LightweightCharts.createChart($('#chart')[0], chartOptions);
 
     const candlestickSeries = chart.addCandlestickSeries({ 
@@ -390,6 +389,7 @@
         wickUpColor: '#ff3545',
         wickDownColor: '#1058ca'
     });
+
     candlestickSeries.priceScale().applyOptions({
         scaleMargins: {
             top: 0.2,
@@ -398,16 +398,17 @@
     });
 
     const data = [
-    {% for data in price_graph_data %}
-            {
-                time: '{{data.trade_date|date:"Y-m-d"}}',
-                open: {{data.open_price}},
-                high: {{data.high_price}},
-                low: {{data.low_price}},
-                close: {{data.close_price}},
-            },
-    {% endfor %}
+        {% for data in stock_data %}
+        {
+            time: '{{ data.trade_date|date:"Y-m-d" }}',
+            open: {{ data.open_price }},
+            high: {{ data.high_price }},
+            low: {{ data.low_price }},
+            close: {{ data.close_price }},
+        },
+        {% endfor %}
     ];
+    
     candlestickSeries.setData(data);
     
     const volumeSeries = chart.addHistogramSeries({
@@ -424,13 +425,14 @@
         },
     });
     const trade_data = [
-        {% for data in trade_graph_data %}
+        {% for data in stock_data %}
         {
-            time: '{{data.trade_date|date:"Y-m-d"}}',
-            value: {{data.trade_quantity}},
+            time: '{{ data.trade_date|date:"Y-m-d" }}',
+            value: {{ data.trade_quantity }},
         },
         {% endfor %}
     ];
+
     volumeSeries.setData(trade_data);
     chart.timeScale().fitContent();
 
