@@ -6,7 +6,7 @@ from django.views.generic import TemplateView, View
 from admin_dashboard.models.last_collect_date import LastCollectDate
 from admin_dashboard.modules.collect.corp import collect_corp
 from admin_dashboard.modules.collect.stock_price import collect_stock_price
-from admin_dashboard.modules.collect.summary_finaicial_statements import collect_summary_finaicial_statements
+from admin_dashboard.modules.collect.summary_financial_statements import collect_summary_finaicial_statements
 
 
 class CollectCorpInfoView(TemplateView):
@@ -25,20 +25,26 @@ class CollectCorpInfoView(TemplateView):
 class CollectStockPriceView(View):
     template_name = 'admin_dashboard/data_collect/collect_stock_price.html'
     context = {
-        'last_stock_collect_date' : LastCollectDate.objects.get().last_stock_collect_date
+        'last_stock_collect_date' : LastCollectDate.objects.get().last_stock_collect_date,
+        'date_logs' : [],
+        'corp_logs' : []
+        
     }
 
     def get(self, request): # get_stock_price
         tab = request.GET.get('tab', 'none_action')
         if tab == 'collect':
-            collect_stock_price()
+            fail_corp, fail_date = collect_stock_price()
+            self.context['date_logs'] += fail_date
+            self.context['corp_logs'] += fail_corp
             
         return render(self.request, self.template_name, context=self.context)
 
 class CollectFinancialStatementView(View):
     template_name = 'admin_dashboard/data_collect/collect_summary_financial_statements.html'
     context = {
-        'last_summaryfs_collect_date' : LastCollectDate.objects.get().last_summaryfs_collect_date
+        'last_summaryfs_collect_date' : LastCollectDate.objects.get().last_summaryfs_collect_date,
+        'logs' : []
     }
 
     years = [2020, 2021, 2022, 2023]
@@ -61,7 +67,8 @@ class CollectFinancialStatementView(View):
             # 수집 실행
             for year in choice_year:
                 for quarter in choice_quarter:
-                    collect_summary_finaicial_statements(year, quarter)
+                    logs = collect_summary_finaicial_statements(year, quarter)
+                    self.context['logs'] += logs
     
         return render(self.request, self.template_name, context=self.context)
 
