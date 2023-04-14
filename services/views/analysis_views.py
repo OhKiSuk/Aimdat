@@ -49,7 +49,8 @@ class AnalysisView(UserPassesTestMixin, ListView):
                 field = self.request.session['condition_en_list']
 
             for corp_id, corp_year, corp_quarter in zip(corp_id_list, corp_year_list, corp_quarter_list):
-                result = queryset.filter(Q(corp_id_id = corp_id) & Q(year = corp_year) & Q(quarter = corp_quarter)).values('corp_id_id', 'corp_id_id__corp_name', 'year', 'quarter', *field)
+                print(corp_id, corp_year, corp_quarter)
+                result = queryset.filter(Q(corp_id__exact = corp_id) & Q(year__exact = corp_year) & Q(quarter__exact = corp_quarter)).values('corp_id', 'corp_id__corp_name', 'year', 'quarter', *field)
                 if result:
                     checked_corp_data.append(result)
 

@@ -45,13 +45,13 @@ class SearchView(UserPassesTestMixin, ListView):
         # Session에 기업명 값이 있을 경우
         if 'corp' in self.request.session:
             for name in self.request.session['corp']:
-                q |= Q(corp_id_id__corp_name__icontains=name)
+                q |= Q(corp_id__corp_name__icontains=name)
 
         # Session에 연, 분기 값이 있을 경우
         if 'year' in self.request.session:
-            q &= Q(year=self.request.session['year'])
+            q &= Q(year__exact=self.request.session['year'])
         if 'quarter' in self.request.session:
-            q &= Q(quarter=self.request.session['quarter'])
+            q &= Q(quarter__exact=self.request.session['quarter'])
 
         # Session에 조건 값이 있을 경우
         if 'name_en' in self.request.session and len(self.request.session['name_en']):

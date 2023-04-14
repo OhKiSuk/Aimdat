@@ -50,7 +50,7 @@ class CorpDetailView(UserPassesTestMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         id = self.kwargs.get(self.pk_url_kwarg)
-        stock_price_obj = StockPrice.objects.filter(Q(corp_id = id))
+        stock_price_obj = StockPrice.objects.filter(Q(corp_id__exact = id))
         disclosure_name, disclosure_date, disclosure_numbers = self.disclosure_data(id)
 
         # 공시 데이터를 가져오지 못한 경우
@@ -61,7 +61,7 @@ class CorpDetailView(UserPassesTestMixin, DetailView):
             context['disclosure_data'] = disclosure_data
             context['page_obj'] = self.paging_disclosure_data(disclosure_data)
 
-        context['corp_info'] = CorpInfo.objects.get(Q(corp_id = id))
+        context['corp_info'] = CorpInfo.objects.get(Q(corp_id__exact = id))
         context['latest_stock_info'] = stock_price_obj.latest('trade_date')
         context['stock_data'] = stock_price_obj
         context['report_data'] = self.recent_report(id)
@@ -77,14 +77,14 @@ class CorpDetailView(UserPassesTestMixin, DetailView):
             if len(y_data) == 3:
                 break
             year = (timezone.now() - timedelta(days=365 * y)).year
-            obj = FS.objects.filter(Q(corp_id = id) & Q(year = year) & Q(quarter = 4))
+            obj = FS.objects.filter(Q(corp_id__exact = id) & Q(year__exact = year) & Q(quarter__exact = 4))
             if obj:
                 y_data.append(obj)
 
             for q in [4, 3, 2, 1]:
                 if len(q_data) == 4:
                     break
-                obj = FS.objects.filter(Q(corp_id = id) & Q(year = year) & Q(quarter = q))
+                obj = FS.objects.filter(Q(corp_id__exact = id) & Q(year__exact = year) & Q(quarter__exact = q))
                 if obj:
                     q_data.append(obj)
         
