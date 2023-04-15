@@ -1,18 +1,30 @@
 """
 author: cslee
+
+@modified at 2023.04.15
+@author OKS in Aimdat Team
 """
 from django.shortcuts import render
 from django.views.generic import TemplateView, View
-from admin_dashboard.models.last_collect_date import LastCollectDate
 from admin_dashboard.modules.collect.corp import collect_corp
 from admin_dashboard.modules.collect.stock_price import collect_stock_price
 from admin_dashboard.modules.collect.summary_financial_statements import collect_summary_finaicial_statements
 
+from ..models.last_collect_date import LastCollectDate
+
 
 class CollectCorpInfoView(TemplateView):
     template_name = 'admin_dashboard/data_collect/collect_corp_info.html'
+
+    lastest_collect_date = LastCollectDate.objects.last()
+
+    if lastest_collect_date:
+        last_corp_collect_date = lastest_collect_date.last_corp_collect_date
+    else:
+        last_corp_collect_date = None
+
     context = {
-        'last_corp_collect_date' : LastCollectDate.objects.get().last_corp_collect_date,
+        'last_corp_collect_date': last_corp_collect_date
     }   
     
     def get(self, request): # get_corp_info
@@ -24,8 +36,16 @@ class CollectCorpInfoView(TemplateView):
     
 class CollectStockPriceView(View):
     template_name = 'admin_dashboard/data_collect/collect_stock_price.html'
+
+    lastest_collect_date = LastCollectDate.objects.last()
+
+    if lastest_collect_date:
+        last_stock_collect_date = lastest_collect_date.last_stock_collect_date
+    else:
+        last_stock_collect_date = None
+
     context = {
-        'last_stock_collect_date' : LastCollectDate.objects.get().last_stock_collect_date,
+        'last_stock_collect_date': lastest_collect_date,
         'date_logs' : [],
         'corp_logs' : []
         
@@ -42,8 +62,16 @@ class CollectStockPriceView(View):
 
 class CollectFinancialStatementView(View):
     template_name = 'admin_dashboard/data_collect/collect_summary_financial_statements.html'
+
+    lastest_collect_date = LastCollectDate.objects.last()
+
+    if lastest_collect_date:
+        last_summaryfs_collect_date = lastest_collect_date.last_summaryfs_collect_date
+    else:
+        last_summaryfs_collect_date = None
+
     context = {
-        'last_summaryfs_collect_date' : LastCollectDate.objects.get().last_summaryfs_collect_date,
+        'last_summaryfs_collect_date': last_summaryfs_collect_date,
         'logs' : []
     }
 
