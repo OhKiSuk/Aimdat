@@ -1,11 +1,15 @@
 """
 @created at 2023.04.04
 @author cslee in Aimdat Team
+
+@modified at 2023.04.17
+@author OKS in Aimdat Team
 """
 import json        
 import os
 import pandas as pd
-import requests    
+import requests
+import retry    
 import sys
 import time
 from datetime import datetime, timedelta
@@ -37,6 +41,7 @@ def _get_secrets(key):
     value = secrets[key]
     return value
 
+@retry.retry(exceptions=[TimeoutError, ValueError], tries=10)
 def _collect_new_corps_stocks(decimal_places=6):
     url = 'https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo'
     service_key = _get_secrets('data_portal_key')
@@ -47,20 +52,13 @@ def _collect_new_corps_stocks(decimal_places=6):
     for i in range(n):
         stock_code = corp_list[i]
         params = {'serviceKey':service_key, 'numOfRows':100000000, 'pageNo':1, 'resultType':'json', 'beginBasDt':20200102, 'likeSrtnCd':stock_code}
-        cnt = 0
-        while(cnt < 5):
-            try:
-                res = requests.get(url, params=params, verify=False)
-                break
-            except TimeoutError:
-                time.sleep(60)
-                cnt += 1
 
-            if cnt == 5:
-                break
-
-        if cnt == 5:
-            fail_list.append([stock_code, 'timeout'])
+        try:
+            res = requests.get(url, params=params, verify=False)
+        except TimeoutError:
+            time.sleep(60)
+        except ValueError:
+            fail_list.append([stock_code, 'json decode error at:' + datetime.now()])
             continue
                 
         res_data = res.json()
@@ -106,10 +104,12 @@ def _collect_new_corps_stocks(decimal_places=6):
             value = float('.'.join(tmp_list))
             change_rate = round(value, decimal_places)
 
+            trade_date = trade_date[0:4] + '-' + trade_date[4:6] + '-' + trade_date[6:8]
+
             try:
                 # 데이터 중복저장 예방
                 sp_data = StockPrice.objects.get(corp_id=id_data, trade_date=trade_date)
-                continue
+                continue 
             except StockPrice.DoesNotExist:
                 sp_data = StockPrice(
                     corp_id=id_data,
