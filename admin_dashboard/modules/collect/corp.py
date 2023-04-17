@@ -1,14 +1,22 @@
 """
-@modified at 2023.04.05
-@author cslee in Aimdat Team
+@modified at 2023.04.17
+@author OKS in Aimdat Team
 """
+import json
 import os
 import pandas as pd
 import sys
 import time
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+
+#django 앱 최상위 경로
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+
+#secrets.json 경로
+SECRETS_FILE = os.path.join(BASE_DIR, 'secrets.json')
 
 dir_collect = os.path.dirname(__file__)
 dir_modules = os.path.dirname(dir_collect)
@@ -143,7 +151,11 @@ def _remove_file(file_path, operate_system, folder=False):
 
 def collect_corp(year=2022, operate_system='win'):
     _crawl_corp_list_files(year)
-    path = r'C:\Users\80ckd\Downloads' 
+
+    # secrets.json의 download_folder 경로 지정
+    with open(SECRETS_FILE, 'r') as f:
+        path = json.load(f)['download_folder']
+
     fname = '상장법인목록.xls'
     file_krx_list = path +'\\'+ fname
 
