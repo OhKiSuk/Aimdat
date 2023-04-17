@@ -1,9 +1,10 @@
 """
 author: cslee
 
-@modified at 2023.04.15
+@modified at 2023.04.17
 @author OKS in Aimdat Team
 """
+from django.db.utils import ProgrammingError
 from django.shortcuts import render
 from django.views.generic import TemplateView, View
 from admin_dashboard.modules.collect.corp import collect_corp
@@ -16,15 +17,16 @@ from ..models.last_collect_date import LastCollectDate
 class CollectCorpInfoView(TemplateView):
     template_name = 'admin_dashboard/data_collect/collect_corp_info.html'
 
-    lastest_collect_date = LastCollectDate.objects.last()
-
-    if lastest_collect_date:
-        last_corp_collect_date = lastest_collect_date.last_corp_collect_date
-    else:
-        last_corp_collect_date = None
+    try:
+        lastest_collect_date = LastCollectDate.objects.last().last_corp_collect_date
+    except ProgrammingError:
+        lastest_collect_date = None
+    except AttributeError:
+        LastCollectDate.objects.create()
+        lastest_collect_date = LastCollectDate.objects.last().last_corp_collect_date
 
     context = {
-        'last_corp_collect_date': last_corp_collect_date
+        'last_corp_collect_date': lastest_collect_date
     }   
     
     def get(self, request): # get_corp_info
@@ -37,18 +39,18 @@ class CollectCorpInfoView(TemplateView):
 class CollectStockPriceView(View):
     template_name = 'admin_dashboard/data_collect/collect_stock_price.html'
 
-    lastest_collect_date = LastCollectDate.objects.last()
-
-    if lastest_collect_date:
-        last_stock_collect_date = lastest_collect_date.last_stock_collect_date
-    else:
-        last_stock_collect_date = None
+    try:
+        lastest_stock_date = LastCollectDate.objects.last().last_stock_collect_date
+    except ProgrammingError:
+        lastest_stock_date = None
+    except AttributeError:
+        LastCollectDate.objects.create()
+        lastest_stock_date = LastCollectDate.objects.last().last_stock_collect_date
 
     context = {
-        'last_stock_collect_date': lastest_collect_date,
+        'last_stock_collect_date': lastest_stock_date,
         'date_logs' : [],
         'corp_logs' : []
-        
     }
 
     def get(self, request): # get_stock_price
@@ -63,15 +65,16 @@ class CollectStockPriceView(View):
 class CollectFinancialStatementView(View):
     template_name = 'admin_dashboard/data_collect/collect_summary_financial_statements.html'
 
-    lastest_collect_date = LastCollectDate.objects.last()
-
-    if lastest_collect_date:
-        last_summaryfs_collect_date = lastest_collect_date.last_summaryfs_collect_date
-    else:
-        last_summaryfs_collect_date = None
+    try:
+        lastest_summaryfs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+    except ProgrammingError:
+        lastest_summaryfs_date = None
+    except AttributeError:
+        LastCollectDate.objects.create()
+        lastest_summaryfs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
 
     context = {
-        'last_summaryfs_collect_date': last_summaryfs_collect_date,
+        'last_summaryfs_collect_date': lastest_summaryfs_date,
         'logs' : []
     }
 
