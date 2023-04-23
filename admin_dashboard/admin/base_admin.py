@@ -32,7 +32,8 @@ from .axes_admin import (
 from ..views.collect_data_views import (
     CollectCorpInfoView, 
     CollectStockPriceView, 
-    CollectFinancialStatementView
+    CollectFinancialStatementView,
+    CollectFcorpFinancialStatementsView
 )
 from ..views.corp_manage_views import (
     CorpManageView, 
@@ -56,6 +57,7 @@ class CustomAdminSite(AdminSite):
             path('summaryfs/collect', custom_admin_site.admin_view(CollectFinancialStatementView.as_view()), name='collect_summary_financial_statements'),
             path('stock/collect', custom_admin_site.admin_view(CollectStockPriceView.as_view()), name='collect_stock_price'),
             path('corp/collect', custom_admin_site.admin_view(CollectCorpInfoView.as_view()), name='collect_corp_info'),
+            path('fs/collect/fcorp', custom_admin_site.admin_view(CollectFcorpFinancialStatementsView.as_view()), name='collect_fcorp_fs'),
             
             path('corp/manage', custom_admin_site.admin_view(CorpManageView.as_view()), name='corp_manage'),
             path('corp/manage/id/<int:pk>/', custom_admin_site.admin_view(CorpIdChangeView.as_view()), name='corp_id_change'),

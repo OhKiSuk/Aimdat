@@ -11,6 +11,11 @@
             </a>
         </li>
         <li class="nav-item">
+            <a href="{% url 'admin:collect_fcorp_fs' %}" class="nav-link {% if '/admin/fs/collect/fcorp' in request.path %}active{% endif %}">
+            금융기업 재무정보 수집
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="{% url 'admin:collect_stock_price' %}" class="nav-link {% if '/admin/stock/collect' in request.path %}active{% endif %}">
             주가정보 수집
             </a>
