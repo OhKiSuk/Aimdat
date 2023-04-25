@@ -71,7 +71,7 @@ def _get_fcorp_list():
         return HttpResponseServerError
     
 @retry.retry(exceptions=SSLError, tries=10, delay=3)
-def _crawl_dart(crawl_crp_list, year:int, quarter:int, fs_type=5, sleep_time=1):
+def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     """
     open dart의 단일회사 재무제표 조회에서 금융 기업 목록 검색 후 재무제표 파싱
     """
@@ -79,10 +79,10 @@ def _crawl_dart(crawl_crp_list, year:int, quarter:int, fs_type=5, sleep_time=1):
     driver = webdriver.Chrome(ChromeDriverManager().install())
     
     fs_result = []
+    logs = []
     # 검색 후 재무제표 획득
     for stock_code in crawl_crp_list:
         driver.get(url)
-        print(stock_code)
 
         find_corp_button = driver.find_element(By.ID, 'btnOpenFindCrp')
         find_corp_button.click()
@@ -114,8 +114,9 @@ def _crawl_dart(crawl_crp_list, year:int, quarter:int, fs_type=5, sleep_time=1):
         select_year.select_by_value(str(year))
         
         # 보고서명 선택 {1: 1분기보고서, 2: 반기보고서, 3: 3분기보고서, 4: 사업보고서}
-        select_report_name_element = WebDriverWait(driver, 1).until(EC.presence_of_element_located((By.ID, "reportCode")))
+        select_report_name_element = WebDriverWait(driver, 1).until(EC.presence_of_element_located((By.ID, 'reportCode')))
         select_report_name = Select(select_report_name_element)
+
         if quarter == 1:
             select_report_name.select_by_value('11013')
         elif quarter == 2:
@@ -191,7 +192,9 @@ def _crawl_dart(crawl_crp_list, year:int, quarter:int, fs_type=5, sleep_time=1):
                 rows = table.find_all('tr')
                 
                 # 차변/대변 존재 여부 확인
-                if len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'제\s*?[0-9]+'))) > 0:
+                if len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'제\s*?[0-9]+'))) > 0 or \
+                    len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'(3\s*?개\s*?월|누\s*?적\s*?)'))):
+
                     for row in rows:
 
                         # 재무제표 표 헤더 건너뛰기
@@ -204,6 +207,13 @@ def _crawl_dart(crawl_crp_list, year:int, quarter:int, fs_type=5, sleep_time=1):
                             continue
                         else:
                             account_subject = tds[0].get_text() # 계정과목
+
+                        # row가 합쳐져 있는 형태를 찾은 경우 log 저장 후 넘김
+                        rowspan_tds = [td for td in tds if td.has_attr('rowspan')]
+                        if len(rowspan_tds) > 0 or len(row.find_all(name='td')) == 1:
+                            log_messages = str(stock_code+':'+tds[0].get_text()+' 계정과목 내에 rowspan이 존재합니다.')
+                            logs.append(log_messages)
+                            continue
 
                         # 재무제표 내에 주석이 존재하는 지 확인
                         if table.find(name='th', string=re.compile(r'\s*?주\s*?석')):
@@ -277,7 +287,6 @@ def _crawl_dart(crawl_crp_list, year:int, quarter:int, fs_type=5, sleep_time=1):
                                     fs_dict[account_subject] = str(value)
                             elif value == '':
                                 continue
-
             else:
                 # 재무제표가 아닌 테이블은 넘어간다.
                 continue
@@ -286,7 +295,7 @@ def _crawl_dart(crawl_crp_list, year:int, quarter:int, fs_type=5, sleep_time=1):
             if len(table.find_all(string=re.compile(r'.*?미\s*?처\s*?분'))) == 0 and len(table.find_all(string=re.compile(r'\s*?[0-9]+\.\s*?[0-9]+\.\s*?[0-9]+'))) == 0:
                 fs_result.append(fs_dict)
 
-    return fs_result
+    return fs_result, logs
     
 def _remove_file(file_path, system_name, folder=False):
     """
@@ -305,7 +314,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
     금융 기업 재무제표 목록 저장
     """
     fcorp_list = _get_fcorp_list()
-    crawl_result = _crawl_dart(fcorp_list, year, quarter, fs_type)
+    crawl_result, logs = _crawl_dart(fcorp_list, year, quarter, fs_type)
 
     if crawl_result:
         client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -323,6 +332,8 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
             if len(file_path) > 0:
                 system_name = platform.system()
                 _remove_file(file_path[0], system_name)
+
+        print(logs)
 
         # 성공 여부 리턴
         if result:

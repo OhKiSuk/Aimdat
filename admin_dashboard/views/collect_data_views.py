@@ -133,25 +133,25 @@ class CollectFcorpFinancialStatementsView(View):
                 now_year = datetime.now().year
                 years = [now_year - i for i in range(5)]
             else:
-                years = [year]
+                years = [int(year)]
 
             # 분기 {1: 1분기, 2: 반기, 3: 3분기, 4: 사업보고서}
             if quarter == 'all':
                 quarters = [1, 2, 3, 4]
             else:
-                quarters = [quarter]
+                quarters = [int(quarter)]
 
             # 재무제표 종류 {0: 연결재무제표, 5: 일반재무제표}
             if fs_type == "all":
                 fs_types = [0, 5]
             else:
-                fs_types = [fs_type]
+                fs_types = [int(fs_type)]
 
             # 재무제표 수집
             for y in years:
                 for q in quarters:
-                    for type in fs_types:
-                        result = save_fcorp(y, q, type)
+                    for fs in fs_types:
+                        result = save_fcorp(y, q, fs)
 
             # 수집 성공 시 수집일 변경
             if result:
