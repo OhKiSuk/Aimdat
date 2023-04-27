@@ -39,12 +39,13 @@ from ..views.corp_manage_views import (
     CorpManageView, 
     CorpIdChangeView, 
     CorpInfoChangeView, 
-    CorpSummaryFinancialStatementsChangeView
+    CorpSummaryFinancialStatementsChangeView,
 )
 from ..views.inquiry_manage_views import (
     InquiryListView, 
     InquiryAddAnswerView
 )
+from ..views.collect_ifrs_views import CollectIFRSView
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin_dashboard/index.html'
@@ -58,6 +59,7 @@ class CustomAdminSite(AdminSite):
             path('stock/collect', custom_admin_site.admin_view(CollectStockPriceView.as_view()), name='collect_stock_price'),
             path('corp/collect', custom_admin_site.admin_view(CollectCorpInfoView.as_view()), name='collect_corp_info'),
             path('fs/collect/fcorp', custom_admin_site.admin_view(CollectFcorpFinancialStatementsView.as_view()), name='collect_fcorp_fs'),
+            path('ifrs/collect', custom_admin_site.admin_view(CollectIFRSView.as_view()), name='collect_ifrs'),
             
             path('corp/manage', custom_admin_site.admin_view(CorpManageView.as_view()), name='corp_manage'),
             path('corp/manage/id/<int:pk>/', custom_admin_site.admin_view(CorpIdChangeView.as_view()), name='corp_id_change'),
