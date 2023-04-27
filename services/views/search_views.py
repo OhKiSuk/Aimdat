@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.04.12
+@modified at 2023.04.26
 @author JSU in Aimdat Team
 """
 
@@ -24,12 +24,12 @@ class SearchView(UserPassesTestMixin, ListView):
     paginate_by = 100
     
     def test_func(self):
-        if self.request.user.is_admin:
-            return False
-        
         auth = self.request.user.is_authenticated
 
         if auth:
+            if self.request.user.is_admin:
+                return False
+            
             date = self.request.user.expiration_date.date() >= timezone.now().date()
             return auth and date
         
