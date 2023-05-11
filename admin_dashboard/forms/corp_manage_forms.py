@@ -49,7 +49,7 @@ class CorpInfoChangeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['corp_homepage_url'].label = '기업 홈페이지 주소'
-        self.fields['corp_settlement_date'].label = '기업 결산일'
+        self.fields['corp_settlement_month'].label = '기업 결산월'
         self.fields['corp_ceo_name'].label = 'CEO 이름'
         self.fields['corp_summary'].label = '기업 설명'
 

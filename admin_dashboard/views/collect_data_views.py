@@ -15,10 +15,11 @@ from django.views.generic import (
     TemplateView, 
     View
 )
-from admin_dashboard.modules.collect.corp import collect_corp
-from admin_dashboard.modules.collect.stock_price import collect_stock_price
-from admin_dashboard.modules.collect.summary_financial_statements import collect_summary_finaicial_statements
-from admin_dashboard.modules.collect.fcorp_financial_statements import save_fcorp
+from ..modules.collect.corp import collect_corp
+from ..modules.collect.stock_price import collect_stock_price
+from ..modules.collect.summary_financial_statements import collect_summary_finaicial_statements
+from ..modules.collect.fcorp_financial_statements import save_fcorp
+from ..modules.collect.dcorp_financial_statements import save_dcorp
 
 from ..models.last_collect_date import LastCollectDate
 
@@ -176,4 +177,67 @@ class CollectFcorpFinancialStatementsView(View):
             LastCollectDate.objects.create()
             lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
         
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_fs_date})
+
+class CollectDcorpFinancialStatementsView(View):
+    """
+    비금융기업 재무제표 수집 뷰
+    """
+    template_name = 'admin_dashboard/data_collect/collect_dcorp_financial_statements.html'
+
+    def post(self, request):
+        if request.method == 'POST':
+            year = request.POST.get('year')
+            quarter = request.POST.get('quarter')
+
+            # 선택하지 않았을 경우 경고 alert
+            if year == "none" or quarter == "none":
+                messages.success(self.request, '항목을 선택해주세요.')
+                return redirect('admin:collect_fcorp_fs')
+
+            # 최근 5년치 재무제표만 수집 가능
+            if year == 'all':
+                now_year = datetime.now().year
+                years = [now_year - i for i in range(5)]
+            else:
+                years = [int(year)]
+
+            # 분기 {1: 1분기, 2: 반기, 3: 3분기, 4: 사업보고서}
+            if quarter == 'all':
+                quarters = ['1분기', '반기', '3분기', '사업']
+            elif quarter == '1':
+                quarters = ['1분기']
+            elif quarter == '2':
+                quarters = ['반기']
+            elif quarter == '3':
+                quarters = ['3분기']
+            elif quarter == '4':
+                quarters = ['사업']
+
+            # 재무제표 수집
+            result = save_dcorp(years, quarters)
+
+            # 수집 성공 시 수집일 변경
+            if result:
+                try:
+                    lastest_fs_date = LastCollectDate.objects.last()
+                    lastest_fs_date.last_summaryfs_collect_date = datetime.today()
+                    lastest_fs_date.save()
+                except AttributeError:
+                    LastCollectDate.objects.create()
+                    lastest_fs_date = LastCollectDate.objects.last()
+                    lastest_fs_date.last_summaryfs_collect_date = datetime.today()
+                    lastest_fs_date.save()
+
+        return render(self.request, self.template_name, context={'lastest_collect_date': datetime.today()})
+
+    def get(self, requeset):
+        try:
+            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+        except ProgrammingError:
+            lastest_fs_date = None
+        except AttributeError:
+            LastCollectDate.objects.create()
+            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+
         return render(self.request, self.template_name, context={'lastest_collect_date': lastest_fs_date})

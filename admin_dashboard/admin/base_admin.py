@@ -1,5 +1,5 @@
 """
-@modified at 2023.04.05
+@modified at 2023.05.01
 @author OKS in Aimdat Team
 """
 from account.forms.login_forms import CustomAuthenticationForm
@@ -32,20 +32,23 @@ from .axes_admin import (
 from ..views.collect_data_views import (
     CollectCorpInfoView, 
     CollectStockPriceView, 
-    CollectFinancialStatementView,
-    CollectFcorpFinancialStatementsView
+    CollectFcorpFinancialStatementsView,
+    CollectDcorpFinancialStatementsView
 )
 from ..views.corp_manage_views import (
-    CorpManageView, 
-    CorpIdChangeView, 
-    CorpInfoChangeView, 
-    CorpSummaryFinancialStatementsChangeView,
+    ManageCorpIdListView, 
+    ManageCorpIdUpdateView,
+    ManageCorpInfoListView,
+    ManageCorpInfoUpdateView,
+    ManageCorpFinancialStatementsAddView,
+    ManageCorpFinancialStatementsDeleteView,
+    ManageCorpFinancialStatementsSearchView,
+    ManageCorpFinancialStatementsUpdateView,
 )
 from ..views.inquiry_manage_views import (
     InquiryListView, 
     InquiryAddAnswerView
 )
-from ..views.collect_ifrs_views import CollectIFRSView
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin_dashboard/index.html'
@@ -55,16 +58,29 @@ class CustomAdminSite(AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('summaryfs/collect', custom_admin_site.admin_view(CollectFinancialStatementView.as_view()), name='collect_summary_financial_statements'),
-            path('stock/collect', custom_admin_site.admin_view(CollectStockPriceView.as_view()), name='collect_stock_price'),
-            path('corp/collect', custom_admin_site.admin_view(CollectCorpInfoView.as_view()), name='collect_corp_info'),
-            path('fs/collect/fcorp', custom_admin_site.admin_view(CollectFcorpFinancialStatementsView.as_view()), name='collect_fcorp_fs'),
-            path('ifrs/collect', custom_admin_site.admin_view(CollectIFRSView.as_view()), name='collect_ifrs'),
+            # 재무제표 수집
+            path('collect/fs/fcorp/', custom_admin_site.admin_view(CollectFcorpFinancialStatementsView.as_view()), name='collect_fs_fcorp'),
+            path('collect/fs/dcorp/', custom_admin_site.admin_view(CollectDcorpFinancialStatementsView.as_view()), name='collect_fs_dcorp'),
+
+            # 주가정보 수집
+            path('collect/stock/', custom_admin_site.admin_view(CollectStockPriceView.as_view()), name='collect_stock'),
+
+            # 기업정보 수집
+            path('collect/corp/info/', custom_admin_site.admin_view(CollectCorpInfoView.as_view()), name='collect_corp_info'),
             
-            path('corp/manage', custom_admin_site.admin_view(CorpManageView.as_view()), name='corp_manage'),
-            path('corp/manage/id/<int:pk>/', custom_admin_site.admin_view(CorpIdChangeView.as_view()), name='corp_id_change'),
-            path('corp/manage/info/<int:pk>/', custom_admin_site.admin_view(CorpInfoChangeView.as_view()), name='corp_info_change'),
-            path('corp/manage/summary/<int:pk>/', custom_admin_site.admin_view(CorpSummaryFinancialStatementsChangeView.as_view()), name='corp_summary_change'),
+            # 기업 식별 목록 관리
+            path('manage/corp/id/list/', custom_admin_site.admin_view(ManageCorpIdListView.as_view()), name='manage_corp_id_list'),
+            path('manage/corp/id/update/<int:pk>/', custom_admin_site.admin_view(ManageCorpIdUpdateView.as_view()), name='manage_corp_id_update'),
+
+            # 기업 정보 관리
+            path('manage/corp/info/list/', custom_admin_site.admin_view(ManageCorpInfoListView.as_view()), name='manage_corp_info_list'),
+            path('manage/corp/info/update/<int:pk>/', custom_admin_site.admin_view(ManageCorpInfoUpdateView.as_view()), name='manage_corp_info_update'),
+
+            # 기업 재무제표 관리
+            path('manage/corp/fs/add/', custom_admin_site.admin_view(ManageCorpFinancialStatementsAddView.as_view()), name='manage_corp_fs_add'),
+            path('manage/corp/fs/delete/', custom_admin_site.admin_view(ManageCorpFinancialStatementsDeleteView.as_view()), name='manage_corp_fs_delete'),
+            path('manage/corp/fs/search/', custom_admin_site.admin_view(ManageCorpFinancialStatementsSearchView.as_view()), name='manage_corp_fs_search'),
+            path('manage/corp/fs/update/', custom_admin_site.admin_view(ManageCorpFinancialStatementsUpdateView.as_view()), name='manage_corp_fs_update'),
 
             #문의사항 관리
             path('inquiry/manage/', custom_admin_site.admin_view(InquiryListView.as_view()), name='inquiry_manage'),

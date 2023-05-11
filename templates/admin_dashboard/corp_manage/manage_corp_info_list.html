@@ -1,0 +1,72 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="row mt-3">
+    <span class="font-lg fw-bold">기업정보 관리</span>
+</div>
+
+<div class="row mt-3">
+    <div class="col-9">
+        <div class="bg-white p-3">
+            <table class="table table-bordered table-hover mt-3">
+                <thead>
+                    <tr class="bg-sub fw-bold font-sm text-white text-center">
+                        <td>기업명</td>
+                        <td>홈페이지 주소</td>
+                        <td>기업 결산월</td>
+                        <td>CEO 명</td>
+                        <td>기업 소개</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in content.object_list %}
+                    <tr class="font-sm text-center">
+                        <td>
+                            <a href="{% url 'admin:manage_corp_info_update' i.id %}">{{ i.corp_id.corp_name }}</a>
+                        </td>
+                        <td>{{ i.corp_homepage_url }}</td>
+                        <td>{{ i.corp_settlement_month }}</td>
+                        <td>{{ i.corp_ceo_name }}</td>
+                        <td>{{ i.corp_summary }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <ul class="pagination pagination-sm justify-content-center">
+                {% if content.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ content.previous_page_number }}">이전</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+                </li>
+                {% endif %}
+                {% for page_number in content.paginator.page_range %}
+                {% if page_number >= content.number|add:-5 and page_number <= content.number|add:5 %}
+                {% if page_number == content.number %}
+                <li class="page-item active" aria-current="page">
+                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                </li>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+                {% if content.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ content.next_page_number }}">다음</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

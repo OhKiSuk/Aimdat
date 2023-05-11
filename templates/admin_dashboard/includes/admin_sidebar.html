@@ -6,35 +6,44 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{% url 'admin:collect_summary_financial_statements' %}" class="nav-link {% if '/admin/summaryfs/collect' in request.path %}active{% endif %}">
-            재무정보 수집
-            </a>
+            <a class="nav-link {% if '/admin/collect/fs/' in request.path %}active{% endif %}" href="" data-bs-toggle="collapse" data-bs-target="#id_collapse_fs" aria-expanded="false">재무제표 수집</a>
         </li>
+        <div class="collapse" id="id_collapse_fs">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:collect_fs_fcorp' %}">&nbsp;&nbsp;&nbsp;&nbsp;금융기업</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:collect_fs_dcorp' %}">&nbsp;&nbsp;&nbsp;&nbsp;비금융기업</a>
+                </li>
+            </ul>
+        </div>
         <li class="nav-item">
-            <a href="{% url 'admin:collect_fcorp_fs' %}" class="nav-link {% if '/admin/fs/collect/fcorp' in request.path %}active{% endif %}">
-            금융기업 재무정보 수집
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'admin:collect_stock_price' %}" class="nav-link {% if '/admin/stock/collect' in request.path %}active{% endif %}">
+            <a href="{% url 'admin:collect_stock' %}" class="nav-link {% if '/admin/collect/stock/' in request.path %}active{% endif %}">
             주가정보 수집
             </a>
         </li>
         <li class="nav-item">
-            <a href="{% url 'admin:collect_corp_info' %}" class="nav-link {% if '/admin/corp/collect' in request.path %}active{% endif %}">
+            <a href="{% url 'admin:collect_corp_info' %}" class="nav-link {% if '/admin/collect/corp/info/' in request.path %}active{% endif %}">
             기업정보 수집
             </a>
         </li>
         <li class="nav-item">
-            <a href="{% url 'admin:collect_ifrs' %}" class="nav-link {% if '/admin/ifrs/collect' in request.path %}active{% endif %}">
-            IFRS 수집
-            </a>
+            <a class="nav-link {% if '/admin/manage/corp/' in request.path %}active{% endif %}" href="" data-bs-toggle="collapse" data-bs-target="#id_collapse_manage_corp" aria-expanded="false">기업 데이터 관리</a>
         </li>
-        <li class="nav-item">
-            <a href="{% url 'admin:corp_manage' %}" class="nav-link {% if '/admin/corp/manage' in request.path %}active{% endif %}">
-            기업정보 관리
-            </a>
-        </li>
+        <div class="collapse" id="id_collapse_manage_corp">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:manage_corp_id_list' %}">&nbsp;&nbsp;&nbsp;&nbsp;기업 식별자</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:manage_corp_info_list' %}">&nbsp;&nbsp;&nbsp;&nbsp;기업 정보</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:manage_corp_fs_search' %}">&nbsp;&nbsp;&nbsp;&nbsp;기업 재무제표</a>
+                </li>
+            </ul>
+        </div>
         <li class="nav-item">
             <a href="{% url 'admin:account_user_changelist' %}" class="nav-link {% if '/admin/account/user/' in request.path %}active{% endif %}">
             계정정보 관리

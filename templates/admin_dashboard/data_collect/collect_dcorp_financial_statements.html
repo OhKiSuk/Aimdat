@@ -1,7 +1,7 @@
 {% extends 'admin_dashboard/layout/admin_base.html' %}
 {% block content %}
 <div class="row mt-3">
-    <span class="font-lg fw-bold">금융기업 재무정보 수집</span>
+    <span class="font-lg fw-bold">비금융기업 재무정보 수집</span>
 </div>
 <div class="row mt-3">
     <div class="mb-2">
@@ -10,7 +10,7 @@
     <hr>
     <span class="font-md">
         <div style="text-align: right;">
-            <form method="post" action="{% url 'admin:collect_fs_fcorp' %}">
+            <form method="post" action="{% url 'admin:collect_fs_dcorp' %}">
                 {% csrf_token %}
                 <div class="row">
                     <div class="col">
@@ -31,14 +31,6 @@
                             <option value="2">2분기</option>
                             <option value="3">3분기</option>
                             <option value="4">4분기</option>
-                        </select>
-                    </div>
-                    <div class="col">
-                        <select class="form-select form-select-sm" name="fs_type">
-                            <option value="none">재무제표 종류</option>
-                            <option value="all">전체</option>
-                            <option value="5">개별재무제표</option>
-                            <option value="0">연결재무제표</option>
                         </select>
                     </div>
                     <div class="col">

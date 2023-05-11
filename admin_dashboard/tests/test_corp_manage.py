@@ -2,15 +2,16 @@
 @created at 2023.03.16
 @author OKS in Aimdat Team
 
-@modified at 2023.04.11
+@modified at 2023.05.11
 @author OKS in Aidmat Team
 """
 from account.models import User
+from bson.objectid import ObjectId
 from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from services.models.corp_id import CorpId
 from services.models.corp_info import CorpInfo
-from services.models.corp_summary_financial_statements import CorpSummaryFinancialStatements
+from unittest import mock
 
 class CorpManageTest(TestCase):
     
@@ -37,44 +38,11 @@ class CorpManageTest(TestCase):
             corp_ceo_name = 'test',
             corp_summary = 'test',
         )
-        self.corp_summary = CorpSummaryFinancialStatements.objects.create(
-            corp_id = self.corp_id,
-            disclosure_date = '2000-12-31',
-            year = '9999',
-            quarter = '1',
-            revenue = 00.00,
-            operating_profit = 00.00,
-            net_profit = 00.00,
-            operating_margin = 00.00,
-            net_profit_margin = 00.00,
-            debt_ratio = 00.00,
-            cost_of_sales_ratio = 00.00,
-            quick_ratio = 00.00,
-            dividend = 00.00,
-            total_dividend = 00.00,
-            dividend_yield = 00.00,
-            dividend_payout_ratio = 00.00,
-            dividend_ratio = 00.00,
-            per = 00.00,
-            pbr = 00.00,
-            psr = 00.00,
-            ev_ebitda = 00.00,
-            eps = 00.00,
-            bps = 00.00,
-            roe = 00.00,
-            dps = 00.00,
-            total_debt = 00.00,
-            total_asset = 00.00,
-            total_capital = 00.00,
-            borrow_debt = 00.00,
-            face_value = 00.00,
-        )
     
     def tearDown(self):
         User.objects.all().delete()
         CorpId.objects.all().delete()
         CorpInfo.objects.all().delete()
-        CorpSummaryFinancialStatements.objects.all().delete()
     
     def test_change_corp_id_success(self):
         """
@@ -86,11 +54,11 @@ class CorpManageTest(TestCase):
         request = self.factory.get(reverse('admin:index'))
         self.client.login(request=request, username=email, password=password)
         
-        response = self.client.post(reverse('admin:corp_id_change', args=[self.corp_id.id]), {'corp_name': 'testcorp'})
+        response = self.client.post(reverse('admin:manage_corp_id_update', args=[self.corp_id.id]), {'corp_name': 'testcorp'})
 
         self.assertTrue(response.status_code, 302)
 
-    def test_change_corp_id_success(self):
+    def test_change_corp_info_success(self):
         """
         기업 정보가 정상적으로 변경되는지 테스트
         """
@@ -100,13 +68,14 @@ class CorpManageTest(TestCase):
         request = self.factory.get(reverse('admin:index'))
         self.client.login(request=request, username=email, password=password)
         
-        response = self.client.post(reverse('admin:corp_info_change', args=[self.corp_info.corp_id.id]), {'corp_summary': 'testinfo'})
+        response = self.client.post(reverse('admin:manage_corp_info_update', args=[self.corp_info.corp_id.id]), {'corp_summary': 'testinfo'})
 
         self.assertTrue(response.status_code, 302)
 
-    def test_change_corp_id_success(self):
+    @mock.patch('pymongo.collection.Collection.find_one')
+    def test_corp_fs_search_success(self, mock_find_one):
         """
-        기업 요약재무제표가 정상적으로 변경되는지 테스트
+        기업 재무제표 검색 성공 테스트
         """
         email = 'testadmin@aimdat.com'
         password = 'testadmin1!'
@@ -114,6 +83,98 @@ class CorpManageTest(TestCase):
         request = self.factory.get(reverse('admin:index'))
         self.client.login(request=request, username=email, password=password)
         
-        response = self.client.post(reverse('admin:corp_summary_change', args=[self.corp_summary.corp_id.id]), {'revenue': '10.00'})
+        data = {
+            '종목코드': '000000', 
+            '년도': 2020, 
+            '분기': 1, 
+            '재무제표종류': '별도재무상태표'
+        }
+        
+        mock_find_one.return_value = {
+            '종목코드': '000000', 
+            '년도': 2020, 
+            '분기': 1, 
+            '재무제표종류': '별도재무상태표',
+            'test': '1'
+        }
+        
+        response = self.client.post(reverse('admin:manage_corp_fs_search'), data=data)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual('1', mock_find_one.return_value['test'])
 
-        self.assertTrue(response.status_code, 302)
+    @mock.patch('pymongo.collection.Collection.update_one')
+    def test_corp_fs_update_success(self, mock_update_one):
+        """
+        기업 재무제표 계정과목 수정 성공 테스트
+        """
+        email = 'testadmin@aimdat.com'
+        password = 'testadmin1!'
+        
+        request = self.factory.get(reverse('admin:index'))
+        self.client.login(request=request, username=email, password=password)
+
+        data = {
+            'fs_id': ObjectId(),
+            'key': 'test',
+            'value': '1234'
+        }
+
+        mock_update_one.return_value = mock.Mock(matched_count=1)
+        
+        response = self.client.post(reverse('admin:manage_corp_fs_update'), data=data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(1, mock_update_one.return_value.matched_count)
+        self.assertJSONEqual(str(response.content, encoding='utf8'), {'message': '데이터 수정이 완료되었습니다. 새로고침하여 확인해주세요.'})
+
+    @mock.patch('pymongo.collection.Collection.update_one')
+    def test_corp_fs_delete_success(self, mock_update_one):
+        """
+        기업 재무제표 계정과목 삭제 성공 테스트
+        """
+        email = 'testadmin@aimdat.com'
+        password = 'testadmin1!'
+        
+        request = self.factory.get(reverse('admin:index'))
+        self.client.login(request=request, username=email, password=password)
+
+        data = {
+            'fs_id': ObjectId(),
+            'key': 'test'
+        }
+
+        mock_update_one.return_value = mock.Mock(matched_count=1)
+        
+        response = self.client.post(reverse('admin:manage_corp_fs_delete'), data=data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(1, mock_update_one.return_value.matched_count)
+        self.assertJSONEqual(str(response.content, encoding='utf8'), {'message': '데이터 삭제가 완료되었습니다. 새로고침하여 확인해주세요.'})
+
+    @mock.patch('pymongo.collection.Collection.update_one')
+    @mock.patch('pymongo.collection.Collection.find_one')
+    def test_corp_fs_add_success(self, mock_find_one, mock_update_one):
+        """
+        기업 재무제표 계정과목 추가 성공 테스트
+        """
+        email = 'testadmin@aimdat.com'
+        password = 'testadmin1!'
+        
+        request = self.factory.get(reverse('admin:index'))
+        self.client.login(request=request, username=email, password=password)
+
+        data = {
+            'fs_id': ObjectId(),
+            'key': 'test',
+            'value': '1234'
+        }
+
+        mock_find_one.return_value = None
+        mock_update_one.return_value = mock.Mock(matched_count=1)
+        
+        response = self.client.post(reverse('admin:manage_corp_fs_add'), data=data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(1, mock_update_one.return_value.matched_count)
+        self.assertJSONEqual(str(response.content, encoding='utf8'), {'message': '계정과목 추가가 완료되었습니다. 새로고침하여 확인해주세요.'})

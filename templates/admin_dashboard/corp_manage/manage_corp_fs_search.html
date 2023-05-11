@@ -1,0 +1,188 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% block content %}
+<div class="row mt-3">
+    <span class="font-lg fw-bold">기업 재무제표 관리</span>
+</div>
+
+<div class="row mt-3">
+    <div class="col-10">
+        <div class="bg-white p-3">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">
+                        <input type="text" class="form-control form-control-sm" placeholder="기업명(종목코드)" name="corp_name">
+                    </div>
+                    <div class="col mx-3">
+                        <select class="form-select form-select-sm" name="year">
+                            <option value="none">년도</option>
+                            <option value="2020">2020</option>
+                            <option value="2021">2021</option>
+                            <option value="2022">2022</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select class="form-select form-select-sm" name="quarter">
+                            <option value="none">분기</option>
+                            <option value="1">1분기</option>
+                            <option value="2">2분기</option>
+                            <option value="3">3분기</option>
+                            <option value="4">4분기</option>
+                        </select>
+                    </div>
+                    <div class="col mx-3">
+                        <select class="form-select form-select-sm" name="fs_name">
+                            <option value="none">재무제표명</option>
+                            <option value="1">재무상태표</option>
+                            <option value="2">포괄손익계산서</option>
+                            <option value="3">현금흐름표</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select class="form-select form-select-sm" name="fs_type">
+                            <option value="none">재무제표종류</option>
+                            <option value="0">연결재무제표</option>
+                            <option value="5">별도재무제표</option>
+                        </select>
+                    </div>
+                    <div class="col mx-3">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">검색하기</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if content %}
+<div class="row mt-3 mb-5">
+    <div class="col-10">
+        <div class="bg-white p-3 mb-3">
+            <span class="font-sm fw-bold">검색조건: </span>
+            {% for item in search_query %}
+                <div class="badge bg-main text-white">{{ item }}</div>
+            {% endfor %}
+
+            <button class="btn btn-sm btn-primary float-end" data-bs-toggle="collapse" data-bs-target="#id_add_account_subject" aria-expanded="false">계정과목 추가</button>
+        </div>
+
+        <div class="bg-white p-3 my-3 collapse" id="id_add_account_subject">
+            <div class="row mb-3">
+                <label class="col-2" for="id_add_account_subject_name">계정과목</label>
+                <input id="id_add_account_subject_name" type="text" class="col flex-grow-1 form-control form-control-sm"/>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-2" for="id_add_account_subject_value">값</label>
+                <input id="id_add_account_subject_value" type="text" class="col flex-grow-1 form-control form-control-sm"/>
+            </div>
+            
+            <button class="btn btn-sm btn-primary add_account_subject">추가하기</button>
+        </div>
+
+        <div class="bg-white p-3">
+            <table class="table">
+                <tr>
+                    <th>계정과목</th>
+                    <th>값</th>
+                    <th>수정</th>
+                    <th>삭제</th>
+                </tr>
+                {% for key, value in content.items %}
+                <tr>
+                    {% if key != '_id' %}
+                    <td>{{ key }}</td>
+                    <td>{{ value }}</td>
+                    <td><button class="btn btn-sm btn-primary update_fs">수정</button></td>
+                    <td><button class="btn btn-sm btn-danger delete_fs">삭제</button></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </table>            
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).on('click', '.update_fs', function() {
+        var tr = $(this).closest('tr');
+        var value = tr.find('td:nth-child(2)').text();
+
+        tr.find('td:nth-child(2)').html("<input class='form-control form-control-sm' value='"+value+"' />");
+        tr.find('td:nth-child(3)').html("<button class='btn btn-sm btn-primary submit_update'>확인</button> <button class='btn btn-sm btn-secondary cancel_update'>취소</button>")
+    })
+
+    $(document).on('click', '.submit_update', function() {
+        var tr = $(this).closest('tr');
+        var key = tr.find('td:first-child').text();
+        var value = tr.find('td:nth-child(2)').find('input').val();
+
+        $.ajax({
+            url: '{% url "admin:manage_corp_fs_update" %}',
+            method: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                'fs_id': '{{ fs_id }}',
+                'key': key,
+                'value': value
+            },
+            success: function(message) {
+                alert(message.message)
+            }
+        })
+    })
+
+    $(document).on('click', '.cancel_update', function() {
+        var tr = $(this).closest('tr');
+        var value = tr.find('td:nth-child(2)').find('input').val();
+
+        tr.find('td:nth-child(2)').html(value)
+        tr.find('td:nth-child(3)').html('<button class="btn btn-sm btn-primary update_fs">수정</button>')
+    })
+
+    $(document).on('click', '.delete_fs', function() {
+        var confirm_delete = confirm('경고: 정말로 계정과목을 삭제하시겠습니까? 삭제된 계정과목은 복구할 수 없습니다.')
+
+        if(confirm_delete == true) {
+            var tr = $(this).closest('tr');
+            var key = tr.find('td:first-child').text();
+
+            $.ajax({
+                url: '{% url "admin:manage_corp_fs_delete" %}',
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    'fs_id': '{{ fs_id }}',
+                    'key': key
+                },
+                success: function(message) {
+                    alert(message.message)
+                }
+            })
+        }
+    })
+
+    $(document).on('click', '.add_account_subject', function() {
+        var subject_name = $('#id_add_account_subject_name').val()
+        var subject_value = $('#id_add_account_subject_value').val()
+        
+        $.ajax({
+            url: '{% url "admin:manage_corp_fs_add" %}',
+            method: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                'fs_id': '{{ fs_id }}',
+                'key': subject_name,
+                'value': subject_value
+            },
+            success: function(message) {
+                alert(message.message)
+            }
+        })
+    })
+</script>
+{% endblock %}

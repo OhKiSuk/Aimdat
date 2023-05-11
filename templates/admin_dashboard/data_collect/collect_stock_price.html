@@ -3,29 +3,34 @@
 <div class="row mt-3">
     <span class="font-lg fw-bold">주가정보 수집</span>
 </div>
-<div class="row mt-3">
-    <span class="font-md fw-bold">주가정보 마지막 수정일</span>
-    <hr style="background-color: blue; border-color: blue">
-    <span class="font-md">
-        <p>
-            {{last_stock_collect_date}}
-            <div style="text-align: right;">
-              
-                <button id="collect" style="background-color: blue; color: white;" href>
-                    <a class="collect_btn" href="?tab=collect">수집</a>
-                </button>
-            </div>
-        </p>        
-    </span>
-    <textarea rows="10" cols="80" style="background-color: white; border-color: blue" readonly >
-        {{date_logs}}
-        {{corp_logs}}
-    </textarea>
-   
-</div>
 
-{% endblock %}
-{% block script %}
-<script>
-</script>
+<div class="row mt-3">
+    <div class="mb-2">
+        <span class="font-md fw-bold">주가정보 마지막 수정일: {{ last_stock_collect_date }}</span>
+    </div>
+    <hr>
+    <div class="mb-3">
+        <a class="btn btn-sm btn-primary float-end" href="?tab=collect">수집</a>
+    </div>
+
+    <div class="mb-2">
+        <span class="font-md fw-bold">주가 수집 실패 날짜 목록</span>
+    </div>
+
+    <textarea class="mb-3" rows="10" cols="80" readonly>
+        {% for log in date_logs %}
+            <div>{{ log }}</div>
+        {% endfor %}
+    </textarea>
+
+    <div class="mb-2">
+        <span class="font-md fw-bold">주가 수집 실패 기업 목록</span>
+    </div>
+    
+    <textarea rows="10" cols="80" readonly>
+        {% for log in corp_logs %}
+            <div>{{ log }}</div>
+        {% endfor %}
+    </textarea>
+</div>
 {% endblock %}

@@ -12,10 +12,14 @@
             <a class="nav-link {% if tab == 'corp_info' %}active{% endif %} tabs" href="?tab=corp_info" data-tab-id="corp_info">기업 정보</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == 'corp_summary' %}active{% endif %} tabs" href="?tab=corp_summary" data-tab-id="corp_summary">기업 요약 재무제표</a>
+            <a class="nav-link {% if tab == 'corp_fs' %}active{% endif %} tabs" href="?tab=corp_fs" data-tab-id="corp_fs">기업 요약 재무제표</a>
         </li>
     </ul>
 </div>
+
+{% if tab == 'corp_fs' %}
+
+{% endif %}
 
 <div class="row mt-3">
     <div class="col-9">
@@ -29,7 +33,7 @@
                         <td>기업 결산일</td>
                         <td>CEO 명</td>
                         <td>기업 소개</td>
-                        {% elif tab == 'corp_summary' %}
+                        {% elif tab == 'corp_fs' %}
                         <td>공시일</td>
                         <td>매출액</td>
                         <td>영업이익</td>
@@ -54,7 +58,7 @@
                         <td>{{ i.corp_settlement_date }}</td>
                         <td>{{ i.corp_ceo_name }}</td>
                         <td>{{ i.corp_summary }}</td>
-                        {% elif tab == 'corp_summary' %}
+                        {% elif tab == 'corp_fs' %}
                         <td>
                             <a href="{% url 'admin:corp_summary_change' i.corp_id.id %}">{{ i.corp_id.corp_name }}</a>
                         </td>
@@ -80,7 +84,7 @@
             <ul class="pagination pagination-sm justify-content-center">
                 {% if content.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_summary' %}?tab=corp_summary{% else %}?tab=corp_id{% endif %}&page={{ content.previous_page_number }}">이전</a>
+                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_fs' %}?tab=corp_fs{% else %}?tab=corp_id{% endif %}&page={{ content.previous_page_number }}">이전</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
@@ -90,17 +94,17 @@
                 {% for page_number in content.paginator.page_range %}
                 {% if page_number == content.number %}
                 <li class="page-item active" aria-current="page">
-                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_summary' %}?tab=corp_summary{% else %}?tab=corp_id{% endif %}&page={{ page_number }}">{{ page_number }}</a>
+                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_fs' %}?tab=corp_fs{% else %}?tab=corp_id{% endif %}&page={{ page_number }}">{{ page_number }}</a>
                 </li>
                 {% else %}
                 <li class="page-item">
-                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_summary' %}?tab=corp_summary{% else %}?tab=corp_id{% endif %}&page={{ page_number }}">{{ page_number }}</a>
+                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_fs' %}?tab=corp_fs{% else %}?tab=corp_id{% endif %}&page={{ page_number }}">{{ page_number }}</a>
                 </li>
                 {% endif %}
                 {% endfor %}
                 {% if content.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_summary' %}?tab=corp_summary{% else %}?tab=corp_id{% endif %}&page={{ content.next_page_number }}">다음</a>
+                    <a class="page-link" href="{% if tab == 'corp_info'%}?tab=corp_info{% elif tab == 'corp_fs' %}?tab=corp_fs{% else %}?tab=corp_id{% endif %}&page={{ content.next_page_number }}">다음</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
