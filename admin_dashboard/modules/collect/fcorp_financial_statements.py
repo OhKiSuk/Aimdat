@@ -152,48 +152,54 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
             fs_dict = dict()
 
             # 재무제표 여부 확인
-            if len(table.find_all(name='th', string=re.compile(r'\s*?과\s*?목'))) > 0 or len(table.find_all(name='th', string=re.compile(r'제\s*?[0-9]+'))) > 0:
+            if len(table.find_all(name='th', string=re.compile(r'과\s*목'))) > 0 or\
+                len(table.find_all(name='th', string=re.compile(r'제\s*[0-9]+'))) > 0 or \
+                len(table.find_all(name='th', string=re.compile('구\s*분'))) > 0:
 
                 # 종목코드 지정
                 fs_dict['종목코드'] = str(stock_code)
 
                 # 재무제표 금액 단위 파싱
-                unit = inner_html.find(name='td', attrs={'valign': 'BOTTOM'}, string=re.compile(r'\s*?\(\s*?단위'))
+                unit = inner_html.find(name='td', string=re.compile(r'\(\s*단위'))
                 if unit:
-                    fs_dict['단위'] = re.sub(r'\(단위\s*?:\s*?|\)', '', unit.get_text()).replace(' ', '')
+                    fs_dict['단위'] = re.sub(r'\(단위\s*:\s*|\)', '', unit.get_text()).replace(' ', '')
 
                 # 재무제표의 년도, 분기 설정
                 fs_dict['년도'] = year
                 fs_dict['분기'] = quarter
 
+                fs_dict['재무제표종류'] = '' # 재무제표종류가 구분이 안되는 케이스를 확인하기 위함
                 # 가져온 재무제표의 종류 구분
-                if len(table.find_all(string=re.compile(r'자\s*?본\s*?총\s*?계'))) > 0:
+                if len(table.find_all(string=re.compile(r'자\s*본\s*총\s*계'))) > 0:
                     if fs_type == 5:
                         fs_dict['재무제표종류'] = '재무상태표'
                     elif fs_type == 0:
                         fs_dict['재무제표종류'] = '연결재무상태표'
-                elif len(table.find_all(string=re.compile(r'.*?주\s*?당\s*?순?\s*?이\s*?익'))) > 0:
+                elif len(table.find_all(string=re.compile(r'주\s*당\s*순?\s*이\s*익'))) > 0 or \
+                    len(table.find_all(string=re.compile(r'주\s*당\s*이\s*익'))):
                         if fs_type == 5:
                             fs_dict['재무제표종류'] = '포괄손익계산서'
                         elif fs_type == 0:
                             fs_dict['재무제표종류'] = '연결포괄손익계산서'
-                elif len(table.find_all(string=re.compile(r'현\s*?금\s*?흐\s*?름'))) > 0:
+                elif len(table.find_all(string=re.compile(r'현\s*금\s*흐\s*름'))) > 0:
                     if fs_type == 5:
                         fs_dict['재무제표종류'] = '현금흐름표'
                     elif fs_type == 0:
                         fs_dict['재무제표종류'] = '연결현금흐름표'
-                elif len(table.find_all(string=re.compile(r'.*?미\s*?처\s*?분'))) > 0:
+                elif len(table.find_all(string=re.compile(r'미\s*처\s*분'))) > 0 or \
+                    len(table.find_all(string=re.compile('처\s*분\s*액'))) > 0:
                     # 이익잉여금처분계산서 제외
                     continue
-                elif len(table.find_all(string=re.compile(r'\s*?[0-9]+년?\.?\s*?[0-9]+월?\.?\s*?[0-9]+일?'))) > 0:
+                elif len(table.find_all(string=re.compile(r'[0-9]+년?\.?\s*[0-9]+월?\.?\s*[0-9]+일?'))) > 0 or \
+                    len(name='th', string=re.compile('자\s*본\s*금')) > 0:
                     # 자본변동표 제외
                     continue
                 
                 rows = table.find_all('tr')
                 
                 # 차변/대변 존재 여부 확인
-                if len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'제\s*?[0-9]+'))) > 0 or \
-                    len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'(3\s*?개\s*?월|누\s*?적\s*?)'))):
+                if len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'제\s*[0-9]+'))) > 0 or \
+                    len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'(3\s?개\s*월|누\s*적\s*)'))):
 
                     for row in rows:
 
@@ -216,7 +222,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                             continue
 
                         # 재무제표 내에 주석이 존재하는 지 확인
-                        if table.find(name='th', string=re.compile(r'\s*?주\s*?석')):
+                        if table.find(name='th', string=re.compile(r'\s*주\s*석')):
                             debit = tds[2].get_text().replace(',', '').replace(' ', '').strip() # 차변(왼쪽)
                             credit = tds[3].get_text().replace(',', '').replace(' ', '').strip() # 대변(오른쪽)
 
@@ -265,7 +271,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                             account_subject = tds[0].get_text() # 계정과목
 
                         # 재무제표 내에 주석이 존재하는 지 확인
-                        if table.find(name='th', string=re.compile(r'\s*?주\s*?석')):
+                        if table.find(name='th', string=re.compile(r'\s*주\s*석')):
                             value = tds[2].get_text().replace(',', '').replace(' ', '').strip() # 재무제표 값
 
                             # 각 계정과목의 값 존재 여부 확인
@@ -292,7 +298,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                 continue
 
             # 수집된 재무제표는 list에 저장(이익잉여금처분계산서, 자본변동표는 제외)
-            if len(table.find_all(string=re.compile(r'.*?미\s*?처\s*?분'))) == 0 and len(table.find_all(string=re.compile(r'\s*?[0-9]+\.\s*?[0-9]+\.\s*?[0-9]+'))) == 0:
+            if len(table.find_all(string=re.compile(r'미\s*처\s*분'))) == 0 and len(table.find_all(string=re.compile(r'\s?[0-9]+\.\s*[0-9]+\.\s*[0-9]+'))) == 0:
                 fs_result.append(fs_dict)
 
     return fs_result, logs
@@ -316,6 +322,13 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
     fcorp_list = _get_fcorp_list()
     crawl_result, logs = _crawl_dart(fcorp_list, year, quarter, fs_type)
 
+    '''
+    ## test crawl and save to file directly
+    tmp = json.dumps(crawl_result, indent=2, ensure_ascii=False)
+    with open(f"crawl_result_{year}_{quarter}_{fs_type}.json", 'w', encoding='utf-8') as f:
+        f.write(tmp)
+    '''
+    
     if crawl_result:
         client = pymongo.MongoClient("mongodb://localhost:27017/")
         db = client["aimdat"]
