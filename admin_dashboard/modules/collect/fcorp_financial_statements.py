@@ -1,17 +1,21 @@
 """
 @created at 2023.04.23
 @author OKS in Aimdat Team
+
+@modified at 2023.05.12
+@author OKS in Aimdat Team
 """
 import csv
 import glob
 import json
 import os
-import platform
 import pymongo
+import shutil
 import re
 import retry
 import time
 
+from bson.decimal128 import Decimal128
 from django.http import HttpResponseServerError
 from django.db.models import Q
 from bs4 import BeautifulSoup
@@ -154,15 +158,15 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
             # 재무제표 여부 확인
             if len(table.find_all(name='th', string=re.compile(r'과\s*목'))) > 0 or\
                 len(table.find_all(name='th', string=re.compile(r'제\s*[0-9]+'))) > 0 or \
-                len(table.find_all(name='th', string=re.compile('구\s*분'))) > 0:
+                len(table.find_all(name='th', string=re.compile(r'구\s*분'))) > 0:
 
                 # 종목코드 지정
                 fs_dict['종목코드'] = str(stock_code)
 
                 # 재무제표 금액 단위 파싱
-                unit = inner_html.find(name='td', string=re.compile(r'\(\s*단위'))
+                unit = inner_html.find(name='td', string=re.compile(r'\(\s?단위'))
                 if unit:
-                    fs_dict['단위'] = re.sub(r'\(단위\s*:\s*|\)', '', unit.get_text()).replace(' ', '')
+                    fs_dict['단위'] = re.sub(r'\s|단위|:|\(|\)', '', unit.get_text()).strip()
 
                 # 재무제표의 년도, 분기 설정
                 fs_dict['년도'] = year
@@ -172,26 +176,26 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                 # 가져온 재무제표의 종류 구분
                 if len(table.find_all(string=re.compile(r'자\s*본\s*총\s*계'))) > 0:
                     if fs_type == 5:
-                        fs_dict['재무제표종류'] = '재무상태표'
+                        fs_dict['재무제표종류'] = '별도재무상태표'
                     elif fs_type == 0:
                         fs_dict['재무제표종류'] = '연결재무상태표'
                 elif len(table.find_all(string=re.compile(r'주\s*당\s*순?\s*이\s*익'))) > 0 or \
                     len(table.find_all(string=re.compile(r'주\s*당\s*이\s*익'))):
                         if fs_type == 5:
-                            fs_dict['재무제표종류'] = '포괄손익계산서'
+                            fs_dict['재무제표종류'] = '별도포괄손익계산서'
                         elif fs_type == 0:
                             fs_dict['재무제표종류'] = '연결포괄손익계산서'
                 elif len(table.find_all(string=re.compile(r'현\s*금\s*흐\s*름'))) > 0:
                     if fs_type == 5:
-                        fs_dict['재무제표종류'] = '현금흐름표'
+                        fs_dict['재무제표종류'] = '별도현금흐름표'
                     elif fs_type == 0:
                         fs_dict['재무제표종류'] = '연결현금흐름표'
                 elif len(table.find_all(string=re.compile(r'미\s*처\s*분'))) > 0 or \
-                    len(table.find_all(string=re.compile('처\s*분\s*액'))) > 0:
+                    len(table.find_all(string=re.compile(r'처\s*분\s*액'))) > 0:
                     # 이익잉여금처분계산서 제외
                     continue
                 elif len(table.find_all(string=re.compile(r'[0-9]+년?\.?\s*[0-9]+월?\.?\s*[0-9]+일?'))) > 0 or \
-                    len(name='th', string=re.compile('자\s*본\s*금')) > 0:
+                    len(name='th', string=re.compile(r'자\s*본\s*금')) > 0:
                     # 자본변동표 제외
                     continue
                 
@@ -223,38 +227,46 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
 
                         # 재무제표 내에 주석이 존재하는 지 확인
                         if table.find(name='th', string=re.compile(r'\s*주\s*석')):
-                            debit = tds[2].get_text().replace(',', '').replace(' ', '').strip() # 차변(왼쪽)
-                            credit = tds[3].get_text().replace(',', '').replace(' ', '').strip() # 대변(오른쪽)
+                            debit = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 차변(왼쪽)
+                            credit = re.findall(r'\(?\d+\)?', tds[3].get_text().replace(',', '')) # 대변(오른쪽)
 
                             # 차변/대변의 숫자 존재 여부 확인
-                            if debit != '' and credit == '':
-                                if '(' in str(debit):
-                                    fs_dict[account_subject] = str(debit).replace('(', '-').replace(')', '')
+                            if debit != [] and credit == []:
+
+                                # 음수/양수 구분
+                                if '(' in str(debit[0]):
+                                    fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = str(debit)
-                            elif debit == '' and credit != '':
-                                if '(' in str(credit):
-                                    fs_dict[account_subject] = str(credit).replace('(', '-').replace(')', '')
+                                    fs_dict[account_subject] = Decimal128(str(debit[0]))
+                            elif debit == [] and credit != []:
+
+                                # 음수/양수 구분
+                                if '(' in str(credit[0]):
+                                    fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = str(credit)
-                            elif debit == '' and credit == '':
+                                    fs_dict[account_subject] = Decimal128(str(credit[0]))
+                            elif debit == [] and credit == []:
                                 continue
                         else:
-                            debit = tds[1].get_text().replace(',', '').replace(' ', '').strip() # 차변(왼쪽)
-                            credit = tds[2].get_text().replace(',', '').replace(' ', '').strip() # 대변(오른쪽)
+                            debit = re.findall(r'\(?\d+\)?', tds[1].get_text().replace(',', '')) # 차변(왼쪽)
+                            credit = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 대변(오른쪽)
 
                             # 차변/대변의 숫자 존재 여부 확인
-                            if debit != '' and credit == '':
-                                if '(' in str(debit):
-                                    fs_dict[account_subject] = str(debit).replace('(', '-').replace(')', '')
+                            if debit != [] and credit == []:
+
+                                # 음수/양수 구분
+                                if '(' in str(debit[0]):
+                                    fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = str(debit).replace('-', '')
-                            elif debit == '' and credit != '':
-                                if '(' in str(credit):
-                                    fs_dict[account_subject] = str(credit).replace('(', '-').replace(')', '')
+                                    fs_dict[account_subject] = Decimal128(str(debit[0]).replace('-', ''))
+                            elif debit == [] and credit != []:
+
+                                # 음수/양수 구분
+                                if '(' in str(credit[0]):
+                                    fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = str(credit)
-                            elif debit == '' and credit == '':
+                                    fs_dict[account_subject] = Decimal128(str(credit[0]))
+                            elif debit == [] and credit == []:
                                 continue
                 else:
                     for row in rows:
@@ -272,26 +284,30 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
 
                         # 재무제표 내에 주석이 존재하는 지 확인
                         if table.find(name='th', string=re.compile(r'\s*주\s*석')):
-                            value = tds[2].get_text().replace(',', '').replace(' ', '').strip() # 재무제표 값
+                            value = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 재무제표 값
 
                             # 각 계정과목의 값 존재 여부 확인
-                            if value != '':
-                                if '(' in str(value):
-                                    fs_dict[account_subject] = str(value).replace('(', '-').replace(')', '')
+                            if value != []:
+
+                                # 음수/양수 구분
+                                if '(' in str(value[0]):
+                                    fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = str(value)
-                            elif value == '':
+                                    fs_dict[account_subject] = Decimal128(str(value[0]))
+                            elif value == []:
                                 continue
                         else:
-                            value = tds[1].get_text().replace(',', '').replace(' ', '').replace('-', '') # 재무제표 값
+                            value = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 재무제표 값
 
                             # 각 계정과목의 값 존재 여부 확인
-                            if value != '':
-                                if '(' in str(value):
-                                    fs_dict[account_subject] = str(value).replace('(', '-').replace(')', '')
+                            if value != []:
+
+                                # 음수/양수 구분
+                                if '(' in str(value[0]):
+                                    fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = str(value)
-                            elif value == '':
+                                    fs_dict[account_subject] = Decimal128(str(value[0]))
+                            elif value == []:
                                 continue
             else:
                 # 재무제표가 아닌 테이블은 넘어간다.
@@ -303,17 +319,20 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
 
     return fs_result, logs
     
-def _remove_file(file_path, system_name, folder=False):
+def _remove_file(file_path, folder=False):
     """
     사용한 파일 제거
     """
-    if system_name == 'Windows':
-        if folder:
-            os.system('echo y | rd /s {} '.format(file_path))
-        else:
-            os.system('del {}'.format(file_path)) # Windows
-    elif system_name == 'Linux':
-        os.system('rm -rf {}'.format(file_path)) # Linux
+    if folder:
+        try:
+            shutil.rmtree(file_path)
+        except OSError:
+            pass
+    else:
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
     
 def save_fcorp(year:int, quarter:int, fs_type=5):
     """
@@ -321,13 +340,6 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
     """
     fcorp_list = _get_fcorp_list()
     crawl_result, logs = _crawl_dart(fcorp_list, year, quarter, fs_type)
-
-    '''
-    ## test crawl and save to file directly
-    tmp = json.dumps(crawl_result, indent=2, ensure_ascii=False)
-    with open(f"crawl_result_{year}_{quarter}_{fs_type}.json", 'w', encoding='utf-8') as f:
-        f.write(tmp)
-    '''
     
     if crawl_result:
         client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -340,11 +352,10 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
         # 사용한 파일 제거
         with open(SECRETS_FILE, 'r') as secrets:
             download_path = json.load(secrets)['download_folder']
-            file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
+            file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
 
             if len(file_path) > 0:
-                system_name = platform.system()
-                _remove_file(file_path[0], system_name)
+                _remove_file(file_path[0])
 
         print(logs)
 
