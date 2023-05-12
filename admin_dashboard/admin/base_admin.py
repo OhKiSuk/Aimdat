@@ -33,7 +33,8 @@ from ..views.collect_data_views import (
     CollectCorpInfoView, 
     CollectStockPriceView, 
     CollectFcorpFinancialStatementsView,
-    CollectDcorpFinancialStatementsView
+    CollectDcorpFinancialStatementsView,
+    CollectInvestmentIndexView
 )
 from ..views.corp_manage_views import (
     ManageCorpIdListView, 
@@ -67,6 +68,9 @@ class CustomAdminSite(AdminSite):
 
             # 기업정보 수집
             path('collect/corp/info/', custom_admin_site.admin_view(CollectCorpInfoView.as_view()), name='collect_corp_info'),
+
+            # 투자지표 수집 및 저장
+            path('collect/corp/investment/index/', custom_admin_site.admin_view(CollectInvestmentIndexView.as_view()), name='collect_corp_invsetment_index'),
             
             # 기업 식별 목록 관리
             path('manage/corp/id/list/', custom_admin_site.admin_view(ManageCorpIdListView.as_view()), name='manage_corp_id_list'),

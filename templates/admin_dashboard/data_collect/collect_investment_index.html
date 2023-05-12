@@ -1,0 +1,52 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% block content %}
+<div class="row mt-3">
+    <span class="font-lg fw-bold">투자지표 수집 및 저장</span>
+</div>
+<div class="row mt-3">
+    <div class="mb-2">
+        <span class="font-md fw-bold">재무정보 마지막 수정일: {{ lastest_collect_date }}</span>
+    </div>
+    <hr>
+    <span class="font-md">
+        <div style="text-align: right;">
+            <form method="post" action="{% url 'admin:collect_corp_invsetment_index' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">
+                        <select class="form-select form-select-sm" name="year">
+                            <option value="none">년도</option>
+                            <option value="all">전체</option>
+                            <option value="2020">2020</option>
+                            <option value="2021">2021</option>
+                            <option value="2022">2022</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+                    <div class="col mx-3">
+                        <select class="form-select form-select-sm" name="quarter">
+                            <option value="none">분기</option>
+                            <option value="all">전체</option>
+                            <option value="1">1분기</option>
+                            <option value="2">2분기</option>
+                            <option value="3">3분기</option>
+                            <option value="4">4분기</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select class="form-select form-select-sm" name="fs_type">
+                            <option value="none">재무제표 종류</option>
+                            <option value="all">전체</option>
+                            <option value="5">별도재무제표</option>
+                            <option value="0">연결재무제표</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">수집하기</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </span>
+</div>
+{% endblock %}

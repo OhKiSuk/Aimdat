@@ -1,7 +1,7 @@
 """
 author: cslee
 
-@modified at 2023.04.23
+@modified at 2023.05.12
 @author OKS in Aimdat Team
 """
 from django.contrib import messages
@@ -16,6 +16,7 @@ from django.views.generic import (
     View
 )
 from ..modules.collect.corp import collect_corp
+from ..modules.collect.investment_index import save_investment_index
 from ..modules.collect.stock_price import collect_stock_price
 from ..modules.collect.summary_financial_statements import collect_summary_finaicial_statements
 from ..modules.collect.fcorp_financial_statements import save_fcorp
@@ -232,6 +233,58 @@ class CollectDcorpFinancialStatementsView(View):
         return render(self.request, self.template_name, context={'lastest_collect_date': datetime.today()})
 
     def get(self, requeset):
+        try:
+            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+        except ProgrammingError:
+            lastest_fs_date = None
+        except AttributeError:
+            LastCollectDate.objects.create()
+            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_fs_date})
+
+class CollectInvestmentIndexView(View):
+    """
+    투자지표 수집 및 저장 기능
+    """
+    template_name = 'admin_dashboard/data_collect/collect_investment_index.html'
+
+    def post(self, request):
+        year = request.POST.get('year')
+        quarter = request.POST.get('quarter')
+        fs_type = request.POST.get('fs_type')
+
+        if year == "none" or quarter == "none":
+            messages.success(self.request, '항목을 선택해주세요.')
+            return redirect('admin:collect_fcorp_fs')
+        
+        # 최근 5년치 재무제표만 수집 가능
+        if year == 'all':
+            now_year = datetime.now().year
+            years = [now_year - i for i in range(5)]
+        else:
+            years = [int(year)]
+
+        # 분기 {1: 1분기, 2: 반기, 3: 3분기, 4: 사업보고서}
+        if quarter == 'all':
+            quarters = [1, 2, 3, 4]
+        else:
+            quarters = [int(quarter)]
+
+        # 재무제표 종류 {0: 연결재무제표, 5: 별도재무제표}
+            if fs_type == "all":
+                fs_types = ['0', '5']
+            else:
+                fs_types = [fs_type]
+
+        for y in years:
+            for q in quarters:
+                for f in fs_types:
+                    save_investment_index(y, q, f)
+
+        return render(self.request, self.template_name)
+    
+    def get(self, request):
         try:
             lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
         except ProgrammingError:
