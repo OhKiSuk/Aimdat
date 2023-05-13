@@ -2,7 +2,7 @@
 @created at 2023.03.22
 @author JSU in Aimdat Team
 
-@modified at 2023.04.26
+@modified at 2023.05.12
 @author JSU in Aimdat Team
 """
 
@@ -22,8 +22,7 @@ from config.settings.base import get_secret
 
 from ..models.corp_id import CorpId
 from ..models.corp_info import CorpInfo
-from ..models.corp_summary_financial_statements import \
-    CorpSummaryFinancialStatements as FS
+from ..models.investment_index import InvestmentIndex
 from ..models.stock_price import StockPrice
 
 
@@ -78,14 +77,14 @@ class CorpDetailView(UserPassesTestMixin, DetailView):
             if len(y_data) == 3:
                 break
             year = (timezone.now() - timedelta(days=365 * y)).year
-            obj = FS.objects.filter(Q(corp_id__exact = id) & Q(year__exact = year) & Q(quarter__exact = 4))
+            obj = InvestmentIndex.objects.filter(Q(corp_id__exact = id) & Q(year__exact = year) & Q(quarter__exact = 4))
             if obj:
                 y_data.append(obj)
 
             for q in [4, 3, 2, 1]:
                 if len(q_data) == 4:
                     break
-                obj = FS.objects.filter(Q(corp_id__exact = id) & Q(year__exact = year) & Q(quarter__exact = q))
+                obj = InvestmentIndex.objects.filter(Q(corp_id__exact = id) & Q(year__exact = year) & Q(quarter__exact = q))
                 if obj:
                     q_data.append(obj)
         
@@ -112,24 +111,17 @@ class CorpDetailView(UserPassesTestMixin, DetailView):
 
     # 공시 데이터 API 요청
     def disclosure_data(self, id):
-        app_config = apps.get_app_config('services')
-        key = CorpId.objects.get(id=id).stock_code
+        stock_code = CorpId.objects.get(id=id).stock_code
         report_names = []
         report_dates = []
         report_nunbers = []
 
-        if key is None:
+        if stock_code is None:
             return None, None, None
-
-        with open(app_config.path + '/corp_code.json', 'r') as f:
-            data = json.load(f)
-        
-        if key in data:
-            corp_code = data[key]
 
         url = 'https://opendart.fss.or.kr/api/list.json'
         api_key = get_secret('dart_api_key')
-        response = requests.get(url, params={'crtfc_key': api_key, 'corp_code': corp_code, 'bgn_de': 20200101, 'page_count': 100}).json()
+        response = requests.get(url, params={'crtfc_key': api_key, 'stock_code': stock_code, 'bgn_de': 20200101, 'page_count': 100}).json()
         
         if '000' in response['status']:
                 for data in response['list']:

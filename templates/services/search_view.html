@@ -246,7 +246,7 @@ $('#table').DataTable({
 });
 
 {% with corp_name as name %}
-var availableTags = {{name|safe}};
+var availableTags = {{ name|safe }};
 $("#search_input").autocomplete({
     source: availableTags,
     appendTo: "#search_results",

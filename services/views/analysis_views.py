@@ -2,7 +2,7 @@
 @created at 2023.03.28
 @author JSU in Aimdat Team
 
-@modified at 2023.04.26
+@modified at 2023.05.11
 @author JSU in Aimdat Team
 """
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -11,12 +11,11 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.generic import ListView
 
-from ..models.corp_summary_financial_statements import \
-    CorpSummaryFinancialStatements as FS
+from ..models.investment_index import InvestmentIndex
 
 
 class AnalysisView(UserPassesTestMixin, ListView):
-    model = FS
+    model = InvestmentIndex
     template_name = 'services/analysis_view.html'
     
     def test_func(self):
@@ -60,13 +59,13 @@ class AnalysisView(UserPassesTestMixin, ListView):
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
-        rsi_list = ['per', 'pbr', 'psr', 'ev_ebitda', 'eps', 'bps', 'roe', 'dps']
+        remove_field = ['id', 'corp_id', 'year', 'quarter']
+        rsi_list = ['per', 'pbr', 'psr', 'ev_ebitda', 'ev_ocf', 'eps', 'bps', 'roe', 'dps']
         fs_list_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
             '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', '총부채', '총자산', \
                 '총자본', '총차입금', '액면가']
 
-        fs_list_en = [ field.name for field in FS._meta.get_fields() ]
+        fs_list_en = [ field.name for field in InvestmentIndex._meta.get_fields() ]
         
         for field in remove_field:
             fs_list_en.remove(field)

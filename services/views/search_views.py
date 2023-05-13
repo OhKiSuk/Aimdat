@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.04.26
+@modified at 2023.05.11
 @author JSU in Aimdat Team
 """
 
@@ -14,12 +14,11 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.generic.list import ListView
 
-from ..models.corp_summary_financial_statements import \
-    CorpSummaryFinancialStatements as FS
+from ..models.investment_index import InvestmentIndex
 
 
 class SearchView(UserPassesTestMixin, ListView):
-    model = FS
+    model = InvestmentIndex
     template_name = 'services/search_view.html'
     paginate_by = 100
     
@@ -45,7 +44,7 @@ class SearchView(UserPassesTestMixin, ListView):
         # Session에 기업명 값이 있을 경우
         if 'corp' in self.request.session:
             for name in self.request.session['corp']:
-                q |= Q(corp_id__corp_name__icontains=name)
+                q &= Q(corp_id__corp_name__icontains=name)
 
         # Session에 연, 분기 값이 있을 경우
         if 'year' in self.request.session:
@@ -70,14 +69,14 @@ class SearchView(UserPassesTestMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        rsi_list = ['per', 'pbr', 'psr', 'ev_ebitda', 'eps', 'bps', 'roe', 'dps']
+        rsi_list = ['per', 'pbr', 'psr', 'ev_ebitda', 'ev_ocf', 'eps', 'bps', 'roe', 'dps']
         fs_list_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
             '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', '총부채', '총자산', \
                 '총자본', '총차입금', '액면가']
 
         # 필요 없는 필드 제거
-        fs_list_en = [ field.name for field in FS._meta.get_fields() ]   
-        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
+        fs_list_en = [ field.name for field in InvestmentIndex._meta.get_fields() ]   
+        remove_field = ['id', 'corp_id', 'year', 'quarter']
 
         for field in remove_field:
             fs_list_en.remove(field) 
@@ -118,12 +117,12 @@ class SearchView(UserPassesTestMixin, ListView):
         max = []
         condition_ko = ['매출액', '영업이익', '순이익', '영업이익률', '순이익률', '부채비율', '매출원가율',\
         '당좌비율', '배당금', '총배당금', '배당수익률', '배당지급률', '배당률', 'PER', 'PBR', 'PSR',\
-            'EV_EBITDA', 'EV_PER_EBITDA', 'EPS', 'BPS', 'ROE', 'DPS', '총부채', '총자산', '총자본',\
+            'EV_EBITDA', 'EV_OCF', 'EPS', 'BPS', 'ROE', 'DPS', '총부채', '총자산', '총자본',\
                 '총차입금', '액면가']
         
         # 필요 없는 필드 제거
-        fields = [ field.name for field in FS._meta.get_fields() ]
-        remove_field = ['id', 'corp_id', 'disclosure_date', 'year', 'quarter']
+        fields = [ field.name for field in InvestmentIndex._meta.get_fields() ]
+        remove_field = ['id', 'corp_id', 'year', 'quarter']
 
         for field in remove_field:
             fields.remove(field)
