@@ -297,7 +297,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                             elif value == []:
                                 continue
                         else:
-                            value = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 재무제표 값
+                            value = re.findall(r'\(?\d+\)?', tds[1].get_text().replace(',', '')) # 재무제표 값
 
                             # 각 계정과목의 값 존재 여부 확인
                             if value != []:
