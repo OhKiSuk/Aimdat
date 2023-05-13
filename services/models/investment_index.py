@@ -34,6 +34,6 @@ class InvestmentIndex(models.Model):
     dps = models.DecimalField(max_digits=19, decimal_places=2, null=True) # 주당배당금
     ev_ebitda = models.DecimalField(max_digits=19, decimal_places=2, null=True)
     ev_ocf = models.DecimalField(max_digits=19, decimal_places=2, null=True)
-    divdend = models.DecimalField(max_digits=19, decimal_places=2, null=True) #배당금
+    dividend = models.DecimalField(max_digits=19, decimal_places=2, null=True) #배당금
     dividend_ratio = models.DecimalField(max_digits=19, decimal_places=2, null=True) # 배당률
     dividend_payout_ratio = models.DecimalField(max_digits=19, decimal_places=2, null=True) # 배당성향
