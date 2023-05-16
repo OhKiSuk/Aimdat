@@ -1,12 +1,14 @@
 """
-author: cslee
+@created at 2023.03.25
+@author cslee in Aimdat Team
 
-@modified at 2023.05.12
+@modified at 2023.05.16
 @author OKS in Aimdat Team
 """
 from django.contrib import messages
 from datetime import datetime
 from django.db.utils import ProgrammingError
+from django.http import HttpResponseServerError
 from django.shortcuts import (
     render, 
     redirect
@@ -119,53 +121,62 @@ class CollectFinancialStatementView(View):
 class CollectFcorpFinancialStatementsView(View):
     template_name = 'admin_dashboard/data_collect/collect_fcorp_financial_statements.html'
 
+    def _verify_data(self, data):
+        """
+        입력 값 검증 함수
+        """
+        if data in ['none', 'all'] or str(data).isdecimal():
+            return data
+
+        return HttpResponseServerError
+
     def post(self, request):
-        if request.method == 'POST':
-            year = request.POST.get('year')
-            quarter = request.POST.get('quarter')
-            fs_type = request.POST.get('fs_type')
+        # 허용된 입력값이 아니면 500에러 리턴
+        year = self._verify_data(request.POST.get('year'))
+        quarter = self._verify_data(request.POST.get('quarter'))
+        fs_type = self._verify_data(request.POST.get('fs_type'))
 
-            # 선택하지 않았을 경우 경고 alert
-            if year == "none" or quarter == "none" or fs_type == "none":
-                messages.success(self.request, '항목을 선택해주세요.')
-                return redirect('admin:collect_fcorp_fs')
+        # 선택하지 않았을 경우 경고 alert
+        if year == "none" or quarter == "none" or fs_type == "none":
+            messages.success(self.request, '항목을 선택해주세요.')
+            return redirect('admin:collect_fcorp_fs')
 
-            # 최근 5년치 재무제표만 수집 가능
-            if year == 'all':
-                now_year = datetime.now().year
-                years = [now_year - i for i in range(5)]
-            else:
-                years = [int(year)]
+        # 최근 5년치 재무제표만 수집 가능
+        if year == 'all':
+            now_year = datetime.now().year
+            years = [now_year - i for i in range(5)]
+        else:
+            years = [int(year)]
 
-            # 분기 {1: 1분기, 2: 반기, 3: 3분기, 4: 사업보고서}
-            if quarter == 'all':
-                quarters = [1, 2, 3, 4]
-            else:
-                quarters = [int(quarter)]
+        # 분기 {1: 1분기, 2: 반기, 3: 3분기, 4: 사업보고서}
+        if quarter == 'all':
+            quarters = [1, 2, 3, 4]
+        else:
+            quarters = [int(quarter)]
 
-            # 재무제표 종류 {0: 연결재무제표, 5: 일반재무제표}
-            if fs_type == "all":
-                fs_types = [0, 5]
-            else:
-                fs_types = [int(fs_type)]
+        # 재무제표 종류 {0: 연결재무제표, 5: 일반재무제표}
+        if fs_type == "all":
+            fs_types = [0, 5]
+        else:
+            fs_types = [int(fs_type)]
 
-            # 재무제표 수집
-            for y in years:
-                for q in quarters:
-                    for fs in fs_types:
-                        result = save_fcorp(y, q, fs)
+        # 재무제표 수집
+        for y in years:
+            for q in quarters:
+                for fs in fs_types:
+                    result = save_fcorp(y, q, fs)
 
-            # 수집 성공 시 수집일 변경
-            if result:
-                try:
-                    lastest_fs_date = LastCollectDate.objects.last()
-                    lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                    lastest_fs_date.save()
-                except AttributeError:
-                    LastCollectDate.objects.create()
-                    lastest_fs_date = LastCollectDate.objects.last()
-                    lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                    lastest_fs_date.save()
+        # 수집 성공 시 수집일 변경
+        if result:
+            try:
+                lastest_fs_date = LastCollectDate.objects.last()
+                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
+                lastest_fs_date.save()
+            except AttributeError:
+                LastCollectDate.objects.create()
+                lastest_fs_date = LastCollectDate.objects.last()
+                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
+                lastest_fs_date.save()
 
         return render(self.request, self.template_name, context={'lastest_collect_date': datetime.today()})
     
@@ -186,49 +197,58 @@ class CollectDcorpFinancialStatementsView(View):
     """
     template_name = 'admin_dashboard/data_collect/collect_dcorp_financial_statements.html'
 
+    def _verify_data(self, data):
+        """
+        입력 값 검증 함수
+        """
+        if data in ['none', 'all'] or str(data).isdecimal():
+            return data
+
+        return HttpResponseServerError
+
     def post(self, request):
-        if request.method == 'POST':
-            year = request.POST.get('year')
-            quarter = request.POST.get('quarter')
+        # 허용된 입력값이 아니면 500에러 리턴
+        year = self._verify_data(request.POST.get('year'))
+        quarter = self._verify_data(request.POST.get('quarter'))
 
-            # 선택하지 않았을 경우 경고 alert
-            if year == "none" or quarter == "none":
-                messages.success(self.request, '항목을 선택해주세요.')
-                return redirect('admin:collect_fcorp_fs')
+        # 선택하지 않았을 경우 경고 alert
+        if year == "none" or quarter == "none":
+            messages.success(self.request, '항목을 선택해주세요.')
+            return redirect('admin:collect_fcorp_fs')
 
-            # 최근 5년치 재무제표만 수집 가능
-            if year == 'all':
-                now_year = datetime.now().year
-                years = [now_year - i for i in range(5)]
-            else:
-                years = [int(year)]
+        # 최근 5년치 재무제표만 수집 가능
+        if year == 'all':
+            now_year = datetime.now().year
+            years = [now_year - i for i in range(5)]
+        else:
+            years = [int(year)]
 
-            # 분기 {1: 1분기, 2: 반기, 3: 3분기, 4: 사업보고서}
-            if quarter == 'all':
-                quarters = ['1분기', '반기', '3분기', '사업']
-            elif quarter == '1':
-                quarters = ['1분기']
-            elif quarter == '2':
-                quarters = ['반기']
-            elif quarter == '3':
-                quarters = ['3분기']
-            elif quarter == '4':
-                quarters = ['사업']
+        # 분기 {1: 1분기, 2: 반기, 3: 3분기, 4: 사업보고서}
+        if quarter == 'all':
+            quarters = ['1분기', '반기', '3분기', '사업']
+        elif quarter == '1':
+            quarters = ['1분기']
+        elif quarter == '2':
+            quarters = ['반기']
+        elif quarter == '3':
+            quarters = ['3분기']
+        elif quarter == '4':
+            quarters = ['사업']
 
-            # 재무제표 수집
-            result = save_dcorp(years, quarters)
+        # 재무제표 수집
+        result = save_dcorp(years, quarters)
 
-            # 수집 성공 시 수집일 변경
-            if result:
-                try:
-                    lastest_fs_date = LastCollectDate.objects.last()
-                    lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                    lastest_fs_date.save()
-                except AttributeError:
-                    LastCollectDate.objects.create()
-                    lastest_fs_date = LastCollectDate.objects.last()
-                    lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                    lastest_fs_date.save()
+        # 수집 성공 시 수집일 변경
+        if result:
+            try:
+                lastest_fs_date = LastCollectDate.objects.last()
+                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
+                lastest_fs_date.save()
+            except AttributeError:
+                LastCollectDate.objects.create()
+                lastest_fs_date = LastCollectDate.objects.last()
+                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
+                lastest_fs_date.save()
 
         return render(self.request, self.template_name, context={'lastest_collect_date': datetime.today()})
 
@@ -249,12 +269,21 @@ class CollectInvestmentIndexView(View):
     """
     template_name = 'admin_dashboard/data_collect/collect_investment_index.html'
 
-    def post(self, request):
-        year = request.POST.get('year')
-        quarter = request.POST.get('quarter')
-        fs_type = request.POST.get('fs_type')
+    def _verify_data(self, data):
+        """
+        입력 값 검증 함수
+        """
+        if data in ['none', 'all'] or str(data).isdecimal():
+            return data
 
-        if year == "none" or quarter == "none":
+        return HttpResponseServerError
+
+    def post(self, request):
+        year = self._verify_data(request.POST.get('year'))
+        quarter = self._verify_data(request.POST.get('quarter'))
+        fs_type = self._verify_data(request.POST.get('fs_type'))
+
+        if year == "none" or quarter == "none" or fs_type == "none":
             messages.success(self.request, '항목을 선택해주세요.')
             return redirect('admin:collect_fcorp_fs')
         
@@ -272,10 +301,10 @@ class CollectInvestmentIndexView(View):
             quarters = [int(quarter)]
 
         # 재무제표 종류 {0: 연결재무제표, 5: 별도재무제표}
-            if fs_type == "all":
-                fs_types = ['0', '5']
-            else:
-                fs_types = [fs_type]
+        if fs_type == "all":
+            fs_types = ['0', '5']
+        else:
+            fs_types = [fs_type]
 
         for y in years:
             for q in quarters:
