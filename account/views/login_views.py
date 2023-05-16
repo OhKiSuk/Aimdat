@@ -26,4 +26,6 @@ class ServiceLoginView(UserPassesTestMixin, LoginView):
         return not self.request.user.is_authenticated
     
     def handle_no_permission(self):
+        if self.request.user.is_admin:
+            return HttpResponseRedirect(reverse_lazy('admin:logout'))
         return HttpResponseRedirect(reverse_lazy('index'))

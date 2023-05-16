@@ -19,15 +19,12 @@ class AnalysisView(UserPassesTestMixin, ListView):
     template_name = 'services/analysis_view.html'
     
     def test_func(self):
-        auth = self.request.user.is_authenticated
-
-        if auth:
+        if self.request.user.is_authenticated:
             if self.request.user.is_admin:
                 return False
+            if self.request.user.expiration_date.date() >= timezone.now().date():
+                return True
             
-            date = self.request.user.expiration_date.date() >= timezone.now().date()
-            return auth and date
-        
         return False
     
     def handle_no_permission(self):
