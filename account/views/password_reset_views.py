@@ -2,7 +2,7 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.04.05
+@modified at 2023.05.16
 @author OKS in Aimdat Team
 """
 import secrets
@@ -103,13 +103,13 @@ class CustomPasswordConfirmView(UserPassesTestMixin, PasswordResetConfirmView):
 
     def test_func(self):
         if self.request.user.is_authenticated:
-            if self.request.user.user_classify is not 'U':
+            if self.request.user.user_classify != 'U':
                 return False
             
             if self.request.user.is_admin:
                 return False
         
-        return self.request.user.is_authenticated
+        return self.request.user.is_anonymous
     
     def handle_no_permission(self):
         return HttpResponseRedirect(reverse_lazy('index'))
