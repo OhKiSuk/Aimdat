@@ -2,7 +2,7 @@
 @created at 2023.03.19
 @author OKS in Aimdat Team
 
-@modified at 2023.05.07
+@modified at 2023.05.16
 @author OKS in Aimdat Team
 """
 import pymongo
@@ -59,7 +59,7 @@ class ManageCorpIdUpdateView(UpdateView):
             raise PermissionDenied()
         else:
             form.save()
-            return redirect('admin:corp_manage')
+            return redirect('admin:manage_corp_id_list')
         
 class ManageCorpInfoListView(TemplateView):
     """
@@ -92,6 +92,7 @@ class ManageCorpInfoUpdateView(UpdateView):
             raise PermissionDenied()
         else:
             form.save()
+            return redirect('admin:manage_corp_info_list')
 
 class ManageCorpFinancialStatementsSearchView(View):
     """
