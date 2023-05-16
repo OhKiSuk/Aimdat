@@ -2,7 +2,7 @@
 @created at 2023.04.04
 @author cslee in Aimdat Team
 
-@modified at 2023.04.17
+@modified at 2023.05.16
 @author OKS in Aimdat Team
 """
 import json        
@@ -58,10 +58,13 @@ def _collect_new_corps_stocks(decimal_places=6):
         except TimeoutError:
             time.sleep(60)
         except ValueError:
-            fail_list.append([stock_code, 'json decode error at:' + datetime.now()])
+            fail_list.append([stock_code, 'json decode error at:' + str(datetime.now())])
             continue
-                
-        res_data = res.json()
+        
+        try:
+            res_data = res.json()
+        except:
+            continue
         dict_list = res_data['response']['body']['items']['item']
  
         basDt, srtnCd, isinCd, mrktCtg, clpr, vs, fltRt, mkp, hipr, lopr, trqu, trPrc, lstgStCnt, mrktTotAmt = \
@@ -190,7 +193,7 @@ def _collect_stocks(last_date:datetime, today=datetime.today().date(), decimal_p
             break
 
     fail_list = []
-    date = last_date + timedelta(days=1)
+    date = last_date + str(timedelta(days=1))
     while date <= today:
         cnt = 0
         while(cnt < 5): # 최대 50초 대기
@@ -267,16 +270,23 @@ def _collect_stocks(last_date:datetime, today=datetime.today().date(), decimal_p
 
     return fail_list
 
-def collect_stock_price():
-    try:
-        last_collect_date = LastCollectDate.objects.get()
-    except LastCollectDate.DoesNotExist:
-        last_collect_date = LastCollectDate()
+def collect_stock_price(user):
+    """
+    주가 데이터 수집 후 저장
+    """
+    # 마지막 수집일 조회
+    last_collect_date = LastCollectDate.objects.filter(collect_type='stock_price').last()
+    if last_collect_date:
+        last_collect_date = last_collect_date.collect_date.strftime('%Y-%m-%d')
+    else:
+        last_collect_date = datetime(2020, 1, 2).strftime('%Y-%m-%d')
     
-    fail_corp = _collect_new_corps_stocks() # 최초 수집
-    fail_date = _collect_stocks(last_date=last_collect_date.last_stock_collect_date) # 마지막 수집일 ~ 오늘 수집
+    collect_new_corps_stocks_logs = _collect_new_corps_stocks() # 신규 등록 기업 주가 정보 수집
+    collect_stocks_logs = _collect_stocks(last_date=last_collect_date) # 기존 등록 기업 주가 정보 수집
     
-    last_collect_date.last_stock_collect_date = datetime.today().date()
-    last_collect_date.save()
+    LastCollectDate.objects.create(
+        collect_user = user,
+        collect_type = 'stock_price'
+    )
     
-    return fail_corp, fail_date
+    return collect_new_corps_stocks_logs, collect_stocks_logs

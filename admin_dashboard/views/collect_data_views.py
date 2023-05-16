@@ -20,105 +20,67 @@ from django.views.generic import (
 from ..modules.collect.corp import collect_corp
 from ..modules.collect.investment_index import save_investment_index
 from ..modules.collect.stock_price import collect_stock_price
-from ..modules.collect.summary_financial_statements import collect_summary_finaicial_statements
 from ..modules.collect.fcorp_financial_statements import save_fcorp
 from ..modules.collect.dcorp_financial_statements import save_dcorp
 
 from ..models.last_collect_date import LastCollectDate
 
 class CollectCorpInfoView(TemplateView):
-    template_name = 'admin_dashboard/data_collect/collect_corp_info.html'
-
-    try:
-        lastest_collect_date = LastCollectDate.objects.last().last_corp_collect_date
-    except ProgrammingError:
-        lastest_collect_date = None
-    except AttributeError:
-        LastCollectDate.objects.create()
-        lastest_collect_date = LastCollectDate.objects.last().last_corp_collect_date
-
-    context = {
-        'last_corp_collect_date': lastest_collect_date
-    }   
+    """
+    기업정보 수집
+    """
+    template_name = 'admin_dashboard/data_collect/collect_corp_info.html'   
     
-    def get(self, request): # get_corp_info
+    def get(self, request):
         tab = request.GET.get('tab', 'none_action')
-        if tab == 'collect':
-            collect_corp()     
 
-        return render(self.request, self.template_name, context=self.context)
+        if tab == 'collect':
+            collect_corp()
+
+        lastest_collect_date = LastCollectDate.objects.filter(collect_type='corp_info').last()
+        if lastest_collect_date:
+            lastest_collect_date = lastest_collect_date.collect_date.strftime('%Y-%m-%d')
+        else:
+            lastest_collect_date = '수집 기록이 없습니다.'
+
+        context = {
+            'last_corp_collect_date': lastest_collect_date
+        }
+
+        return render(self.request, self.template_name, context=context)
     
 class CollectStockPriceView(View):
+    """
+    주가정보 수집
+    """
     template_name = 'admin_dashboard/data_collect/collect_stock_price.html'
 
-    try:
-        lastest_stock_date = LastCollectDate.objects.last().last_stock_collect_date
-    except ProgrammingError:
-        lastest_stock_date = None
-    except AttributeError:
-        LastCollectDate.objects.create()
-        lastest_stock_date = LastCollectDate.objects.last().last_stock_collect_date
-
-    context = {
-        'last_stock_collect_date': lastest_stock_date,
-        'date_logs' : [],
-        'corp_logs' : []
-    }
-
-    def get(self, request): # get_stock_price
-        tab = request.GET.get('tab', 'none_action')
-        if tab == 'collect':
-            fail_corp, fail_date = collect_stock_price()
-            self.context['date_logs'] += fail_date
-            self.context['corp_logs'] += fail_corp
-            
-        return render(self.request, self.template_name, context=self.context)
-
-class CollectFinancialStatementView(View):
-    template_name = 'admin_dashboard/data_collect/collect_summary_financial_statements.html'
-
-    try:
-        lastest_summaryfs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
-    except ProgrammingError:
-        lastest_summaryfs_date = None
-    except AttributeError:
-        LastCollectDate.objects.create()
-        lastest_summaryfs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
-
-    context = {
-        'last_summaryfs_collect_date': lastest_summaryfs_date,
-        'logs' : []
-    }
-
-    years = [2020, 2021, 2022, 2023]
-    quarters = [1, 2, 3, 4]
-    def post(self, request):
-        if request.method == 'POST':
-            year = request.POST.get('year')
-            quarter =  request.POST.get('quarter')
-            # 입력값 전처리
-            choice_year = []
-            choice_quarter = []
-            if year == 'all':
-                choice_year = self.years
-            else:
-                choice_year.append(int(year))
-            if quarter == 'all':
-                choice_quarter = self.quarters
-            else:
-                choice_quarter.append(self.quarters[int(quarter)-1])
-            # 수집 실행
-            for year in choice_year:
-                for quarter in choice_quarter:
-                    logs = collect_summary_finaicial_statements(year, quarter)
-                    self.context['logs'] += logs
-    
-        return render(self.request, self.template_name, context=self.context)
-
     def get(self, request):
-        return render(self.request, self.template_name, context=self.context)
+        tab = request.GET.get('tab', 'none_action')
+
+        if tab == 'collect':
+            fail_corp, fail_date = collect_stock_price(request.user.email)
+            context['date_logs'] += fail_date
+            context['corp_logs'] += fail_corp
+
+        lastest_collect_date = LastCollectDate.objects.filter(collect_type='stock_price').last()
+        if lastest_collect_date:
+            lastest_collect_date = lastest_collect_date.collect_date.strftime('%Y-%m-%d')
+        else:
+            lastest_collect_date = '수집 기록이 없습니다.'
+
+        context = {
+            'last_stock_collect_date': lastest_collect_date,
+            'date_logs' : [],
+            'corp_logs' : []
+        }
+            
+        return render(self.request, self.template_name, context=context)
 
 class CollectFcorpFinancialStatementsView(View):
+    """
+    금융기업 재무제표 수집
+    """
     template_name = 'admin_dashboard/data_collect/collect_fcorp_financial_statements.html'
 
     def _verify_data(self, data):
@@ -166,30 +128,28 @@ class CollectFcorpFinancialStatementsView(View):
                 for fs in fs_types:
                     result = save_fcorp(y, q, fs)
 
-        # 수집 성공 시 수집일 변경
+        # 수집 성공 시 수집 로그 저장
         if result:
-            try:
-                lastest_fs_date = LastCollectDate.objects.last()
-                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                lastest_fs_date.save()
-            except AttributeError:
-                LastCollectDate.objects.create()
-                lastest_fs_date = LastCollectDate.objects.last()
-                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                lastest_fs_date.save()
+            LastCollectDate.objects.create(
+                collect_user = request.user.email,
+                collect_type = 'fcorp_fs'
+            )
 
-        return render(self.request, self.template_name, context={'lastest_collect_date': datetime.today()})
+        lastest_collect_date = LastCollectDate.objects.filter(collect_type='fcorp_fs').last()
+        if lastest_collect_date:
+            lastest_collect_date = lastest_collect_date.collect_date.strftime('%Y-%m-%d')
+        else:
+            lastest_collect_date = '수집 기록이 없습니다.'
+
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date})
     
     def get(self, request):
         try:
-            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
-        except ProgrammingError:
-            lastest_fs_date = None
-        except AttributeError:
-            LastCollectDate.objects.create()
-            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+            lastest_collect_date = LastCollectDate.objects.filter(collect_type='fcorp_fs').last().collect_date.strftime('%Y-%m-%d')
+        except (ProgrammingError, AttributeError):
+            lastest_collect_date = '수집 기록이 없습니다.'
         
-        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_fs_date})
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date})
 
 class CollectDcorpFinancialStatementsView(View):
     """
@@ -214,7 +174,7 @@ class CollectDcorpFinancialStatementsView(View):
         # 선택하지 않았을 경우 경고 alert
         if year == "none" or quarter == "none":
             messages.success(self.request, '항목을 선택해주세요.')
-            return redirect('admin:collect_fcorp_fs')
+            return redirect('admin:collect_dcorp_fs')
 
         # 최근 5년치 재무제표만 수집 가능
         if year == 'all':
@@ -238,30 +198,28 @@ class CollectDcorpFinancialStatementsView(View):
         # 재무제표 수집
         result = save_dcorp(years, quarters)
 
-        # 수집 성공 시 수집일 변경
+        # 수집 성공 시 수집 로그 저장
         if result:
-            try:
-                lastest_fs_date = LastCollectDate.objects.last()
-                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                lastest_fs_date.save()
-            except AttributeError:
-                LastCollectDate.objects.create()
-                lastest_fs_date = LastCollectDate.objects.last()
-                lastest_fs_date.last_summaryfs_collect_date = datetime.today()
-                lastest_fs_date.save()
+            LastCollectDate.objects.create(
+                collect_user = request.user.email,
+                collect_type = 'dcorp_fs'
+            )
 
-        return render(self.request, self.template_name, context={'lastest_collect_date': datetime.today()})
+        lastest_collect_date = LastCollectDate.objects.filter(collect_type='dcorp_fs').last()
+        if lastest_collect_date:
+            lastest_collect_date = lastest_collect_date.collect_date.strftime('%Y-%m-%d')
+        else:
+            lastest_collect_date = '수집 기록이 없습니다.'
+
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date})
 
     def get(self, requeset):
         try:
-            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
-        except ProgrammingError:
-            lastest_fs_date = None
-        except AttributeError:
-            LastCollectDate.objects.create()
-            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+            lastest_collect_date = LastCollectDate.objects.filter(collect_type='dcorp_fs').last().collect_date.strftime('%Y-%m-%d')
+        except (ProgrammingError, AttributeError):
+            lastest_collect_date = '수집 기록이 없습니다.'
 
-        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_fs_date})
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date})
 
 class CollectInvestmentIndexView(View):
     """
@@ -315,11 +273,8 @@ class CollectInvestmentIndexView(View):
     
     def get(self, request):
         try:
-            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
-        except ProgrammingError:
-            lastest_fs_date = None
-        except AttributeError:
-            LastCollectDate.objects.create()
-            lastest_fs_date = LastCollectDate.objects.last().last_summaryfs_collect_date
+            lastest_fs_date = LastCollectDate.objects.filter(collect_type='investment_index').last().collect_date.strftime('%Y-%m-%d')
+        except (ProgrammingError, AttributeError):
+            lastest_fs_date = '수집 기록이 없습니다.'
 
         return render(self.request, self.template_name, context={'lastest_collect_date': lastest_fs_date})
