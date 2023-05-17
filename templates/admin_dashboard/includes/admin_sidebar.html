@@ -6,6 +6,15 @@
             </a>
         </li>
         <li class="nav-item">
+            <a href="{% url 'admin:collect_corp_id' %}" class="nav-link {% if '/admin/collect/corp/id/' in request.path %}active{% endif %}">기업 식별자 수집</a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'admin:collect_corp_info' %}" class="nav-link {% if '/admin/collect/corp/info/' in request.path %}active{% endif %}">기업정보 수집</a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'admin:collect_stock' %}" class="nav-link {% if '/admin/collect/stock/' in request.path %}active{% endif %}">주가정보 수집</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link {% if '/admin/collect/fs/' in request.path %}active{% endif %}" href="" data-bs-toggle="collapse" data-bs-target="#id_collapse_fs" aria-expanded="false">재무제표 수집</a>
         </li>
         <div class="collapse" id="id_collapse_fs">
@@ -18,16 +27,6 @@
                 </li>
             </ul>
         </div>
-        <li class="nav-item">
-            <a href="{% url 'admin:collect_stock' %}" class="nav-link {% if '/admin/collect/stock/' in request.path %}active{% endif %}">
-            주가정보 수집
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'admin:collect_corp_info' %}" class="nav-link {% if '/admin/collect/corp/info/' in request.path %}active{% endif %}">
-            기업정보 수집
-            </a>
-        </li>
         <li class="nav-item">
             <a class="nav-link {% if '/admin/collect/corp/investment/index/' in request.path %}active{% endif %}" href="{% url 'admin:collect_corp_invsetment_index' %}">투자지표 수집 및 저장</a>
         </li>

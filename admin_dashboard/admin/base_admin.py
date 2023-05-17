@@ -1,5 +1,5 @@
 """
-@modified at 2023.05.01
+@modified at 2023.05.17
 @author OKS in Aimdat Team
 """
 from account.forms.login_forms import CustomAuthenticationForm
@@ -30,6 +30,7 @@ from .axes_admin import (
     AccessSuccessAdmin
 )
 from ..views.collect_data_views import (
+    CollectCorpIdView,
     CollectCorpInfoView, 
     CollectStockPriceView, 
     CollectFcorpFinancialStatementsView,
@@ -62,6 +63,9 @@ class CustomAdminSite(AdminSite):
             # 재무제표 수집
             path('collect/fs/fcorp/', custom_admin_site.admin_view(CollectFcorpFinancialStatementsView.as_view()), name='collect_fs_fcorp'),
             path('collect/fs/dcorp/', custom_admin_site.admin_view(CollectDcorpFinancialStatementsView.as_view()), name='collect_fs_dcorp'),
+
+            # 기업 식별자 수집
+            path('collect/corp/id/', custom_admin_site.admin_view(CollectCorpIdView.as_view()), name='collect_corp_id'),
 
             # 주가정보 수집
             path('collect/stock/', custom_admin_site.admin_view(CollectStockPriceView.as_view()), name='collect_stock'),

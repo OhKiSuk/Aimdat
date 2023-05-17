@@ -2,7 +2,7 @@
 @created at 2023.03.25
 @author cslee in Aimdat Team
 
-@modified at 2023.05.16
+@modified at 2023.05.17
 @author OKS in Aimdat Team
 """
 from django.contrib import messages
@@ -17,25 +17,55 @@ from django.views.generic import (
     TemplateView, 
     View
 )
-from ..modules.collect.corp import collect_corp
+from ..modules.collect.corp_id import save_corp_id
+from ..modules.collect.corp_info import save_corp_info
 from ..modules.collect.investment_index import save_investment_index
-from ..modules.collect.stock_price import collect_stock_price
+from ..modules.collect.stock_price import save_stock_price
 from ..modules.collect.fcorp_financial_statements import save_fcorp
 from ..modules.collect.dcorp_financial_statements import save_dcorp
 
 from ..models.last_collect_date import LastCollectDate
 
+class CollectCorpIdView(TemplateView):
+    """
+    기업 식별자 정보 수집
+    """
+    template_name = 'admin_dashboard/data_collect/collect_corp_id.html'  
+
+    def get(self, request):
+        tab = request.GET.get('tab', 'none_action')
+
+        lastest_collect_date = LastCollectDate.objects.filter(collect_type='corp_id').last()
+        if lastest_collect_date:
+            lastest_collect_date = lastest_collect_date.collect_date.strftime('%Y-%m-%d')
+        else:
+            lastest_collect_date = '수집 기록이 없습니다.'
+
+        context = {
+            'last_corp_collect_date': lastest_collect_date,
+            'fail_logs': []
+        }
+
+        if tab == 'collect':
+            logs, result = save_corp_id()
+            context['fail_logs'] += logs
+
+            if result:
+                LastCollectDate.objects.create(
+                    collect_user = request.user.email,
+                    collect_type = 'corp_id'
+                )
+
+        return render(self.request, self.template_name, context=context)
+
 class CollectCorpInfoView(TemplateView):
     """
-    기업정보 수집
+    기업 정보 수집
     """
     template_name = 'admin_dashboard/data_collect/collect_corp_info.html'   
     
     def get(self, request):
         tab = request.GET.get('tab', 'none_action')
-
-        if tab == 'collect':
-            collect_corp()
 
         lastest_collect_date = LastCollectDate.objects.filter(collect_type='corp_info').last()
         if lastest_collect_date:
@@ -44,8 +74,19 @@ class CollectCorpInfoView(TemplateView):
             lastest_collect_date = '수집 기록이 없습니다.'
 
         context = {
-            'last_corp_collect_date': lastest_collect_date
+            'last_corp_collect_date': lastest_collect_date,
+            'fail_logs': []
         }
+
+        if tab == 'collect':
+            logs, result = save_corp_info()
+            context['fail_logs'] += logs
+
+            if result:
+                LastCollectDate.objects.create(
+                    collect_user = request.user.email,
+                    collect_type = 'corp_info'
+                )
 
         return render(self.request, self.template_name, context=context)
     
@@ -58,11 +99,6 @@ class CollectStockPriceView(View):
     def get(self, request):
         tab = request.GET.get('tab', 'none_action')
 
-        if tab == 'collect':
-            fail_corp, fail_date = collect_stock_price(request.user.email)
-            context['date_logs'] += fail_date
-            context['corp_logs'] += fail_corp
-
         lastest_collect_date = LastCollectDate.objects.filter(collect_type='stock_price').last()
         if lastest_collect_date:
             lastest_collect_date = lastest_collect_date.collect_date.strftime('%Y-%m-%d')
@@ -70,10 +106,19 @@ class CollectStockPriceView(View):
             lastest_collect_date = '수집 기록이 없습니다.'
 
         context = {
-            'last_stock_collect_date': lastest_collect_date,
-            'date_logs' : [],
-            'corp_logs' : []
+            'lastest_collect_date': lastest_collect_date,
+            'fail_logs' : []
         }
+
+        if tab == 'collect':
+            fail_logs, result = save_stock_price()
+            context['fail_logs'] += fail_logs
+            
+            if result:
+                LastCollectDate.objects.create(
+                    collect_user = request.user.email,
+                    collect_type = 'stock_price'
+                )
             
         return render(self.request, self.template_name, context=context)
 
@@ -126,7 +171,7 @@ class CollectFcorpFinancialStatementsView(View):
         for y in years:
             for q in quarters:
                 for fs in fs_types:
-                    result = save_fcorp(y, q, fs)
+                    logs, result = save_fcorp(y, q, fs)
 
         # 수집 성공 시 수집 로그 저장
         if result:
@@ -141,7 +186,7 @@ class CollectFcorpFinancialStatementsView(View):
         else:
             lastest_collect_date = '수집 기록이 없습니다.'
 
-        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date})
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date, 'logs': logs})
     
     def get(self, request):
         try:
@@ -196,7 +241,7 @@ class CollectDcorpFinancialStatementsView(View):
             quarters = ['사업']
 
         # 재무제표 수집
-        result = save_dcorp(years, quarters)
+        logs, result = save_dcorp(years, quarters)
 
         # 수집 성공 시 수집 로그 저장
         if result:
@@ -211,7 +256,7 @@ class CollectDcorpFinancialStatementsView(View):
         else:
             lastest_collect_date = '수집 기록이 없습니다.'
 
-        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date})
+        return render(self.request, self.template_name, context={'lastest_collect_date': lastest_collect_date, 'logs': logs})
 
     def get(self, requeset):
         try:
