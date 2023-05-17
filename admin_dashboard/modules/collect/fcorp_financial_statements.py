@@ -2,7 +2,7 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.05.12
+@modified at 2023.05.17
 @author OKS in Aimdat Team
 """
 import csv
@@ -16,6 +16,7 @@ import retry
 import time
 
 from bson.decimal128 import Decimal128
+from datetime import datetime
 from django.http import HttpResponseServerError
 from django.db.models import Q
 from bs4 import BeautifulSoup
@@ -357,10 +358,22 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
             if len(file_path) > 0:
                 _remove_file(file_path[0])
 
-        print(logs)
+        return logs, result
+    else:
+        logs.append(
+            {
+                'error_code': '',
+                'error_rank': 'info',
+                'error_detail': 'NO_RESULT_FOUND_AT_COLLECT_CORP_INFO',
+                'error_time': datetime.now()
+            }
+        )
 
-        # 성공 여부 리턴
-        if result:
-            return True
-        else:
-            return False
+        with open(SECRETS_FILE, 'r') as secrets:
+            download_path = json.load(secrets)['download_folder']
+            file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
+
+            if len(file_path) > 0:
+                _remove_file(file_path[0])
+
+    return logs, False

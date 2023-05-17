@@ -2,7 +2,7 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.05.03
+@modified at 2023.05.17
 @author OKS in Aimdat Team
 """
 import csv
@@ -17,6 +17,7 @@ import shutil
 import zipfile
 
 from bson.decimal128 import Decimal128
+from datetime import datetime
 from django.db.models import Q
 from django.http import HttpResponseServerError
 from pathlib import Path
@@ -216,7 +217,8 @@ def save_dcorp(years, quarters):
 
     # 재무제표 파싱
     fs_lists = _parse_txt(stock_codes)
-
+    
+    logs = []
     if len(fs_lists) > 0:
         client = pymongo.MongoClient('localhost:27017')
         db = client['aimdat']
@@ -243,4 +245,31 @@ def save_dcorp(years, quarters):
                 if len(folder_path) > 0:
                     _remove_file(folder_path[0], system_name, folder=True)
 
-        return True if result else False
+        return logs, result
+    else:
+        logs.append(
+            {
+                'error_code': '',
+                'error_rank': 'info',
+                'error_detail': 'NO_RESULT_FOUND_AT_COLLECT_CORP_INFO',
+                'error_time': datetime.now()
+            }
+        )
+
+        with open(SECRETS_FILE, 'r') as secrets:
+                download_path = json.load(secrets)['download_folder']
+
+                # 삭제할 파일 경로
+                file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
+                folder_path = glob.glob(download_path+'\\fs_zips')
+
+                # system os 조회
+                system_name = platform.system()
+
+                if len(file_path) > 0:
+                    _remove_file(file_path[0], system_name)
+
+                if len(folder_path) > 0:
+                    _remove_file(folder_path[0], system_name, folder=True)
+
+    return logs, False
