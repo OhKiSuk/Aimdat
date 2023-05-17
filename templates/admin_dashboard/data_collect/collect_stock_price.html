@@ -6,7 +6,7 @@
 
 <div class="row mt-3">
     <div class="mb-2">
-        <span class="font-md fw-bold">주가정보 마지막 수정일: {{ last_stock_collect_date }}</span>
+        <span class="font-md fw-bold">주가정보 마지막 수정일: {{ lastest_collect_date }}</span>
     </div>
     <hr>
     <div class="mb-3">
@@ -14,22 +14,12 @@
     </div>
 
     <div class="mb-2">
-        <span class="font-md fw-bold">주가 수집 실패 날짜 목록</span>
+        <span class="font-md fw-bold">수집 에러 목록</span>
     </div>
 
     <textarea class="mb-3" rows="10" cols="80" readonly>
-        {% for log in date_logs %}
-            <div>{{ log }}</div>
-        {% endfor %}
-    </textarea>
-
-    <div class="mb-2">
-        <span class="font-md fw-bold">주가 수집 실패 기업 목록</span>
-    </div>
-    
-    <textarea rows="10" cols="80" readonly>
-        {% for log in corp_logs %}
-            <div>{{ log }}</div>
+        {% for log in fail_logs %}
+            {{ log }}
         {% endfor %}
     </textarea>
 </div>

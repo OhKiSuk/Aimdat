@@ -2,291 +2,168 @@
 @created at 2023.04.04
 @author cslee in Aimdat Team
 
-@modified at 2023.05.16
+@modified at 2023.05.17
 @author OKS in Aimdat Team
-"""
-import json        
-import os
-import pandas as pd
+"""       
 import requests
-import retry    
-import sys
-import time
-from datetime import datetime, timedelta
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from webdriver_manager.chrome import ChromeDriverManager
+import retry
 
-dir_collect = os.path.dirname(__file__)
-dir_modules = os.path.dirname(dir_collect)
-dir_admin_dashboard = os.path.dirname(dir_modules)
-dir_aimdat = os.path.dirname(dir_admin_dashboard)
-sys.path.append(dir_aimdat)
+from datetime import datetime
+from decimal import (
+    Decimal,
+    ROUND_DOWN
+)
+
 from admin_dashboard.models.last_collect_date import LastCollectDate
+from config.settings.base import get_secret
 from services.models.corp_id import CorpId
 from services.models.stock_price import StockPrice
+from ..api_error.open_api_error import check_open_api_errors
 
-def _get_new_corp_list():
-    try:
-        corps = CorpId.objects.filter(corp_isin=None)
-        stock_codes = [corp.stock_code for corp in corps]
-        return stock_codes
-    except CorpId.DoesNotExist:
-        return []
+def _check_is_new(stock_code):
+    """
+    주가정보를 처음 수집하는 기업 구분
+    """
+    corp_id = CorpId.objects.get(stock_code=stock_code).id
+    if StockPrice.objects.filter(corp_id=corp_id).exists():
+        return False
+    else:
+        return True
+    
+@retry.retry(exceptions=TimeoutError, tries=10, delay=3)
+def _collect_stock_price(stock_codes, last_collect_date):
+    """
+    주가 정보가 수집된 적이 없는 신규 기업 종목의 주가 수집
 
-def _get_secrets(key):
-    secrets = json.load(open(os.path.join(dir_aimdat, 'secrets.json')))
-    value = secrets[key]
-    return value
-
-@retry.retry(exceptions=[TimeoutError, ValueError], tries=10)
-def _collect_new_corps_stocks(decimal_places=6):
+    공공데이터포털 금융위원회_주식시세정보 중 주식시세 API 사용
+    """
     url = 'https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo'
-    service_key = _get_secrets('data_portal_key')
-    corp_list = _get_new_corp_list()
-    n = len(corp_list)
 
-    fail_list = []
-    for i in range(n):
-        stock_code = corp_list[i]
-        params = {'serviceKey':service_key, 'numOfRows':100000000, 'pageNo':1, 'resultType':'json', 'beginBasDt':20200102, 'likeSrtnCd':stock_code}
+    fail_logs = []
+    stock_price_data_list = []
+    for stock_code in stock_codes:
+        is_new = _check_is_new(stock_code)
 
+        if is_new:
+            beginBasDt = '20200102'
+        else:
+            beginBasDt = last_collect_date
+
+        params = {
+            'serviceKey':get_secret('data_portal_key'), 
+            'numOfRows':100_000_000, 
+            'pageNo':1, 
+            'resultType':'json', 
+            'beginBasDt':beginBasDt,
+            'likeSrtnCd':stock_code
+        }
+
+        response = requests.get(url, params=params, verify=False)
+        if response.status_code == 422:
+            fail_logs.append(
+                {
+                    'error_code': '300',
+                    'error_rank': 'danger',
+                    'error_detail': stock_code + ', INVALID REQUEST PARAMETER ERROR.',
+                    'error_time': datetime.now()
+                }
+            )
+        elif response.status_code == 500:
+            fail_logs.append(
+                {
+                    'error_code': '300',
+                    'error_rank': 'danger',
+                    'error_detail': stock_code + ', DB_ERROR.',
+                    'error_time': datetime.now()
+                }
+            )
+                
         try:
-            res = requests.get(url, params=params, verify=False)
-        except TimeoutError:
-            time.sleep(60)
+            response_to_json = response.json()
         except ValueError:
-            fail_list.append([stock_code, 'json decode error at:' + str(datetime.now())])
-            continue
-        
-        try:
-            res_data = res.json()
-        except:
-            continue
-        dict_list = res_data['response']['body']['items']['item']
+            # OpenAPI 에러처리
+            open_api_err_log = check_open_api_errors(response)
+            fail_logs.append(open_api_err_log)
+            break
+
+        dict_list = response_to_json['response']['body']['items']['item']
  
-        basDt, srtnCd, isinCd, mrktCtg, clpr, vs, fltRt, mkp, hipr, lopr, trqu, trPrc, lstgStCnt, mrktTotAmt = \
-        'basDt', 'srtnCd', 'isinCd', 'mrktCtg', 'clpr', 'vs', 'fltRt', 'mkp', 'hipr', 'lopr', 'trqu', 'trPrc', 'lstgStCnt', 'mrktTotAmt'
+        basDt, clpr, vs, fltRt, mkp, hipr, lopr, trqu, trPrc, lstgStCnt, mrktTotAmt = \
+        'basDt', 'clpr', 'vs', 'fltRt', 'mkp', 'hipr', 'lopr', 'trqu', 'trPrc', 'lstgStCnt', 'mrktTotAmt'
 
         if len(dict_list) < 1:
-            fail_list.append([stock_code, 'api_result_fail'])
+            fail_logs.append(
+                {
+                    'error_code': '',
+                    'error_rank': 'info',
+                    'error_detail': stock_code+', NO_RESULTS_FOUND_AT_STOCK_PRICE',
+                    'error_time': datetime.now(),
+                }
+            )
             continue
-        # corpID
-        tmp = dict_list[0]
-        stock_code = tmp[srtnCd]
-        corp_isin = tmp[isinCd]
-        corp_market = tmp[mrktCtg]
-        corp_country = corp_isin[:2]
-
-        try:
-            id_data = CorpId.objects.get(stock_code=stock_code)
-            id_data.corp_isin = corp_isin
-            id_data.corp_market = corp_market
-            id_data.corp_country = corp_country
-            id_data.save()
-        except CorpId.DoesNotExist:
-            fail_list.append([stock_code, 'corp_not_exist'])
-            continue
-
-        # stockPrice
+        
+        stock_price_data = {}
         for x in dict_list:
-            trade_date = x[basDt]
-            tmp = [x[mkp], x[hipr], x[lopr], x[clpr], x[lstgStCnt], x[mrktTotAmt], x[trqu], x[trPrc], x[vs]]
-            tmp = [round(float(x), ndigits=decimal_places) for x in tmp]
-            open_price, high_price, low_price, close_price, total_stock, market_capitalization, trade_quantity, trade_price, change_price = tmp
-            # preprocessing for change_rate
-            tmp_list = x[fltRt].split('.')
-            if tmp_list[0] == '-':
-                tmp_list[0] = '-0'
-            elif tmp_list[0] == '':
-                tmp_list[0] = '0'
-            if len(tmp_list) < 2:
-                tmp_list.append('0')
-            value = float('.'.join(tmp_list))
-            change_rate = round(value, decimal_places)
+            trade_date = datetime.strptime(x[basDt], '%Y%m%d').strftime('%Y-%m-%d')
+            tmp = [x[mkp], x[hipr], x[lopr], x[clpr], x[lstgStCnt], x[mrktTotAmt], x[trqu], x[trPrc], x[vs], x[fltRt]]
 
-            trade_date = trade_date[0:4] + '-' + trade_date[4:6] + '-' + trade_date[6:8]
+            # Decimal Type으로 변환
+            tmp = [Decimal(str(x)).quantize(Decimal('0.' + '0'*6), rounding=ROUND_DOWN) for x in tmp]
+            open_price, high_price, low_price, close_price, total_stock, market_capitalization, trade_quantity, trade_price, change_price, change_rate = tmp
 
-            try:
-                # 데이터 중복저장 예방
-                sp_data = StockPrice.objects.get(corp_id=id_data, trade_date=trade_date)
-                continue 
-            except StockPrice.DoesNotExist:
-                sp_data = StockPrice(
-                    corp_id=id_data,
-                    open_price=open_price,
-                    high_price=high_price,
-                    low_price=low_price,
-                    close_price=close_price,
-                    trade_date=trade_date,
-                    total_stock=total_stock,
-                    market_capitalization=market_capitalization,
-                    trade_quantity=trade_quantity,
-                    trade_price=trade_price,
-                    change_price=change_price,
-                    change_rate=change_rate,
-                )
-            sp_data.save()
+            stock_price_data['corp_id'] = CorpId.objects.get(stock_code=stock_code)
+            stock_price_data['trade_date'] = trade_date
+            stock_price_data['open_price'] = open_price
+            stock_price_data['high_price'] = high_price
+            stock_price_data['low_price'] = low_price
+            stock_price_data['close_price'] = close_price
+            stock_price_data['total_stock'] = total_stock
+            stock_price_data['market_capitalization'] = market_capitalization
+            stock_price_data['trade_quantity'] = trade_quantity
+            stock_price_data['trade_price'] = trade_price
+            stock_price_data['change_price'] = change_price
+            stock_price_data['change_rate'] = change_rate
 
-    return fail_list
+            stock_price_data_list.append(stock_price_data)
 
-def _remove_file(file_path, operate_system, folder=False):
-    if operate_system == 'win':
-        if folder:
-            os.system('echo y | rd /s {} '.format(file_path))
-        else:
-            os.system('del {}'.format(file_path)) 
-    elif operate_system == 'linux':
-        os.system('rm -rf {}'.format(file_path))
+    return fail_logs, stock_price_data_list
 
-def _crawl_krx_data(driver:webdriver.Chrome, date):
-    # 날짜 기입
-    a = driver.find_element(By.XPATH, "//input[@name='trdDd']")
-    a.click()
-    a.send_keys(Keys.CONTROL + "A")
-    a.send_keys(date.strftime('%Y%m%d'))
-    # 조회
-    a = driver.find_element(By.XPATH, "//a[@name='search']")
-    a.click()
-    time.sleep(2)
-    # 종가가 없다 -> 휴장이다 -> 넘어간다
-    a = driver.find_element(By.XPATH, "//td[@data-bind='TDD_CLSPRC']")
-    if a.text == '-':
-        return 6
-    # 다운로드 버튼
-    src = 'CI-MDI-UNIT-DOWNLOAD'
-    a = driver.find_element(By.XPATH, "//button[@class='{}']".format(src))
-    a.click()
-    time.sleep(2)
-    # csv 버튼
-    src = 'csv'
-    a = driver.find_element(By.XPATH, "//div[@data-type='{}']".format(src))
-    a.click()
-    time.sleep(2) 
-    time.sleep(10) # download time
-    
-    return 0
-
-def _collect_stocks(last_date:datetime, today=datetime.today().date(), decimal_places=6, operate_system='win'):
-    # init
-    driver = webdriver.Chrome(ChromeDriverManager().install())
-    download_folder = _get_secrets('download_folder')
-
-    url = 'http://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201'
-    driver.get(url)
-    a = driver.find_elements(By.XPATH, "//a[@href='javascript:void(0);']")
-    for e in a:
-        if e.text == '주식':
-            e.click()
-            break
-    a = driver.find_elements(By.XPATH, "//a[@href='javascript:void(0);']")
-    for e in a:
-        if e.text == '종목시세':
-            e.click()
-            break
-    a = driver.find_elements(By.XPATH, "//a[@href='javascript:void(0);']")
-    for e in a:
-        if e.text == '전종목 시세':
-            e.click()
-            break
-
-    fail_list = []
-    date = last_date + str(timedelta(days=1))
-    while date <= today:
-        cnt = 0
-        while(cnt < 5): # 최대 50초 대기
-            try:
-                cnt = _crawl_krx_data(driver, date)
-                break
-            except NoSuchElementException:
-                time.sleep(10)
-                cnt += 1
-        if cnt == 5:    
-            fail_list.append([date, 'timeout'])
-            date += timedelta(days=1)
-            continue
-        if cnt == 6: # 휴장
-            date += timedelta(days=1)
-            continue
-
-        today_str = today.strftime("%Y%m%d")
-        csv_name = ''
-        for f_name in os.listdir(download_folder):
-            if f_name.startswith('data_') & f_name.endswith('{}.csv'.format(today_str)):
-                csv_name = f_name
-                break        
-        csv_path = download_folder+'\\'+csv_name
-        # data parsing and save
-        try:
-            df = pd.read_csv(csv_path, encoding='cp949')
-        except FileNotFoundError:
-            fail_list.append([date, 'file_not_found'])
-            continue
-
-        cols = df.columns[0:1].values.tolist() + df.columns[4:].values.tolist()
-        df = df[cols]
-        n = len(df)
-        for i in range(n):
-            row = df.iloc[i]
-            stock_code = row[0]
-            try:
-                corp_id = CorpId.objects.get(stock_code=stock_code)
-            except CorpId.DoesNotExist:
-                continue
-            
-            # data processing
-            tmp = row[1:]
-            tmp = [round(float(x), ndigits=decimal_places) for x in tmp]
-            close_price, change_price, change_rate, open_price, \
-            high_price, low_price, trade_quantity, trade_price, \
-            market_capitalization, total_stock = tmp
-            
-            # save
-            trade_date = date
-            try: # 중복저장 예방
-                sp_data = StockPrice.objects.get(corp_id=corp_id, trade_date=trade_date)
-                continue 
-            except StockPrice.DoesNotExist:
-                sp_data = StockPrice(
-                    corp_id=corp_id,
-                    trade_date=trade_date,
-                    open_price=open_price,
-                    high_price=high_price,
-                    low_price=low_price,
-                    close_price=close_price,
-                    total_stock=total_stock,
-                    market_capitalization=market_capitalization,
-                    trade_quantity=trade_quantity,
-                    trade_price=trade_price,
-                    change_price=change_price,
-                    change_rate=change_rate
-                )
-                sp_data.save()
-
-        _remove_file(csv_path, operate_system)
-        date += timedelta(days=1)
-
-    return fail_list
-
-def collect_stock_price(user):
+def save_stock_price():
     """
     주가 데이터 수집 후 저장
+
+    성공 시 fail_logs와 True 리턴, 실패 시 fail_logs와 False 리턴
+    기본 리턴값은 fail_logs, False임
     """
     # 마지막 수집일 조회
     last_collect_date = LastCollectDate.objects.filter(collect_type='stock_price').last()
     if last_collect_date:
-        last_collect_date = last_collect_date.collect_date.strftime('%Y-%m-%d')
+        last_collect_date = last_collect_date.collect_date.strftime('%Y%m%d')
     else:
-        last_collect_date = datetime(2020, 1, 2).strftime('%Y-%m-%d')
+        last_collect_date = datetime(2020, 1, 2).strftime('%Y%m%d')
     
-    collect_new_corps_stocks_logs = _collect_new_corps_stocks() # 신규 등록 기업 주가 정보 수집
-    collect_stocks_logs = _collect_stocks(last_date=last_collect_date) # 기존 등록 기업 주가 정보 수집
-    
-    LastCollectDate.objects.create(
-        collect_user = user,
-        collect_type = 'stock_price'
-    )
-    
-    return collect_new_corps_stocks_logs, collect_stocks_logs
+    stock_codes = CorpId.objects.all().values_list('stock_code', flat=True)
+    fail_logs, data_list = _collect_stock_price(stock_codes, last_collect_date)
+
+    if data_list:
+        # 데이터 중복저장 방지
+        for data in data_list:
+            if not StockPrice.objects.filter(corp_id=data['corp_id'], trade_date=data['trade_date']).exists():
+                StockPrice.objects.create(
+                    corp_id=data['corp_id'],
+                    open_price=data['open_price'],
+                    high_price=data['high_price'],
+                    low_price=data['low_price'],
+                    close_price=data['close_price'],
+                    trade_date=data['trade_date'],
+                    total_stock=data['total_stock'],
+                    market_capitalization=data['market_capitalization'],
+                    trade_quantity=data['trade_quantity'],
+                    trade_price=data['trade_price'],
+                    change_price=data['change_price'],
+                    change_rate=data['change_rate'],
+                )
+            
+        return fail_logs, True
+        
+    return fail_logs, False
