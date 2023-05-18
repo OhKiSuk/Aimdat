@@ -148,10 +148,10 @@ class CollectFcorpFinancialStatementsView(View):
             messages.success(self.request, '항목을 선택해주세요.')
             return redirect('admin:collect_fcorp_fs')
 
-        # 최근 5년치 재무제표만 수집 가능
+        # 최근 3년치 재무제표만 수집 가능(금년 제외)
         if year == 'all':
             now_year = datetime.now().year
-            years = [now_year - i for i in range(5)]
+            years = [now_year - i for i in range(1, 4, 1)]
         else:
             years = [int(year)]
 
@@ -221,10 +221,10 @@ class CollectDcorpFinancialStatementsView(View):
             messages.success(self.request, '항목을 선택해주세요.')
             return redirect('admin:collect_dcorp_fs')
 
-        # 최근 5년치 재무제표만 수집 가능
+        # 최근 3년치 재무제표만 수집 가능(금년 제외)
         if year == 'all':
             now_year = datetime.now().year
-            years = [now_year - i for i in range(5)]
+            years = [now_year - i for i in range(1, 4, 1)]
         else:
             years = [int(year)]
 
