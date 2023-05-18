@@ -10,7 +10,6 @@ import glob
 import json
 import os
 import pymongo
-import shutil
 import re
 import retry
 import time
@@ -34,6 +33,7 @@ from selenium.webdriver.support.ui import Select
 from ssl import SSLError
 from webdriver_manager.chrome import ChromeDriverManager
 from services.models.corp_id import CorpId
+from ..remove.remove_files import remove_files
 
 #django 앱 최상위 경로
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
@@ -320,21 +320,6 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
 
     return fs_result, logs
     
-def _remove_file(file_path, folder=False):
-    """
-    사용한 파일 제거
-    """
-    if folder:
-        try:
-            shutil.rmtree(file_path)
-        except OSError:
-            pass
-    else:
-        try:
-            os.remove(file_path)
-        except OSError:
-            pass
-    
 def save_fcorp(year:int, quarter:int, fs_type=5):
     """
     금융 기업 재무제표 목록 저장
@@ -356,7 +341,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
             file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
 
             if len(file_path) > 0:
-                _remove_file(file_path[0])
+                remove_files(file_path[0])
 
         return logs, result
     else:
@@ -374,6 +359,6 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
             file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
 
             if len(file_path) > 0:
-                _remove_file(file_path[0])
+                remove_files(file_path[0])
 
     return logs, False

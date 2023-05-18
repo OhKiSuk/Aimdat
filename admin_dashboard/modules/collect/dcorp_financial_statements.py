@@ -2,7 +2,7 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.05.17
+@modified at 2023.05.18
 @author OKS in Aimdat Team
 """
 import csv
@@ -10,7 +10,6 @@ import glob
 import json
 import os
 import pandas
-import platform
 import pymongo
 import time
 import shutil
@@ -27,6 +26,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 
 from services.models.corp_id import CorpId
+from ..remove.remove_files import remove_files
 
 #django 앱 최상위 경로
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
@@ -195,18 +195,6 @@ def _parse_txt(stock_codes):
     # dict 목록 리턴
     return fs_dict_list
 
-def _remove_file(file_path, system_name, folder=False):
-    """
-    사용한 파일 제거
-    """
-    if system_name == 'Windows':
-        if folder:
-            os.system('echo y | rd /s {} '.format(file_path))
-        else:
-            os.system('del {}'.format(file_path)) # Windows
-    elif system_name == 'Linux':
-        os.system('rm -rf {}'.format(file_path)) # Linux
-
 def save_dcorp(years, quarters):
 
     # 재무제표 다운로드
@@ -236,14 +224,11 @@ def save_dcorp(years, quarters):
                 file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
                 folder_path = glob.glob(download_path+'\\fs_zips')
 
-                # system os 조회
-                system_name = platform.system()
-
                 if len(file_path) > 0:
-                    _remove_file(file_path[0], system_name)
+                    remove_files(file_path[0])
 
                 if len(folder_path) > 0:
-                    _remove_file(folder_path[0], system_name, folder=True)
+                    remove_files(folder_path[0], folder=True)
 
         return logs, result
     else:
@@ -263,13 +248,10 @@ def save_dcorp(years, quarters):
                 file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
                 folder_path = glob.glob(download_path+'\\fs_zips')
 
-                # system os 조회
-                system_name = platform.system()
-
                 if len(file_path) > 0:
-                    _remove_file(file_path[0], system_name)
+                    remove_files(file_path[0])
 
                 if len(folder_path) > 0:
-                    _remove_file(folder_path[0], system_name, folder=True)
+                    remove_files(folder_path[0], folder=True)
 
     return logs, False
