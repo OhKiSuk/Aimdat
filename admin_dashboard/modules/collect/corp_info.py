@@ -1,5 +1,5 @@
 """
-@created at 2023.05.17
+@created at 2023.05.18
 @author OKS in Aimdat Team
 """
 import csv
@@ -72,9 +72,10 @@ def _collect_corp_info(stock_codes):
                 params['corp_code'] = element.find('corp_code').text
 
                 response = requests.get(url, params=params, verify=False)
+                time.sleep(0.3)
 
                 response_to_json = response.json()
-                if response['status'] == '000':
+                if response_to_json['status'] == '000':
                     corp_info_data['corp_id'] = CorpId.objects.get(stock_code=stock_code)
                     corp_info_data['corp_homepage_url'] = response_to_json['hm_url'] # 홈페이지 주소
                     corp_info_data['corp_settlement_month'] = response_to_json['acc_mt'] # 결산월
@@ -84,7 +85,7 @@ def _collect_corp_info(stock_codes):
                     corp_info_data_list.append(corp_info_data)
                 else:
                     # OpenDartApi 예외처리
-                    log = check_open_dart_api_error(response['status'])
+                    log = check_open_dart_api_error(response_to_json['status'])
                     logs.append(log)
     
     return corp_info_data_list, logs
@@ -113,8 +114,8 @@ def _parse_induty_code(corp_id, induty_code):
 
         for row in file_content:
             if row[1] == induty_code:
-                CorpId.objects.filter(corp_id=corp_id).update(
-                    corp_sectors=row[0]
+                CorpId.objects.filter(id=corp_id).update(
+                    corp_sectors=row[2]
                 )
 
 def save_corp_info():
@@ -132,8 +133,9 @@ def save_corp_info():
         _download_induty_code()
 
         for corp_info in result:
-            # CorpId에 섹터명(산업분류명) 파싱 후 저장
-            _parse_induty_code(corp_info['corp_id'].id, corp_info['induty_code'])
+            # CorpId에 섹터명(산업분류명) 파싱 후 저장(Corp 섹터가 없는 것만)
+            if CorpId.objects.filter(corp_sectors=None).exists():
+                _parse_induty_code(corp_info['corp_id'].id, corp_info['induty_code'])
 
             # 중복 저장 방지
             if not CorpInfo.objects.filter(corp_id=corp_info['corp_id']).exists():
