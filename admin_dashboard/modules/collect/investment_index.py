@@ -2,8 +2,8 @@
 @created at 2023.05.10
 @author JSU in Aimdat Team
 
-@modified at 2023.05.12
-@author OKS in Aimdat Team
+@modified at 2023.05.19
+@author JSU in Aimdat Team
 """
 import os
 import zipfile
@@ -59,11 +59,11 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
 
     # 정규식 패턴
     not_digit_pattern = re.compile(r'(\D|-)')
-    revenue_pattern = re.compile(r'\.?\s*매출액|영업수익(\(손실\)|<주석40>|:)?')
-    cost_of_sales_pattern = re.compile(r'\s*.{0,5}\.?\s*영업비용|매출원가\s*(\(.{0,4}\))?$')
-    operating_profit_pattern = re.compile(r'\s*.{0,5}\.?\s*총?영업이익\s*(\(.{0,4}\)|\s*)?$')
-    net_profit_pattern = re.compile(r'\s*.{0,5}\.?\s*(연결)?(당기|분기)순이익\s*(\(.{0,4}\)|\s*)?$')
-    inventories_pattern = re.compile(r'\s*.{0,5}\.?\s*재고자산\s*(\(.{0,4}\)|\s*)?$')
+    revenue_pattern = re.compile(r'(\.?\s*(매출액|영업수익)(\(손실\)|<주석40>|:)?|^((영업|금융)?수익(\(매출액\)?)|매출액(\((영업수익|매출액)\))?)$)')
+    cost_of_sales_pattern = re.compile(r'\s*.{0,3}\.?\s*영업비용|매출원가\s*(\(.{0,4}\))?$')
+    operating_profit_pattern = re.compile(r'\s*.{0,3}\.?\s*총?영업이익\s*(\(.{0,4}\)|\s*)?$')
+    net_profit_pattern = re.compile(r'\s*.{0,3}\.?\s*(연결)?(당기|분기)순이익\s*(\(.{0,4}\)|\s*)?$')
+    inventories_pattern = re.compile(r'\s*.{0,3}\.?\s*재고자산\s*(\(.{0,4}\)|\s*)?$')
     total_debt_pattern = re.compile(r'\s*부\s*채\s*총\s*계')
     total_asset_pattern = re.compile(r'\s*자\s*산\s*총\s*계')
     total_capital_pattern = re.compile(r'\s*자\s*본\s*총\s*계')
@@ -338,8 +338,9 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
                         # 주당 현금배당금(보통주) 파싱(단위: 원)
                         if element.find('stock_knd') != None:
                             stock_knd = element.find('stock_knd').text
+                            se = element.find('se').text
 
-                            if stock_knd == '보통주':
+                            if stock_knd == '보통주' and se == '주당 현금배당금(원)':
                                 value = not_digit_pattern.sub('', element.find('thstrm').text)
                                 if value:
                                     index_dict['dividend'] = Decimal(value) # 배당금 저장
@@ -349,6 +350,9 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
                             value = not_digit_pattern.sub('', element.find('thstrm').text)
                             if value:
                                 total_dividend = Decimal(value) * Decimal(1000000)
+                    
+                    if 'dividend' not in index_dict:
+                        index_dict['dividend'] = Decimal(0)
                 
                 # 나눗셈 정확도 설정
                 ctx = Context(prec=6)
