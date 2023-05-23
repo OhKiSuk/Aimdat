@@ -2,7 +2,7 @@
 @created at 2023.05.10
 @author JSU in Aimdat Team
 
-@modified at 2023.05.19
+@modified at 2023.05.23
 @author JSU in Aimdat Team
 """
 import os
@@ -10,6 +10,7 @@ import zipfile
 import pymongo
 import re
 import requests
+import retry
 import shutil
 import xml.etree.ElementTree as ET
 
@@ -48,6 +49,7 @@ def _unzip_corp_code():
     with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
         zip_file.extract('CORPCODE.xml', download_path)
 
+@retry.retry(exceptions=[TimeoutError, requests.exceptions.ConnectionError], tries=10, delay=3)
 def _parse_investment_index(year, quarter, fs_type, stock_codes):
     """
     기업 데이터 파싱 후 투자지표 데이터로 변환

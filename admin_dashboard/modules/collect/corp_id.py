@@ -13,7 +13,7 @@ from config.settings.base import get_secret
 from services.models.corp_id import CorpId
 from ..api_error.open_api_error import check_open_api_errors
 
-@retry.retry(exceptions=TimeoutError, tries=10, delay=3)
+@retry.retry(exceptions=[TimeoutError, requests.exceptions.ConnectionError], tries=10, delay=3)
 def _collect_corp_id():
     """
     기업 식별자 정보 수집
