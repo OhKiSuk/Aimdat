@@ -27,7 +27,7 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         기존 비밀번호 일치 여부 검증
         """
         old_password = self.cleaned_data.get('old_password')
-        if check_password(self.user.password, old_password):
+        if not check_password(self.user.password, old_password):
             raise ValidationError(self.error_messages['password_incorrect'])
         return old_password
 
