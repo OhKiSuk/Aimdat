@@ -54,9 +54,9 @@ class AccountManageAdmin(ModelAdmin):
                     user.save()
                     return self.response_add(request, user)
             else:
-                form = AdminCreationForm(request)
+                form = AdminCreationForm(request.POST).errors
 
-            extra_context['add_form'] = form
+            extra_context['form'] = form
 
         return super().add_view(request, form_url, extra_context)
     
@@ -77,9 +77,9 @@ class AccountManageAdmin(ModelAdmin):
                     else:
                         raise Http404('관리자 계정만 변경 가능합니다.')
         else:
-            form = AdminChangeForm(instance=user)
+            form = AdminChangeForm(instance=user).errors
         
-        extra_context['change_form'] = form
+        extra_context['form'] = form
         extra_context['user_id'] = user.id
         
         return super().change_view(request, object_id, form_url, extra_context)

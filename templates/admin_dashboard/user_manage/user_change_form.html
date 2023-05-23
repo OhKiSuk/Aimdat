@@ -15,18 +15,19 @@
             </div>
 
             <form class="form-control rounded-3 mt-3" method="post">
+                {% include 'includes/form_errors.html' %}
                 {% csrf_token %}
                 <div class="my-3 row">
                     <label for="email" class="col-sm-2 col-form-label">이메일 정보</label>
                     <div class="col-sm-10">
-                        <input type="text" class="form-control" id="email" name="email" value="{{ change_form.email.value|default_if_none:'' }}">
+                        <input type="text" class="form-control" id="email" name="email" value="{{ form.email.value|default_if_none:'' }}">
                     </div>
                 </div>
 
                 <div class="mb-3 row">
                     <label for="password1" class="col-sm-2 col-form-label">비밀번호</label>
                     <div class="col-sm-10">
-                        <input type="text" readonly class="form-control-plaintext" name="password" id="password" value="{{ change_form.password.value|default_if_none:'' }}">
+                        <input type="text" readonly class="form-control-plaintext" name="password" id="password" value="{{ form.password.value|default_if_none:'' }}">
                     </div>
                 </div>
 

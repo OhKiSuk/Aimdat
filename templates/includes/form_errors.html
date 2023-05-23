@@ -3,4 +3,8 @@
 <div class="alert alert-warning mt-3" role="alert">
     <i class="bi bi-exclamation-triangle"></i> {{ form.errors.values|get_form_errors }}
 </div>
+{% elif '/admin/' in request.path_info %}
+<div class="alert alert-warning mt-3" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> {{ form.values|get_form_errors }}
+</div>
 {% endif %}
