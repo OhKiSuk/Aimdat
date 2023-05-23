@@ -2,7 +2,7 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.05.18
+@modified at 2023.05.23
 @author OKS in Aimdat Team
 """
 import csv
@@ -182,13 +182,13 @@ def _parse_txt(stock_codes):
             
             # 계정과목 저장
             for _, row in match_rows.iterrows():
-                if row.filter(regex=r'(누적|말$)').empty:
+                if row.filter(regex=r'(누적|말|당기$)').empty:
                     fs_dict[row['항목명']] = None 
                 else:
-                    if row.filter(regex=r'(누적|말$)').iloc[0] == 'nan':
+                    if row.filter(regex=r'(누적|말|당기$)').iloc[0] == 'nan':
                         fs_dict[row['항목명']] = None
                     else:
-                        fs_dict[row['항목명']] = Decimal128(str(row.filter(regex=r'(누적|말$)').iloc[0]).replace(',', ''))
+                        fs_dict[row['항목명']] = Decimal128(str(row.filter(regex=r'(누적|말|당기$)').iloc[0]).replace(',', ''))
 
             fs_dict_list.append(fs_dict)
     
