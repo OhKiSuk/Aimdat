@@ -2,7 +2,7 @@
 @created at 2023.03.24
 @author cslee in Aimdat Team
 
-@modified at 2023.05.17
+@modified at 2023.05.23
 @author OKS in Aimdat Team
 """
 import datetime
@@ -19,36 +19,36 @@ def _collect_corp_id():
     기업 식별자 정보 수집
     """
     # 수집 날짜 지정(한국 기준)
-    date = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))) - datetime.timedelta(days=1)
+    BasDt = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))) - datetime.timedelta(days=1)
 
-    # 평일, 주말 구분(0 ~ 4: 평일, 5: 토요일, 6: 일요일)
-    if date.weekday() == 5:
-        likeBasDt = date - datetime.timedelta(days=1)
-    elif date.weekday() == 6:
-        likeBasDt = date - datetime.timedelta(days=2)
-    else:
-        likeBasDt = date
-
-    url = 'https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo'
-    params = {
-        'serviceKey': get_secret('data_portal_key'),
-        'numOfRows': 100_000,
-        'pageNo': 1,
-        'resultType': 'json',
-        'basDt': likeBasDt.strftime('%Y%m%d')
-    }
-    
-    response = requests.get(url, params=params, verify=False)
-
+    # 최근 일주일 안에 업데이트 된 상장 목록 획득
     fail_logs = []
-    try:
-        response_to_json = response.json()
-    except ValueError:
-        # OpenAPI 에러처리
-        log = check_open_api_errors(response)
-        fail_logs.append(log)
+    for _ in range(7):
+        url = 'https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo'
+        params = {
+            'serviceKey': get_secret('data_portal_key'),
+            'numOfRows': 100000,
+            'pageNo': 1,
+            'resultType': 'json',
+            'basDt': BasDt.strftime('%Y%m%d')
+        }
+        
+        response = requests.get(url, params=params, verify=False)
 
-    corp_list = response_to_json['response']['body']['items']['item']
+        try:
+            response_to_json = response.json()
+            
+            if int(response_to_json['response']['body']['totalCount']) == 0:
+                BasDt = BasDt - datetime.timedelta(days=1)
+                continue
+            else:
+                corp_list = response_to_json['response']['body']['items']['item']
+                break
+        except ValueError:
+            # OpenAPI 에러처리
+            log = check_open_api_errors(response)
+            fail_logs.append(log)
+            break
 
     return corp_list, fail_logs
 
