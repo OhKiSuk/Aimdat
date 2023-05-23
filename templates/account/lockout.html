@@ -4,6 +4,11 @@
     <div class="font-md">로그인 실패</div>
     <br>
     <p class="font-sm">로그인 시도 횟수가 너무 많습니다. 나중에 다시 시도하시길 바랍니다.</p>
+    
+    {% if request.path_info == '/admin/login/' %}
+    <a class="font-sm" href="{% url 'admin:login' %}">로그인</a>
+    {% else %}
     <a class="font-sm" href="{% url 'account:login' %}">로그인</a>
+    {% endif %}
 </div>
 {% endblock %}
