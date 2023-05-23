@@ -7,6 +7,7 @@
 """       
 import requests
 import retry
+import time
 
 from datetime import datetime
 from decimal import (
@@ -16,6 +17,7 @@ from decimal import (
 
 from admin_dashboard.models.last_collect_date import LastCollectDate
 from config.settings.base import get_secret
+from django.db.models import Q
 from services.models.corp_id import CorpId
 from services.models.stock_price import StockPrice
 from ..api_error.open_api_error import check_open_api_errors
@@ -51,7 +53,7 @@ def _collect_stock_price(stock_codes, last_collect_date):
 
         params = {
             'serviceKey':get_secret('data_portal_key'), 
-            'numOfRows':100_000_000, 
+            'numOfRows':100000000, 
             'pageNo':1, 
             'resultType':'json', 
             'beginBasDt':beginBasDt,
@@ -59,6 +61,7 @@ def _collect_stock_price(stock_codes, last_collect_date):
         }
 
         response = requests.get(url, params=params, verify=False)
+        time.sleep(0.5)
         if response.status_code == 422:
             fail_logs.append(
                 {
@@ -87,7 +90,7 @@ def _collect_stock_price(stock_codes, last_collect_date):
             break
 
         dict_list = response_to_json['response']['body']['items']['item']
- 
+
         basDt, clpr, vs, fltRt, mkp, hipr, lopr, trqu, trPrc, lstgStCnt, mrktTotAmt = \
         'basDt', 'clpr', 'vs', 'fltRt', 'mkp', 'hipr', 'lopr', 'trqu', 'trPrc', 'lstgStCnt', 'mrktTotAmt'
 
@@ -102,8 +105,8 @@ def _collect_stock_price(stock_codes, last_collect_date):
             )
             continue
         
-        stock_price_data = {}
         for x in dict_list:
+            stock_price_data = {}
             trade_date = datetime.strptime(x[basDt], '%Y%m%d').strftime('%Y-%m-%d')
             tmp = [x[mkp], x[hipr], x[lopr], x[clpr], x[lstgStCnt], x[mrktTotAmt], x[trqu], x[trPrc], x[vs], x[fltRt]]
 
@@ -148,7 +151,7 @@ def save_stock_price():
     if data_list:
         # 데이터 중복저장 방지
         for data in data_list:
-            if not StockPrice.objects.filter(corp_id=data['corp_id'], trade_date=data['trade_date']).exists():
+            if not StockPrice.objects.filter(Q(corp_id=data['corp_id']) & Q(trade_date=data['trade_date'])).exists():
                 StockPrice.objects.create(
                     corp_id=data['corp_id'],
                     open_price=data['open_price'],
