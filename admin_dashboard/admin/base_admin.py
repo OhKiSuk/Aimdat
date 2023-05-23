@@ -23,6 +23,7 @@ from django.db.models.functions import (
 )
 from django.urls import path
 from services.models.inquiry import Inquiry
+from ..models.last_collect_date import LastCollectDate
 
 from .axes_admin import (
     AccessAttemptAdmin, 
@@ -150,6 +151,22 @@ class CustomAdminSite(AdminSite):
 
                 extra_context['user_count_label'] = [date.strftime('%Y-%m-%d') for date in dates]
                 extra_context['user_count_data'] = data
+
+        # 최근 데이터 수집일
+        if LastCollectDate.objects.filter(collect_type='corp_id').exists():
+            extra_context['corp_id_date'] = LastCollectDate.objects.filter(collect_type='corp_id').last().collect_date
+        else:
+            extra_context['corp_id_date'] = '정보 없음'
+        
+        if LastCollectDate.objects.filter(collect_type='corp_info').exists():
+            extra_context['corp_info_date'] = LastCollectDate.objects.filter(collect_type='corp_info').last().collect_date
+        else:
+            extra_context['corp_info_date'] = '정보 없음'
+
+        if LastCollectDate.objects.filter(collect_type='stock_price').exists():
+            extra_context['stock_price_date'] = LastCollectDate.objects.filter(collect_type='stock_price').last().collect_date
+        else:
+            extra_context['stock_price_date'] = '정보 없음'    
 
         return super().index(request, extra_context)
     

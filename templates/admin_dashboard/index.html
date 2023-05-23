@@ -43,41 +43,31 @@
         <div class="row" style="margin-left: 1rem;">
             <div class="col flex-grow-1 p-3 bg-white">
                 <div>
-                    <span class="font-md fw-bold">재무정보 갱신일</span>
+                    <span class="font-md fw-bold">기업 식별자 갱신</span>
                 </div>
                 <div class="mt-3 text-center">
                     <span class="font-md fw-bold">
-                        2023-03-06
+                        {{ corp_id_date|date:'Y-m-d' }}
                     </span>
                 </div>
             </div>
             <div class="col flex-grow-1 mx-3 p-3 bg-white">
                 <div>
-                    <span class="font-md fw-bold">주가정보 갱신일</span>
+                    <span class="font-md fw-bold">기업 정보 갱신</span>
                 </div>
                 <div class="mt-3 text-center">
                     <span class="font-md fw-bold">
-                        2023-03-06
+                        {{ corp_info_date|date:'Y-m-d' }}
                     </span>
                 </div>
             </div>
             <div class="col flex-grow-1 p-3 bg-white" style="margin-right: 1rem;">
                 <div>
-                    <span class="font-md fw-bold">기업정보 갱신일</span>
+                    <span class="font-md fw-bold">주가 정보 갱신</span>
                 </div>
                 <div class="mt-3 text-center">
                     <span class="font-md fw-bold">
-                        2023-03-06
-                    </span>
-                </div>
-            </div>
-            <div class="col flex-grow-1 p-3 bg-white">
-                <div>
-                    <span class="font-md fw-bold">계정정보 갱신일</span>
-                </div>
-                <div class="mt-3 text-center">
-                    <span class="font-md fw-bold">
-                        2023-03-06
+                        {{ stock_price_date|date:'Y-m-d' }}
                     </span>
                 </div>
             </div>
