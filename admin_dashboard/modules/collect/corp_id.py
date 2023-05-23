@@ -70,7 +70,8 @@ def save_corp_id():
                     corp_country='대한민국',
                     corp_market=corp['mrktCtg'],
                     corp_isin=corp['isinCd'],
-                    stock_code=corp['srtnCd'][1:]
+                    stock_code=corp['srtnCd'][1:],
+                    base_date=datetime.datetime.strptime(corp['basDt'], '%Y-%m-%d')
                 )
         return fail_logs, True
     else:
