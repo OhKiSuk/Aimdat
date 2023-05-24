@@ -2,7 +2,7 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.05.17
+@modified at 2023.05.24
 @author OKS in Aimdat Team
 """
 import csv
@@ -173,38 +173,29 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                 fs_dict['년도'] = year
                 fs_dict['분기'] = quarter
 
-                fs_dict['재무제표종류'] = '' # 재무제표종류가 구분이 안되는 케이스를 확인하기 위함
-                # 가져온 재무제표의 종류 구분
-                if len(table.find_all(string=re.compile(r'자\s*본\s*총\s*계'))) > 0:
+                if len(table.find_all(string=re.compile(r'부\s*채\s*총\s*계'))) > 0:
                     if fs_type == 5:
                         fs_dict['재무제표종류'] = '별도재무상태표'
                     elif fs_type == 0:
                         fs_dict['재무제표종류'] = '연결재무상태표'
-                elif len(table.find_all(string=re.compile(r'주\s*당\s*순?\s*이\s*익'))) > 0 or \
-                    len(table.find_all(string=re.compile(r'주\s*당\s*이\s*익'))):
+                elif len(table.find_all(string=re.compile(r'주\s*당\s*순?\s*이\s*익'))) > 0:
                         if fs_type == 5:
                             fs_dict['재무제표종류'] = '별도포괄손익계산서'
                         elif fs_type == 0:
                             fs_dict['재무제표종류'] = '연결포괄손익계산서'
-                elif len(table.find_all(string=re.compile(r'현\s*금\s*흐\s*름'))) > 0:
+                elif len(table.find_all(string=re.compile(r'.*?현\s*?금\s*?성\s*?자\s*?산'))) > 0:
                     if fs_type == 5:
                         fs_dict['재무제표종류'] = '별도현금흐름표'
                     elif fs_type == 0:
                         fs_dict['재무제표종류'] = '연결현금흐름표'
-                elif len(table.find_all(string=re.compile(r'미\s*처\s*분'))) > 0 or \
-                    len(table.find_all(string=re.compile(r'처\s*분\s*액'))) > 0:
-                    # 이익잉여금처분계산서 제외
-                    continue
-                elif len(table.find_all(string=re.compile(r'[0-9]+년?\.?\s*[0-9]+월?\.?\s*[0-9]+일?'))) > 0 or \
-                    len(name='th', string=re.compile(r'자\s*본\s*금')) > 0:
-                    # 자본변동표 제외
+                else:
                     continue
                 
                 rows = table.find_all('tr')
                 
                 # 차변/대변 존재 여부 확인
                 if len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'제\s*[0-9]+'))) > 0 or \
-                    len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'(3\s?개\s*월|누\s*적\s*)'))):
+                    len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'(3\s?개\s*월|누\s*적\s*)'))) > 0:
 
                     for row in rows:
 
@@ -232,43 +223,34 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                             credit = re.findall(r'\(?\d+\)?', tds[3].get_text().replace(',', '')) # 대변(오른쪽)
 
                             # 차변/대변의 숫자 존재 여부 확인
-                            if debit != [] and credit == []:
-
+                            if debit:
                                 # 음수/양수 구분
                                 if '(' in str(debit[0]):
                                     fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '-').replace(')', ''))
                                 else:
                                     fs_dict[account_subject] = Decimal128(str(debit[0]))
-                            elif debit == [] and credit != []:
-
-                                # 음수/양수 구분
+                            elif credit:
                                 if '(' in str(credit[0]):
                                     fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '-').replace(')', ''))
                                 else:
                                     fs_dict[account_subject] = Decimal128(str(credit[0]))
-                            elif debit == [] and credit == []:
-                                continue
                         else:
                             debit = re.findall(r'\(?\d+\)?', tds[1].get_text().replace(',', '')) # 차변(왼쪽)
                             credit = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 대변(오른쪽)
 
                             # 차변/대변의 숫자 존재 여부 확인
-                            if debit != [] and credit == []:
-
+                            if debit:
                                 # 음수/양수 구분
                                 if '(' in str(debit[0]):
                                     fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '-').replace(')', ''))
                                 else:
                                     fs_dict[account_subject] = Decimal128(str(debit[0]).replace('-', ''))
-                            elif debit == [] and credit != []:
-
+                            elif credit:
                                 # 음수/양수 구분
                                 if '(' in str(credit[0]):
                                     fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '-').replace(')', ''))
                                 else:
                                     fs_dict[account_subject] = Decimal128(str(credit[0]))
-                            elif debit == [] and credit == []:
-                                continue
                 else:
                     for row in rows:
 
@@ -285,38 +267,30 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
 
                         # 재무제표 내에 주석이 존재하는 지 확인
                         if table.find(name='th', string=re.compile(r'\s*주\s*석')):
-                            value = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 재무제표 값
+                            value = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', ''))
 
                             # 각 계정과목의 값 존재 여부 확인
-                            if value != []:
-
+                            if value:
                                 # 음수/양수 구분
                                 if '(' in str(value[0]):
                                     fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '-').replace(')', ''))
                                 else:
                                     fs_dict[account_subject] = Decimal128(str(value[0]))
-                            elif value == []:
-                                continue
                         else:
-                            value = re.findall(r'\(?\d+\)?', tds[1].get_text().replace(',', '')) # 재무제표 값
+                            value = re.findall(r'\(?\d+\)?', tds[1].get_text().replace(',', ''))
 
                             # 각 계정과목의 값 존재 여부 확인
-                            if value != []:
-
+                            if value:
                                 # 음수/양수 구분
                                 if '(' in str(value[0]):
                                     fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '-').replace(')', ''))
                                 else:
                                     fs_dict[account_subject] = Decimal128(str(value[0]))
-                            elif value == []:
-                                continue
             else:
                 # 재무제표가 아닌 테이블은 넘어간다.
                 continue
-
-            # 수집된 재무제표는 list에 저장(이익잉여금처분계산서, 자본변동표는 제외)
-            if len(table.find_all(string=re.compile(r'미\s*처\s*분'))) == 0 and len(table.find_all(string=re.compile(r'\s?[0-9]+\.\s*[0-9]+\.\s*[0-9]+'))) == 0:
-                fs_result.append(fs_dict)
+            
+            fs_result.append(fs_dict)
 
     return fs_result, logs
     
