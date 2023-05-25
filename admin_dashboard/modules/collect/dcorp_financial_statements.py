@@ -2,7 +2,7 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.05.23
+@modified at 2023.05.25
 @author OKS in Aimdat Team
 """
 import csv
@@ -179,6 +179,7 @@ def _parse_txt(stock_codes):
             
             fs_dict['년도'] = int(df.iloc[0]['결산기준일'][:4])
             fs_dict['분기'] = quarter
+            fs_dict['단위'] = '원'
             
             # 계정과목 저장
             for _, row in match_rows.iterrows():

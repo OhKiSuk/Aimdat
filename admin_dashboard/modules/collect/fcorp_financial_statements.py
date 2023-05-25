@@ -2,7 +2,7 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.05.24
+@modified at 2023.05.25
 @author OKS in Aimdat Team
 """
 import csv
@@ -165,7 +165,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                 fs_dict['종목코드'] = str(stock_code)
 
                 # 재무제표 금액 단위 파싱
-                unit = inner_html.find(name='td', string=re.compile(r'\(\s?단위'))
+                unit = inner_html.find(string=re.compile(r'\(\s?단위'))
                 if unit:
                     fs_dict['단위'] = re.sub(r'\s|단위|:|\(|\)', '', unit.get_text()).strip()
 
