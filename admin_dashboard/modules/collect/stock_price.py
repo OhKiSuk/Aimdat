@@ -2,7 +2,7 @@
 @created at 2023.04.04
 @author cslee in Aimdat Team
 
-@modified at 2023.05.23
+@modified at 2023.05.25
 @author OKS in Aimdat Team
 """       
 import requests
@@ -32,7 +32,7 @@ def _check_is_new(stock_code):
     else:
         return True
     
-@retry.retry(exceptions=[TimeoutError, requests.exceptions.ConnectionError], tries=10, delay=3)
+@retry.retry(exceptions=[TimeoutError, requests.exceptions.RequestException], tries=10, delay=3)
 def _collect_stock_price(stock_codes, last_collect_date):
     """
     주가 정보가 수집된 적이 없는 신규 기업 종목의 주가 수집
