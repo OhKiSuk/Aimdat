@@ -48,7 +48,7 @@ def _unzip_corp_code():
     with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
         zip_file.extract('CORPCODE.xml', download_path)
 
-@retry.retry(exceptions=[TimeoutError, requests.exceptions.ConnectionError], tries=10, delay=3)
+@retry.retry(exceptions=[TimeoutError, requests.exceptions.RequestException], tries=10, delay=3)
 def _collect_corp_info(stock_codes):
     """
     기업 정보 수집
