@@ -2,7 +2,7 @@
 @created at 2023.03.24
 @author cslee in Aimdat Team
 
-@modified at 2023.05.23
+@modified at 2023.05.25
 @author OKS in Aimdat Team
 """
 import datetime
@@ -71,7 +71,7 @@ def save_corp_id():
                     corp_market=corp['mrktCtg'],
                     corp_isin=corp['isinCd'],
                     stock_code=corp['srtnCd'][1:],
-                    base_date=datetime.datetime.strptime(corp['basDt'], '%Y-%m-%d')
+                    base_date=datetime.datetime.strptime(corp['basDt'], '%Y%m%d').strftime('%Y-%m-%d')
                 )
         return fail_logs, True
     else:
