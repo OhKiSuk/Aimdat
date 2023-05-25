@@ -2,8 +2,8 @@
 @created at 2023.05.10
 @author JSU in Aimdat Team
 
-@modified at 2023.05.23
-@author JSU in Aimdat Team
+@modified at 2023.05.25
+@author OKS in Aimdat Team
 """
 import os
 import zipfile
@@ -12,6 +12,7 @@ import re
 import requests
 import retry
 import shutil
+import time
 import xml.etree.ElementTree as ET
 
 from config.settings.base import get_secret
@@ -24,6 +25,7 @@ from django.db.models import Q
 from services.models.corp_id import CorpId
 from services.models.investment_index import InvestmentIndex
 from services.models.stock_price import StockPrice
+from ssl import SSLError
 
 def _download_corp_code():
     """
@@ -49,7 +51,7 @@ def _unzip_corp_code():
     with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
         zip_file.extract('CORPCODE.xml', download_path)
 
-@retry.retry(exceptions=[TimeoutError, requests.exceptions.ConnectionError], tries=10, delay=3)
+@retry.retry(exceptions=[SSLError, requests.exceptions.RequestException], tries=10, delay=3)
 def _parse_investment_index(year, quarter, fs_type, stock_codes):
     """
     기업 데이터 파싱 후 투자지표 데이터로 변환
@@ -60,7 +62,7 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
     collection = db['financial_statements']
 
     # 정규식 패턴
-    not_digit_pattern = re.compile(r'(\D|-)')
+    not_digit_pattern = re.compile(r'\D')
     revenue_pattern = re.compile(r'(\.?\s*(매출액|영업수익)(\(손실\)|<주석40>|:)?|^((영업|금융)?수익(\(매출액\)?)|매출액(\((영업수익|매출액)\))?)$)')
     cost_of_sales_pattern = re.compile(r'\s*.{0,3}\.?\s*영업비용|매출원가\s*(\(.{0,4}\))?$')
     operating_profit_pattern = re.compile(r'\s*.{0,3}\.?\s*총?영업이익\s*(\(.{0,4}\)|\s*)?$')
@@ -76,7 +78,7 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
     corporate_tax_pattern = re.compile(r'\s*.{0,4}?\s*(?!법인세비용차)((계속영업)?법\s*인\s*세\s*비\s*용).*')
     depreciation_cost_pattern = re.compile(r'.*감가상각.*')
     cash_flows_from_operating_pattern = re.compile(r'영업활동\s?으?로?인?한?\s?현금흐름')
-    cash_flows_from_investing_activities_pattern = re.compile(r'투자활동\s?으?로?인?한?\s?현금흐름')
+    #cash_flows_from_investing_activities_pattern = re.compile(r'투자활동\s?으?로?인?한?\s?현금흐름')
 
     # 변수 초기화
     total_dividend = Decimal(0)
@@ -101,6 +103,15 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
 
         # MongoDB에서 재무제표 데이터 조회        
         documents = collection.find(query)
+
+        # 단위 조회(매출액, 영업이익, 당기순이익 등의 지표는 모두 억원 단위, 나머지는 원 단위로 맞춤.)
+        first_documents = next(documents)
+        if first_documents['단위'] == '원':
+            set_unit = Decimal(100_000_000)
+        elif first_documents['단위'] == '천원':
+            set_unit = Decimal(100_000)
+        elif first_documents['단위'] == '백만원':
+            set_unit = Decimal(100)
                 
         # StockPrice 값 연결
         if StockPrice.objects.filter(Q(corp_id__stock_code__exact = stock_code) & Q(trade_date__year__exact = year) & Q(trade_date__month__exact = quarter * 3)).exists():
@@ -120,179 +131,93 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
 
                 if revenue_pattern.match(key):
                     try:
-                        revenue = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        revenue = Decimal(0)
-
-                    if revenue:
-                        revenue = Decimal(revenue)
-                    else:
+                        revenue = Decimal(str(document[key].to_decimal()))
+                    except:
                         revenue = Decimal(0)
                 
                 elif cost_of_sales_pattern.match(key):
                     try:
-                        cost_of_sales = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        cost_of_sales = Decimal(0)
-
-                    if cost_of_sales:
-                        cost_of_sales = Decimal(cost_of_sales)
-                    else:
+                        cost_of_sales = Decimal(str(document[key].to_decimal()))
+                    except:
                         cost_of_sales = Decimal(0)
 
                 elif operating_profit_pattern.match(key):
                     try:
-                        operating_profit = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        operating_profit = Decimal(0)
-
-                    if operating_profit:
-                        operating_profit = Decimal(operating_profit)
-                    else:
+                        operating_profit = Decimal(str(document[key].to_decimal()))
+                    except:
                         operating_profit = Decimal(0)
 
                 elif net_profit_pattern.match(key):
                     try:
-                        net_profit = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        net_profit = Decimal(0)
-
-                    if net_profit:
-                        net_profit = Decimal(net_profit)
-                    else:
+                        net_profit = Decimal(str(document[key].to_decimal()))
+                    except:
                         net_profit = Decimal(0)
 
                 elif inventories_pattern.match(key):
                     try:
-                        inventories = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        inventories = Decimal(0)
-
-                    if inventories:
-                        inventories = Decimal(inventories)
-                    else:
+                        inventories = Decimal(str(document[key].to_decimal()))
+                    except:
                         inventories = Decimal(0)
                 
                 elif total_debt_pattern.match(key):
                     try:
-                        total_debt = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        total_debt = Decimal(0)
-
-                    if total_debt:
-                        total_debt = Decimal(total_debt)
-                    else:
+                        total_debt = Decimal(str(document[key].to_decimal()))
+                    except:
                         total_debt = Decimal(0)
 
                 elif total_asset_pattern.match(key):
                     try:
-                        total_asset = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        total_asset = Decimal(0)
-
-                    if total_asset:
-                        total_asset = Decimal(total_asset)
-                    else:
+                        total_asset = Decimal(str(document[key].to_decimal()))
+                    except:
                         total_asset = Decimal(0)
 
                 elif total_capital_pattern.match(key):
                     try:
-                        total_capital = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        total_capital = Decimal(0)
-
-                    if total_capital:
-                        total_capital = Decimal(total_capital)
-                    else:
+                        total_capital = Decimal(str(document[key].to_decimal()))
+                    except:
                         total_capital = Decimal(0)
 
                 elif current_asset_pattern.match(key):
                     try:
-                        current_asset = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        current_asset = Decimal(0)
-
-                    if current_asset:
-                        current_asset = Decimal(current_asset)
-                    else:
+                        current_asset = Decimal(str(document[key].to_decimal()))
+                    except:
                         current_asset = Decimal(0)
                 
                 elif current_liability_pattern.match(key):
                     try:
-                        current_liability = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        current_liability = Decimal(0)
-
-                    if current_liability:
-                        current_liability = Decimal(current_liability)
-                    else:
+                        current_liability = Decimal(str(document[key].to_decimal()))
+                    except:
                         current_liability = Decimal(0)
 
                 elif cash_and_cash_equivalents_pattern.match(key):
                     try:
-                        cash_and_cash_equivalents = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        cash_and_cash_equivalents = Decimal(0)
-
-                    if cash_and_cash_equivalents:
-                        cash_and_cash_equivalents = Decimal(cash_and_cash_equivalents)
-                    else:
+                        cash_and_cash_equivalents = Decimal(str(document[key].to_decimal()))
+                    except:
                         cash_and_cash_equivalents = Decimal(0)
 
                 elif interest_expense_pattern.match(key):
                     try:
-                        interest_expense = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        interest_expense = Decimal(0)
-
-                    if interest_expense:
-                        interest_expense = Decimal(interest_expense)
-                    else:
+                        interest_expense = Decimal(str(document[key].to_decimal()))
+                    except:
                         interest_expense = Decimal(0)
 
                 elif corporate_tax_pattern.match(key):
                     try:
-                        corporate_tax = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        corporate_tax = Decimal(0)
-
-                    if corporate_tax:
-                        corporate_tax = Decimal(corporate_tax)
-                    else:
+                        corporate_tax = Decimal(str(document[key].to_decimal()))
+                    except:
                         corporate_tax = Decimal(0)
 
                 elif depreciation_cost_pattern.match(key):
                     try:
-                        depreciation_cost = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        depreciation_cost = Decimal(0)
-
-                    if depreciation_cost:
-                        depreciation_cost = Decimal(depreciation_cost)
-                    else:
+                        depreciation_cost = Decimal(str(document[key].to_decimal()))
+                    except:
                         depreciation_cost = Decimal(0)
 
                 elif cash_flows_from_operating_pattern.match(key):
                     try:
-                        cash_flows_from_operating = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
+                        cash_flows_from_operating = Decimal(str(document[key].to_decimal()))
+                    except:
                         cash_flows_from_operating = Decimal(0)
-
-                    if cash_flows_from_operating:
-                        cash_flows_from_operating = Decimal(cash_flows_from_operating)
-                    else:
-                        cash_flows_from_operating = Decimal(0)
-
-                elif cash_flows_from_investing_activities_pattern.match(key):
-                    try:
-                        cash_flows_from_investing_activities = not_digit_pattern.sub('', str(document[key].to_decimal()))
-                    except AttributeError:
-                        cash_flows_from_investing_activities = Decimal(0)
-
-                    if cash_flows_from_investing_activities:
-                        cash_flows_from_investing_activities = Decimal(cash_flows_from_investing_activities)
-                    else:
-                        cash_flows_from_investing_activities = Decimal(0)
                 else:
                     continue
         
@@ -330,6 +255,7 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
 
                 # API 호출
                 response = requests.get(url, params=params)
+                time.sleep(0.3)
 
                 if response.status_code == 200:
                     # 반환데이터 트리 생성
@@ -362,74 +288,74 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
                 # 이익관련
                 try:
                     index_dict['cost_of_sales_ratio'] = ctx.divide(cost_of_sales, revenue) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['cost_of_sales_ratio'] = Decimal(0)
 
                 try:
                     index_dict['operating_margin'] = ctx.divide(operating_profit, revenue) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['operating_margin'] = Decimal(0)
 
                 try:
                     index_dict['net_profit_margin'] = ctx.divide(net_profit, revenue) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['net_profit_margin'] = Decimal(0)
 
                 try:
                     index_dict['roe'] = ctx.divide(net_profit, total_capital) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['roe'] = Decimal(0)
 
                 try:
                     index_dict['roa'] = ctx.divide(net_profit, total_asset) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['roa'] = Decimal(0)
 
                 # 현금관련
                 try:
                     index_dict['current_ratio'] = ctx.divide(current_asset, current_liability) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['current_ratio'] = Decimal(0)
 
                 try:
                     index_dict['quick_ratio'] = ctx.divide((current_asset - inventories), current_liability) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['quick_ratio'] = Decimal(0)
 
                 try:
                     index_dict['debt_ratio'] = ctx.divide(total_debt, total_capital) * Decimal(100)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['debt_ratio'] = Decimal(0)
 
                 # 주가관련
                 try:
                     index_dict['per'] = ctx.divide(market_capitalization, net_profit)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['per'] = Decimal(0)
 
                 try:
                     index_dict['pbr'] = ctx.divide(index_dict['per'], index_dict['roe'])
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['pbr'] = Decimal(0)
 
                 try:
                     index_dict['psr'] = ctx.divide(market_capitalization, revenue)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['psr'] = Decimal(0)
 
                 try:
                     index_dict['eps'] = ctx.divide(net_profit, shares_outstanding)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['eps'] = Decimal(0)
 
                 try:
                     index_dict['bps'] = ctx.divide(total_capital, shares_outstanding)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['bps'] = Decimal(0)
 
                 try:
                     index_dict['dps'] = ctx.divide(total_dividend, shares_outstanding)
-                except (InvalidOperation, ZeroDivisionError):
+                except:
                     index_dict['dps'] = Decimal(0)
 
                 # 현금흐름관련
@@ -456,9 +382,9 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
 
                 # 수치데이터
                 index_dict['stock_code'] = stock_code # 종목코드
-                index_dict['revenue'] = revenue
-                index_dict['operating_profit'] = operating_profit
-                index_dict['net_profit'] = net_profit
+                index_dict['revenue'] = ctx.divide(revenue, set_unit)
+                index_dict['operating_profit'] = ctx.divide(operating_profit, set_unit)
+                index_dict['net_profit'] = ctx.divide(net_profit, set_unit)
 
                 index_dict_list.append(index_dict)
                 continue
