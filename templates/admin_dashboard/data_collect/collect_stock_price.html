@@ -14,13 +14,9 @@
     </div>
 
     <div class="mb-2">
-        <span class="font-md fw-bold">수집 에러 목록</span>
+        <span class="font-md fw-bold">수집 로그 목록</span>
     </div>
 
-    <textarea class="mb-3" rows="10" cols="80" readonly>
-        {% for log in fail_logs %}
-            {{ log }}
-        {% endfor %}
-    </textarea>
+    <textarea class="mb-3" rows="10" cols="80" readonly>{% for log in logs %}{{ log }}{% endfor %}</textarea>
 </div>
 {% endblock %}

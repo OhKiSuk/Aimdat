@@ -2,11 +2,12 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.05.23
-@author OKS in Aimdat Team
+@modified at 2023.05.25
+@author JSU in Aimdat Team
 """
 import csv
 import glob
+import logging
 import os
 import requests
 import retry
@@ -15,14 +16,17 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from config.settings.base import get_secret
-from datetime import datetime
+from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from services.models.corp_id import CorpId
 from services.models.corp_info import CorpInfo
 from webdriver_manager.chrome import ChromeDriverManager
 from ..api_error.open_dart_api_error import check_open_dart_api_error
 from ..remove.remove_files import remove_files
+
+LOGGER = logging.getLogger(__name__)
 
 def _download_corp_code():
     """
@@ -36,8 +40,12 @@ def _download_corp_code():
 
     downlaod_path = get_secret('download_folder')
 
-    with open(downlaod_path+'\\corpCode.zip', 'wb') as file:
-        file.write(response.content)
+    # A003 로깅
+    try:
+        with open(downlaod_path+'\\corpCode.zip', 'wb') as file:
+            file.write(response.content)
+    except:
+        LOGGER.error('[A003] CORPCODE 다운로드 실패.')
 
 def _unzip_corp_code():
     """
@@ -45,10 +53,13 @@ def _unzip_corp_code():
     """
     download_path = get_secret('download_folder')
 
-    with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
-        zip_file.extract('CORPCODE.xml', download_path)
+    # A004 로깅
+    try:
+        with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
+            zip_file.extract('CORPCODE.xml', download_path)
+    except:
+        LOGGER.error('[A004] CORPCODE 압축 해제 실패.')
 
-@retry.retry(exceptions=[TimeoutError, requests.exceptions.RequestException], tries=10, delay=3)
 def _collect_corp_info(stock_codes):
     """
     기업 정보 수집
@@ -63,7 +74,6 @@ def _collect_corp_info(stock_codes):
     corp_code_tree = ET.parse(download_path+'\\CORPCODE.xml')
     corp_code_root = corp_code_tree.getroot()
 
-    logs = []
     corp_info_data_list = []
     for stock_code in stock_codes:
         
@@ -74,7 +84,18 @@ def _collect_corp_info(stock_codes):
             if str(stock_code_element) == str(stock_code):
                 params['corp_code'] = element.find('corp_code').text
 
-                response = requests.get(url, params=params, verify=False)
+                # API 호출 로깅
+                try:
+                    response = requests.get(url, params=params, verify=False)
+                except ConnectTimeout:
+                    LOGGER.error('[A013] Requests 연결 타임아웃 에러')
+                except ConnectionError:
+                    LOGGER.error('[A012] Requests 연결 에러')
+                except Timeout:
+                    LOGGER.error('[A011] Requests 타임아웃 에러')
+                except RequestException:
+                    LOGGER.error('[A010] Requests 범용 에러')
+
                 time.sleep(0.3)
 
                 response_to_json = response.json()
@@ -88,10 +109,9 @@ def _collect_corp_info(stock_codes):
                     corp_info_data_list.append(corp_info_data)
                 else:
                     # OpenDartApi 예외처리
-                    log = check_open_dart_api_error(response_to_json['status'])
-                    logs.append(log)
+                    check_open_dart_api_error(response_to_json['status'])
     
-    return corp_info_data_list, logs
+    return corp_info_data_list
 
 def _download_induty_code():
     """
@@ -100,10 +120,16 @@ def _download_induty_code():
     url = 'https://www.data.go.kr/data/15049591/fileData.do'
     driver = webdriver.Chrome(ChromeDriverManager().install())
     driver.get(url)
+    time.sleep(5)
 
-    download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
-    download_button.click()
+    # A005 로깅
+    try:
+        download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+    except NoSuchElementException:
+        LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
+
     time.sleep(3)
+    download_button.click()
 
 def _parse_induty_code(corp_id, induty_code):
     """
@@ -113,7 +139,11 @@ def _parse_induty_code(corp_id, induty_code):
     file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')[0]
 
     with open(file_path, 'r', newline='') as file:
-        file_content = csv.reader(file)
+        # A006 로깅
+        try:
+            file_content = csv.reader(file)
+        except:
+            LOGGER.error('[A006] 산업분류코드 파싱 실패.')
 
         for row in file_content:
             if row[1] == induty_code:
@@ -129,7 +159,7 @@ def save_corp_info():
     _unzip_corp_code()
 
     stock_codes = CorpId.objects.all().values_list('stock_code', flat=True)
-    result, logs = _collect_corp_info(stock_codes)
+    result = _collect_corp_info(stock_codes)
     
     if len(result) > 0:
         # 산업분류코드 다운로드
@@ -159,19 +189,13 @@ def save_corp_info():
         remove_files(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
         remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
 
-        return logs, True
+        return True
     else:
-        logs.append(
-            {
-                'error_code': '',
-                'error_rank': 'info',
-                'error_detail': 'NO_RESULT_FOUND_AT_COLLECT_CORP_INFO',
-                'error_time': datetime.now()
-            }
-        )
+        # A202 로깅
+        LOGGER.error('[A202] 기업정보가 정상 수집되지 않음')
 
         # corp_code 관련 파일 제거
         remove_files(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
         remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
 
-    return logs, False
+    return False

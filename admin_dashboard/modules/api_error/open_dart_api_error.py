@@ -1,8 +1,14 @@
 """
 @created at 2023.05.17
 @author OKS in Aimdat Team
+
+@modified at 2023.05.25
+@author JSU in Aimdat Team
 """
-from datetime import datetime
+
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 def check_open_dart_api_error(status):
     """
@@ -24,66 +30,32 @@ def check_open_dart_api_error(status):
     900  | UNKNOWN_ERROR                                    | 정의되지 않은 오류가 발생하였습니다.
     901  | SERVICE_KEY_EXPIRED_ERROR                        | 사용자 계정의 개인정보 보유기간이 만료되어 사용할 수 없는 키입니다.
     """
-    log = {}
     if status == '010':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'SERVICE_KEY_IS_NOT_REGISTERED_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '011':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'SERVICE_KEY_CAN_NOT_USE_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '012':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'SERVICE_ACCESS_DENIED_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '013':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'DATA_NOT_FOUND_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '014':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'FILE_DOES_NOT_EXIST_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '020':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '021':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'LIMITED_NUMBER_OF_SEARCH_CORP_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '100':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'INAPPROPRIATE_FIELD_VALUE_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '101':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'INAPPROPRIATE_ACCESS_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '800':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'SYSTEM_INSPECTION_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '900':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'UNKNOWN_ERROR'
-        log['error_time']= datetime.now()
-    elif status == '901':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'SERVICE_KEY_EXPIRED_ERROR'
-        log['error_time']= datetime.now()
+        LOGGER.error('[O111] 등록되지 않은 서비스키')
 
-    return log
+    elif status == '011' or status == '901':
+        LOGGER.error('[O112] 사용할 수 없는 서비스키')
+
+    elif status == '012':
+        LOGGER.error('[O121] IP 차단됨')
+
+    elif status == '013':
+        LOGGER.error('[O122] 조회된 데이터 없음')
+
+    elif status == '014':
+        LOGGER.error('[O123] 파일이 존재하지 않음')
+
+    elif status == '020':
+        LOGGER.error('[O132] 요청제한횟수 초과')
+
+    elif status == '021':
+        LOGGER.error('[O133] 조회제한횟수 초과')
+
+    elif status == '100':
+        LOGGER.error('[O131] 잘못된 파라미터')
+
+    elif status == '101':
+        LOGGER.error('[O124] 부적절한 접근 시도')
+
+    elif status == '800' or status == '900':
+        LOGGER.error('[O100] DART API 에러 ')

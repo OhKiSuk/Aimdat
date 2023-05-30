@@ -3,11 +3,12 @@
 @author OKS in Aimdat Team
 
 @modified at 2023.05.25
-@author OKS in Aimdat Team
+@author JSU in Aimdat Team
 """
 import csv
 import glob
 import json
+import logging
 import os
 import pymongo
 import re
@@ -15,16 +16,12 @@ import retry
 import time
 
 from bson.decimal128 import Decimal128
-from datetime import datetime
 from django.http import HttpResponseServerError
 from django.db.models import Q
 from bs4 import BeautifulSoup
 from pathlib import Path
 from selenium import webdriver
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    TimeoutException
-)
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -41,6 +38,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 #secrets.json 경로
 SECRETS_FILE = os.path.join(BASE_DIR, 'secrets.json')
 
+LOGGER = logging.getLogger(__name__)
+
 def _get_fcorp_list():
     """
     금융 기업 목록 조회
@@ -50,8 +49,14 @@ def _get_fcorp_list():
         url = 'https://www.data.go.kr/data/15049591/fileData.do'
         driver = webdriver.Chrome(ChromeDriverManager().install())
         driver.get(url)
+        time.sleep(5)
 
-        download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+        # A005 로깅
+        try:
+            download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+        except:
+            LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
+        
         download_button.click()
         time.sleep(3)
 
@@ -73,6 +78,8 @@ def _get_fcorp_list():
         return stock_code_list
 
     except (CorpId.DoesNotExist, NoSuchElementException, FileNotFoundError):
+        # A006 로깅
+        LOGGER.error('[A006] 산업분류코드 파싱 실패.')
         return HttpResponseServerError
     
 @retry.retry(exceptions=SSLError, tries=10, delay=3)
@@ -84,7 +91,6 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     driver = webdriver.Chrome(ChromeDriverManager().install())
     
     fs_result = []
-    logs = []
     # 검색 후 재무제표 획득
     for stock_code in crawl_crp_list:
         driver.get(url)
@@ -103,7 +109,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
         try:
             element_present = EC.presence_of_element_located((By.XPATH, '//input[@type="checkbox"][@name="checkCorpSelect"]'))
             WebDriverWait(driver, timeout=1).until(element_present)
-        except TimeoutException:
+        except NoSuchElementException:
             continue
 
         # 새로운 체크박스 중 첫 번째 체크박스 클릭
@@ -213,8 +219,8 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                         # row가 합쳐져 있는 형태를 찾은 경우 log 저장 후 넘김
                         rowspan_tds = [td for td in tds if td.has_attr('rowspan')]
                         if len(rowspan_tds) > 0 or len(row.find_all(name='td')) == 1:
-                            log_messages = str(stock_code+':'+tds[0].get_text()+' 계정과목 내에 rowspan이 존재합니다.')
-                            logs.append(log_messages)
+                            # A503 로깅
+                            LOGGER.info('[A503] 합쳐진 row가 발견됨. {}, {}'.format(str(stock_code), tds[0].get_text()))
                             continue
 
                         # 재무제표 내에 주석이 존재하는 지 확인
@@ -292,14 +298,14 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
             
             fs_result.append(fs_dict)
 
-    return fs_result, logs
+    return fs_result
     
 def save_fcorp(year:int, quarter:int, fs_type=5):
     """
     금융 기업 재무제표 목록 저장
     """
     fcorp_list = _get_fcorp_list()
-    crawl_result, logs = _crawl_dart(fcorp_list, year, quarter, fs_type)
+    crawl_result = _crawl_dart(fcorp_list, year, quarter, fs_type)
     
     if crawl_result:
         client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -317,16 +323,10 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
             if len(file_path) > 0:
                 remove_files(file_path[0])
 
-        return logs, result
+        return  result
     else:
-        logs.append(
-            {
-                'error_code': '',
-                'error_rank': 'info',
-                'error_detail': 'NO_RESULT_FOUND_AT_COLLECT_CORP_INFO',
-                'error_time': datetime.now()
-            }
-        )
+        # A502 로깅
+        LOGGER.error('[A503] 금융 재무제표 크롤 실패.')
 
         with open(SECRETS_FILE, 'r') as secrets:
             download_path = json.load(secrets)['download_folder']
@@ -335,4 +335,4 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
             if len(file_path) > 0:
                 remove_files(file_path[0])
 
-    return logs, False
+    return False

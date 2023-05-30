@@ -3,11 +3,12 @@
 @author JSU in Aimdat Team
 
 @modified at 2023.05.25
-@author OKS in Aimdat Team
+@author JSU in Aimdat Team
 """
 import csv
 import glob
 import json
+import logging
 import os
 import pandas
 import pymongo
@@ -16,7 +17,6 @@ import shutil
 import zipfile
 
 from bson.decimal128 import Decimal128
-from datetime import datetime
 from django.db.models import Q
 from django.http import HttpResponseServerError
 from pathlib import Path
@@ -33,6 +33,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 #secrets.json 경로
 SECRETS_FILE = os.path.join(BASE_DIR, 'secrets.json')
+
+LOGGER = logging.getLogger(__name__)
 
 #download path
 with open(SECRETS_FILE, 'r') as secrets:
@@ -70,10 +72,12 @@ def _get_ifrs_xbrl_txt(years, quarters):
             for r in report:
                 try:
                     btn_report = driver.find_element(By.XPATH, "//a[@title='{} {}보고서 {} 다운로드']".format(y, q, r))
-                    btn_report.click()
-                    time.sleep(0.5)
                 except NoSuchElementException:
-                    print('데이터를 찾을 수 없습니다. {}, {}, {}'.format(y, q, r))
+                    # A402 로깅
+                    LOGGER.error('[A402] 비금융 재무제표 다운로드 실패. {}, {}, {}'.format(y, q, r))
+                
+                btn_report.click()
+                time.sleep(0.5)
 
     time.sleep(2)
 
@@ -100,10 +104,15 @@ def _get_dcorp_list():
         url = 'https://www.data.go.kr/data/15049591/fileData.do'
         driver = webdriver.Chrome(ChromeDriverManager().install())
         driver.get(url)
-
+        time.sleep(5)
+        
         download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
-        download_button.click()
-        time.sleep(3)
+        # A005 로깅
+        try:
+            download_button.click()
+            time.sleep(3)
+        except:
+            LOGGER.error('[A005] 산업분류코드 다운로드 실패.')
 
         with open(SECRETS_FILE, 'r') as secrets:
             download_path = json.load(secrets)['download_folder']
@@ -124,6 +133,8 @@ def _get_dcorp_list():
         return stock_code_list
 
     except (CorpId.DoesNotExist, NoSuchElementException, FileNotFoundError):
+        # A006 로깅
+        LOGGER.error('[A006] 산업분류코드 파싱 실패.')
         return HttpResponseServerError
 
 def _parse_txt(stock_codes):
@@ -207,7 +218,6 @@ def save_dcorp(years, quarters):
     # 재무제표 파싱
     fs_lists = _parse_txt(stock_codes)
     
-    logs = []
     if len(fs_lists) > 0:
         client = pymongo.MongoClient('localhost:27017')
         db = client['aimdat']
@@ -231,16 +241,10 @@ def save_dcorp(years, quarters):
                 if len(folder_path) > 0:
                     remove_files(folder_path[0], folder=True)
 
-        return logs, result
+        return result
     else:
-        logs.append(
-            {
-                'error_code': '',
-                'error_rank': 'info',
-                'error_detail': 'NO_RESULT_FOUND_AT_COLLECT_CORP_INFO',
-                'error_time': datetime.now()
-            }
-        )
+        # A403 로깅
+        LOGGER.error('[A403] 비금융 재무제표 파싱 실패.')
 
         with open(SECRETS_FILE, 'r') as secrets:
                 download_path = json.load(secrets)['download_folder']
@@ -255,4 +259,4 @@ def save_dcorp(years, quarters):
                 if len(folder_path) > 0:
                     remove_files(folder_path[0], folder=True)
 
-    return logs, False
+    return False

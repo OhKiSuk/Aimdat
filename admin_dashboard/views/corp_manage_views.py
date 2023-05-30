@@ -2,9 +2,11 @@
 @created at 2023.03.19
 @author OKS in Aimdat Team
 
-@modified at 2023.05.16
-@author OKS in Aimdat Team
+@modified at 2023.05.25
+@author JSU in Aimdat Team
 """
+
+import logging
 import pymongo
 
 from bson.decimal128 import Decimal128
@@ -29,6 +31,8 @@ from ..forms.corp_manage_forms import (
     CorpIdChangeForm, 
     CorpInfoChangeForm
 )
+
+LOGGER = logging.getLogger(__name__)
     
 class ManageCorpIdListView(TemplateView):
     """
@@ -56,8 +60,12 @@ class ManageCorpIdUpdateView(UpdateView):
 
     def form_valid(self, form):
         if not self.request.user.is_admin:
+            # A711 로깅
+            LOGGER.info('[A711] 기업 식별자 수정 실패. {}, {}'.format(str(self.request.user), str(form)))
             raise PermissionDenied()
         else:
+            # A710 로깅
+            LOGGER.info('[A710] 기업 식별자를 성공적으로 수정. {}, {}'.format(str(self.request.user), str(form)))
             form.save()
             return redirect('admin:manage_corp_id_list')
         
@@ -89,8 +97,12 @@ class ManageCorpInfoUpdateView(UpdateView):
 
     def form_valid(self, form):
         if not self.request.user.is_admin:
+            # A721 로깅
+            LOGGER.info('[A721] 기업 정보 수정 실패. {}, {}'.format(str(self.request.user), str(form)))
             raise PermissionDenied()
         else:
+            # A720 로깅
+            LOGGER.info('[A720] 기업 정보를 성공적으로 수정. {}, {}'.format(str(self.request.user), str(form)))
             form.save()
             return redirect('admin:manage_corp_info_list')
 
@@ -176,8 +188,12 @@ class ManageCorpFinancialStatementsUpdateView(View):
             result = collection.update_one({'_id': ObjectId(fs_id)}, {'$set': {str(key): str(value)}})
 
         if result.matched_count == 1:
+            # A703 로깅
+            LOGGER.info('[A703] 기업 계정과목을 성공적으로 수정. {}, {}, {}, {}'.format(str(request.user)), str(fs_id), str(key), str(value))
             message = {'message': '데이터 수정이 완료되었습니다. 새로고침하여 확인해주세요.'}
         else:
+            # A704 로깅
+            LOGGER.info('[A704] 기업 계정과목 수정 실패. {}, {}, {}, {}'.format(str(request.user)), str(fs_id), str(key), str(value))
             message = {'message': '데이터 수정에 실패했습니다.'}
 
         return JsonResponse(message)
@@ -198,8 +214,12 @@ class ManageCorpFinancialStatementsDeleteView(View):
         result = collection.update_one({'_id': ObjectId(fs_id)}, {'$unset': {str(key): ''}})
 
         if result.matched_count == 1:
+            # A701 로깅
+            LOGGER.info('[A701] 기업 계정과목을 성공적으로 삭제. {}, {}, {}'.format(str(request.user), str(fs_id), str(key)))
             message = {'message': '데이터 삭제가 완료되었습니다. 새로고침하여 확인해주세요.'}
         else:
+            # A702 로깅
+            LOGGER.info('[A702] 기업 계정과목 삭제 실패. {}, {}, {}'.format(str(request.user), str(fs_id), str(key)))
             message = {'message': '데이터 삭제에 실패했습니다.'}
 
         return JsonResponse(message)
@@ -230,8 +250,12 @@ class ManageCorpFinancialStatementsAddView(View):
                 result = collection.update_one({"_id": ObjectId(fs_id)}, {"$set": {str(key): value}})
 
             if result.matched_count == 1:
+                # A705 로깅
+                LOGGER.info('[A705] 기업 계정과목을 성공적으로 추가. {}, {}, {}, {}'.format(str(request.user)), str(fs_id), str(key), str(value))
                 message = {'message': '계정과목 추가가 완료되었습니다. 새로고침하여 확인해주세요.'}
             else:
+                # A706 로깅
+                LOGGER.info('[A706] 기업 계정과목 추가 실패. {}, {}, {}, {}'.format(str(request.user)), str(fs_id), str(key), str(value))
                 message = {'message': '계정과목 추가에 실패했습니다.'}
             
             return JsonResponse(message)

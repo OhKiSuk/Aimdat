@@ -1,10 +1,15 @@
 """
 @created at 2023.05.17
 @author OKS in Aimdat Team
+
+@modified at 2023.05.25
+@author JSU in Aimdat Team
 """
+
+import logging
 import xml.etree.ElementTree as ET
 
-from datetime import datetime
+LOGGER = logging.getLogger(__name__)
 
 def check_open_api_errors(response):
     """
@@ -25,51 +30,26 @@ def check_open_api_errors(response):
     root = ET.fromstring(response.text)
     reason_code = root.find('.//returnReasonCode').text
     
-    log = {}
-    if reason_code == '1':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] == 'APPLICATION_ERROR'
-        log['error_time']= datetime.now()
-    elif reason_code == '10':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] = 'INVALID_REQUEST_PARAMETER_ERROR'
-        log['error_time'] = datetime.now()
-    elif reason_code == '12':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail']= 'NO_OPENAPI_SERVICE_ERROR'
-        log['error_time'] = datetime.now()
-    elif reason_code == '20':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] = 'SERVICE_ACCESS_DENIED_ERROR'
-        log['error_time'] = datetime.now()
-    elif reason_code == '22':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] = 'LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR'
-        log['error_time'] = datetime.now()
-    elif reason_code == '30':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] = 'SERVICE_KEY_IS_NOT_REGISTERED_ERROR'
-        log['error_time'] = datetime.now()
-    elif reason_code == '31':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] = 'DEADLINE_HAS_EXPIRED_ERROR'
-        log['error_time'] = datetime.now()
-    elif reason_code == '32':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] = 'UNREGISTERED_IP_ERROR'
-        log['error_time'] = datetime.now()
-    elif reason_code == '99':
-        log['error_code'] = ''
-        log['error_rank'] = 'info'
-        log['error_detail'] = 'UNKNOWN_ERROR'
-        log['error_time'] = datetime.now()
+    if reason_code == '1' or reason_code == '99':
+        LOGGER.error('[O200] 데이터포털 API 에러')
 
-    return log
+    elif reason_code == '10':
+        LOGGER.error('[O231] 잘못된 파라미터')
+
+    elif reason_code == '12':
+        LOGGER.error('[O233] 해당 오픈API서비스가 없거나 폐기됨')
+
+    elif reason_code == '20':
+        LOGGER.error('[O221] 서비스 접근거부')
+
+    elif reason_code == '22':
+        LOGGER.error('[O232] 요청제한횟수 초과')
+
+    elif reason_code == '30':
+        LOGGER.error('[O211] 등록되지 않은 서비스키')
+
+    elif reason_code == '31':
+        LOGGER.error('[O212] 기한이 만료된 서비스키')
+
+    elif reason_code == '32':
+        LOGGER.error('[O222] 등록되지 않은 IP')

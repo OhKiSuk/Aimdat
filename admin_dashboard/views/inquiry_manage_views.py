@@ -2,9 +2,12 @@
 @created at 2023.03.20
 @author OKS in Aimdat Team
 
-@modified at 2023.04.05
-@author OKS in Aimdat Team
+@modified at 2023.05.25
+@author JSU in Aimdat Team
 """
+
+import logging
+
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
@@ -13,6 +16,8 @@ from django.views.generic import TemplateView, CreateView
 from services.models.inquiry import Inquiry
 from ..forms.inquery_manage_forms import InquiryAnswerForm
 from ..models.inquiry_answer import InquiryAnswer
+
+LOGGER = logging.getLogger(__name__)
 
 class InquiryListView(TemplateView):
     template_name = 'admin_dashboard/inquiry_manage/inquiry_list.html'
@@ -60,8 +65,12 @@ class InquiryAddAnswerView(CreateView):
 
     def form_valid(self, form):
         if not self.request.user.is_admin:
+            # A902 로깅
+            LOGGER.info('[A902] 1:1문의 답변 작성 실패 [{}] {}, {}'.format(str(self.kwargs['pk']), str(self.request.user), str(form)))
             raise PermissionDenied()
         else:
+            # A901 로깅
+            LOGGER.info('[A901] 1:1문의 답변을 성공적으로 작성 [{}] {}, {}'.format(str(self.kwargs['pk']), str(self.request.user), str(form)))
             inquiry = get_object_or_404(Inquiry, id=self.kwargs['pk'])
             form.instance.inquiry = inquiry
             form.save()

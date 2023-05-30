@@ -3,18 +3,19 @@
 @author JSU in Aimdat Team
 
 @modified at 2023.05.25
-@author OKS in Aimdat Team
+@author JSU in Aimdat Team
 """
+import logging
 import os
 import zipfile
 import pymongo
 import re
 import requests
-import retry
 import shutil
 import time
 import xml.etree.ElementTree as ET
 
+from admin_dashboard.modules.api_error.open_dart_api_error import check_open_dart_api_error
 from config.settings.base import get_secret
 from decimal import (
     Context,
@@ -22,10 +23,11 @@ from decimal import (
     InvalidOperation
 )
 from django.db.models import Q
+from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
 from services.models.corp_id import CorpId
-from services.models.investment_index import InvestmentIndex
 from services.models.stock_price import StockPrice
-from ssl import SSLError
+
+LOGGER = logging.getLogger(__name__)
 
 def _download_corp_code():
     """
@@ -39,8 +41,12 @@ def _download_corp_code():
 
     downlaod_path = get_secret('download_folder')
 
-    with open(downlaod_path+'\\corpCode.zip', 'wb') as file:
-        file.write(response.content)
+    # A003 로깅
+    try:
+        with open(downlaod_path+'\\corpCode.zip', 'wb') as file:
+            file.write(response.content)
+    except:
+        LOGGER.error('[A003] CORPCODE 다운로드 실패.')
 
 def _unzip_corp_code():
     """
@@ -48,10 +54,13 @@ def _unzip_corp_code():
     """
     download_path = get_secret('download_folder')
 
-    with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
-        zip_file.extract('CORPCODE.xml', download_path)
+    # A004 로깅
+    try:
+        with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
+            zip_file.extract('CORPCODE.xml', download_path)
+    except:
+        LOGGER.error('[A004] CORPCODE 압축 해제 실패.')
 
-@retry.retry(exceptions=[SSLError, requests.exceptions.RequestException], tries=10, delay=3)
 def _parse_investment_index(year, quarter, fs_type, stock_codes):
     """
     기업 데이터 파싱 후 투자지표 데이터로 변환
@@ -65,14 +74,14 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
     not_digit_pattern = re.compile(r'\D')
     revenue_pattern = re.compile(r'(\.?\s*(매출액|영업수익)(\(손실\)|<주석40>|:)?|^((영업|금융)?수익(\(매출액\)?)|매출액(\((영업수익|매출액)\))?)$)')
     cost_of_sales_pattern = re.compile(r'\s*.{0,3}\.?\s*영업비용|매출원가\s*(\(.{0,4}\))?$')
-    operating_profit_pattern = re.compile(r'\s*.{0,3}\.?\s*총?영업이익\s*(\(.{0,4}\)|\s*)?$')
+    operating_profit_pattern = re.compile(r'\s*(.{0,3}\.?\s*)?총?영업이익\s*(\(.{0,4}\)|\s*)?$')
     net_profit_pattern = re.compile(r'\s*.{0,3}\.?\s*(연결)?(당기|분기)순이익\s*(\(.{0,4}\)|\s*)?$')
     inventories_pattern = re.compile(r'\s*.{0,3}\.?\s*재고자산\s*(\(.{0,4}\)|\s*)?$')
     total_debt_pattern = re.compile(r'\s*부\s*채\s*총\s*계')
     total_asset_pattern = re.compile(r'\s*자\s*산\s*총\s*계')
     total_capital_pattern = re.compile(r'\s*자\s*본\s*총\s*계')
-    current_asset_pattern = re.compile(r'\s*((I|I |\u2160)\.)?\s*(유\s*동\s*자\s*산).*')
-    current_liability_pattern = re.compile(r'\s*((I|I |\u2160)\.)?\s*(유\s*동\s*부\s*채).*')
+    current_asset_pattern = re.compile(r'\s*.{0,3}\.?\s*(유\s*동\s*자\s*산).*')
+    current_liability_pattern = re.compile(r'\s*.{0,3}\.?\s*(유\s*동\s*부\s*채).*')
     cash_and_cash_equivalents_pattern = re.compile(r'\s*.{0,4}?\s*((\(?(당|반|분)\)?)*기\s*말(의)?\s*현\s*금\s*및\s*현\s*금\s*성\s*자\s*산).*')
     interest_expense_pattern = re.compile(r'.{0,4}(이\s*자\s*비\s*용).*')
     corporate_tax_pattern = re.compile(r'\s*.{0,4}?\s*(?!법인세비용차)((계속영업)?법\s*인\s*세\s*비\s*용).*')
@@ -81,6 +90,21 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
     #cash_flows_from_investing_activities_pattern = re.compile(r'투자활동\s?으?로?인?한?\s?현금흐름')
 
     # 변수 초기화
+    revenue = Decimal(0)
+    cost_of_sales = Decimal(0)
+    operating_profit = Decimal(0)
+    net_profit = Decimal(0)
+    inventories = Decimal(0)
+    total_debt = Decimal(0)
+    total_asset = Decimal(0)
+    total_capital = Decimal(0)
+    current_asset = Decimal(0)
+    current_liability = Decimal(0)
+    cash_and_cash_equivalents = Decimal(0)
+    interest_expense = Decimal(0)
+    corporate_tax = Decimal(0)
+    depreciation_cost = Decimal(0)
+    cash_flows_from_operating = Decimal(0)
     total_dividend = Decimal(0)
     interest_expense = Decimal(0)
     depreciation_cost = Decimal(0)
@@ -120,6 +144,8 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
             shares_outstanding = stock_price_obj.total_stock # 발행주식수
             stock_price = stock_price_obj.close_price # 주가
         else:
+            # A603 로깅
+            LOGGER.info('[A603] 저장된 주가 정보가 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
             market_capitalization = 0
             shares_outstanding = 0
             stock_price = 0
@@ -253,9 +279,21 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
                     'reprt_code': reprt_code
                 }
 
-                # API 호출
-                response = requests.get(url, params=params)
+                # API 호출 로깅
+                try:
+                    response = requests.get(url, params=params)
+                except ConnectTimeout:
+                    LOGGER.error('[A013] Requests 연결 타임아웃 에러. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+                except ConnectionError:
+                    LOGGER.error('[A012] Requests 연결 에러. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+                except Timeout:
+                    LOGGER.error('[A011] Requests 타임아웃 에러. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+                except RequestException:
+                    LOGGER.error('[A010] Requests 범용 에러. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+
                 time.sleep(0.3)
+                # OPENDART_API_ERROR 로깅
+                check_open_dart_api_error(response)
 
                 if response.status_code == 200:
                     # 반환데이터 트리 생성
@@ -280,6 +318,8 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
                                 total_dividend = Decimal(value) * Decimal(1000000)
                     
                     if 'dividend' not in index_dict:
+                        # A604 로깅
+                        LOGGER.info('[A604] 배당정보 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
                         index_dict['dividend'] = Decimal(0)
                 
                 # 나눗셈 정확도 설정
@@ -416,36 +456,11 @@ def save_investment_index(year, quarter, fs_type):
     _unzip_corp_code()
     data = _parse_investment_index(year, quarter, fs_type, stock_codes)
 
-    for d in data:
-        InvestmentIndex.objects.create(
-            corp_id=CorpId.objects.get(stock_code=d['stock_code']),
-            year=year, 
-            quarter=quarter,
-            fs_type=fs_type, 
-            revenue=d['revenue'], 
-            operating_profit=d['operating_profit'],
-            net_profit=d['net_profit'],                                                                 
-            cost_of_sales_ratio=d['cost_of_sales_ratio'], 
-            operating_margin=d['operating_margin'],
-            net_profit_margin=d['net_profit_margin'], 
-            roe=d['roe'],
-            roa=d['roa'], 
-            current_ratio=d['current_ratio'], 
-            quick_ratio=d['quick_ratio'],
-            debt_ratio=d['debt_ratio'], 
-            per=d['per'], 
-            pbr=d['pbr'],
-            psr=d['psr'], 
-            eps=d['eps'], 
-            bps=d['bps'], 
-            dps=d['dps'], 
-            ev_ebitda=d['ev_ebitda'],
-            ev_ocf=d['ev_ocf'], 
-            dividend=d['dividend'],
-            dividend_ratio=d['dividend_ratio'], 
-            dividend_payout_ratio=d['payout_ratio']
-        )
-        
     # 사용한 corpCode 파일 제거
     _remove_file(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
     _remove_file(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
+
+    if data:
+        return data
+
+    return False

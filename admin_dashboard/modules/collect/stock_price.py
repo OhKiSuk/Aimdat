@@ -3,10 +3,11 @@
 @author cslee in Aimdat Team
 
 @modified at 2023.05.25
-@author OKS in Aimdat Team
-"""       
+@author JSU in Aimdat Team
+"""
+
+import logging
 import requests
-import retry
 import time
 
 from datetime import datetime
@@ -18,9 +19,12 @@ from decimal import (
 from admin_dashboard.models.last_collect_date import LastCollectDate
 from config.settings.base import get_secret
 from django.db.models import Q
+from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
 from services.models.corp_id import CorpId
 from services.models.stock_price import StockPrice
 from ..api_error.open_api_error import check_open_api_errors
+
+LOGGER = logging.getLogger(__name__)
 
 def _check_is_new(stock_code):
     """
@@ -30,9 +34,10 @@ def _check_is_new(stock_code):
     if StockPrice.objects.filter(corp_id=corp_id).exists():
         return False
     else:
+        # A302 로깅
+        LOGGER.info('[A302] 새로운 주가정보가 수집됨. {}'.format(stock_code))
         return True
     
-@retry.retry(exceptions=[TimeoutError, requests.exceptions.RequestException], tries=10, delay=3)
 def _collect_stock_price(stock_codes, last_collect_date):
     """
     주가 정보가 수집된 적이 없는 신규 기업 종목의 주가 수집
@@ -41,7 +46,6 @@ def _collect_stock_price(stock_codes, last_collect_date):
     """
     url = 'https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo'
 
-    fail_logs = []
     stock_price_data_list = []
     for stock_code in stock_codes:
         is_new = _check_is_new(stock_code)
@@ -60,33 +64,30 @@ def _collect_stock_price(stock_codes, last_collect_date):
             'likeSrtnCd':stock_code
         }
 
-        response = requests.get(url, params=params, verify=False)    
+        # API 호출 로깅
+        try:
+            response = requests.get(url, params=params, verify=False)
+        except ConnectTimeout:
+            LOGGER.error('[A013] Requests 연결 타임아웃 에러')
+        except ConnectionError:
+            LOGGER.error('[A012] Requests 연결 에러')
+        except Timeout:
+            LOGGER.error('[A011] Requests 타임아웃 에러')
+        except RequestException:
+            LOGGER.error('[A010] Requests 범용 에러')
+
         time.sleep(0.5)
+
         if response.status_code == 422:
-            fail_logs.append(
-                {
-                    'error_code': '300',
-                    'error_rank': 'danger',
-                    'error_detail': stock_code + ', INVALID REQUEST PARAMETER ERROR.',
-                    'error_time': datetime.now()
-                }
-            )
+            LOGGER.error('[A304] 주가 API 파라미터 에러. {}'.format(str(stock_code)))
         elif response.status_code == 500:
-            fail_logs.append(
-                {
-                    'error_code': '300',
-                    'error_rank': 'danger',
-                    'error_detail': stock_code + ', DB_ERROR.',
-                    'error_time': datetime.now()
-                }
-            )
+            LOGGER.error('[A305] 주가 API 에러. {}'.format(str(stock_code)))
                 
         try:
             response_to_json = response.json()
         except ValueError:
-            # OpenAPI 에러처리
-            open_api_err_log = check_open_api_errors(response)
-            fail_logs.append(open_api_err_log)
+            # OpenAPI 로깅
+            check_open_api_errors(response)
             break
 
         dict_list = response_to_json['response']['body']['items']['item']
@@ -95,14 +96,8 @@ def _collect_stock_price(stock_codes, last_collect_date):
         'basDt', 'clpr', 'vs', 'fltRt', 'mkp', 'hipr', 'lopr', 'trqu', 'trPrc', 'lstgStCnt', 'mrktTotAmt'
 
         if len(dict_list) < 1:
-            fail_logs.append(
-                {
-                    'error_code': '',
-                    'error_rank': 'info',
-                    'error_detail': stock_code+', NO_RESULTS_FOUND_AT_STOCK_PRICE',
-                    'error_time': datetime.now(),
-                }
-            )
+            # A303 로깅
+            LOGGER.error('[A303] 주가 정보가 정상 수집되지 않음. {}'.format(str(stock_code)))
             continue
         
         for x in dict_list:
@@ -129,14 +124,13 @@ def _collect_stock_price(stock_codes, last_collect_date):
 
             stock_price_data_list.append(stock_price_data)
 
-    return fail_logs, stock_price_data_list
+    return stock_price_data_list
 
 def save_stock_price():
     """
     주가 데이터 수집 후 저장
 
-    성공 시 fail_logs와 True 리턴, 실패 시 fail_logs와 False 리턴
-    기본 리턴값은 fail_logs, False임
+    성공 시 True 리턴, 실패 시 False 리턴, 기본 리턴값은 False임
     """
     # 마지막 수집일 조회
     last_collect_date = LastCollectDate.objects.filter(collect_type='stock_price').last()
@@ -146,7 +140,7 @@ def save_stock_price():
         last_collect_date = datetime(2020, 1, 2).strftime('%Y%m%d')
     
     stock_codes = CorpId.objects.all().values_list('stock_code', flat=True)
-    fail_logs, data_list = _collect_stock_price(stock_codes, last_collect_date)
+    data_list = _collect_stock_price(stock_codes, last_collect_date)
 
     if data_list:
         # 데이터 중복저장 방지
@@ -167,6 +161,6 @@ def save_stock_price():
                     change_rate=data['change_rate'],
                 )
             
-        return fail_logs, True
+        return True
         
-    return fail_logs, False
+    return False
