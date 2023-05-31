@@ -171,7 +171,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                 fs_dict['종목코드'] = str(stock_code)
 
                 # 재무제표 금액 단위 파싱
-                unit = inner_html.find(string=re.compile(r'\(\s?단위'))
+                unit = inner_html.find(string=re.compile(r'단\s*위'))
                 if unit:
                     fs_dict['단위'] = re.sub(r'\s|단위|:|\(|\)', '', unit.get_text()).strip()
 
@@ -234,12 +234,12 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                                 if '(' in str(debit[0]):
                                     fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = Decimal128(str(debit[0]))
+                                    fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '').replace(')', ''))
                             elif credit:
                                 if '(' in str(credit[0]):
                                     fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = Decimal128(str(credit[0]))
+                                    fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '').replace(')', ''))
                         else:
                             debit = re.findall(r'\(?\d+\)?', tds[1].get_text().replace(',', '')) # 차변(왼쪽)
                             credit = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 대변(오른쪽)
@@ -250,13 +250,13 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                                 if '(' in str(debit[0]):
                                     fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = Decimal128(str(debit[0]).replace('-', ''))
+                                    fs_dict[account_subject] = Decimal128(str(debit[0]).replace('(', '').replace(')', ''))
                             elif credit:
                                 # 음수/양수 구분
                                 if '(' in str(credit[0]):
                                     fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = Decimal128(str(credit[0]))
+                                    fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '').replace(')', ''))
                 else:
                     for row in rows:
 
@@ -281,7 +281,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                                 if '(' in str(value[0]):
                                     fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = Decimal128(str(value[0]))
+                                    fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '').replace(')', ''))
                         else:
                             value = re.findall(r'\(?\d+\)?', tds[1].get_text().replace(',', ''))
 
@@ -291,7 +291,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                                 if '(' in str(value[0]):
                                     fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '-').replace(')', ''))
                                 else:
-                                    fs_dict[account_subject] = Decimal128(str(value[0]))
+                                    fs_dict[account_subject] = Decimal128(str(value[0]).replace('(', '').replace(')', ''))
             else:
                 # 재무제표가 아닌 테이블은 넘어간다.
                 continue
