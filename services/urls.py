@@ -2,31 +2,37 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.04.03
+@modified at 2023.05.31
 @author OKS in Aimdat Team
-
-@modified at 2023.04.07
-@author JSU in Aimdat Team
-
-@modified at 2023.04.09
-@author JSU in Aimdat Team
 """
 from django.urls import path
 
 from .views.analysis_views import AnalysisView
-from .views.corp_detail_views import CorpDetailView
+from .views.corp_inquiry_views import CorpInquiryView
 from .views.faq_views import FaqView
-from .views.inquiry_views import AddInquiryView, InquiryDetailView, InquiryView
+from .views.inquiry_views import (
+    AddInquiryView, 
+    InquiryDetailView, 
+    InquiryView
+)
 from .views.introduce_views import IntroduceView
 from .views.mypage_views import MyPageView
 from .views.search_views import SearchView
-from .views.terms_views import TermsOfPrivacyView, TermsOfUseView
+from .views.terms_views import (
+    TermsOfPrivacyView, 
+    TermsOfUseView
+    )
 
 app_name = 'services'
 
 urlpatterns = [
-    path('', SearchView.as_view(), name='search'),
-    path('<int:id>/', CorpDetailView.as_view(), name="detail"),
+    # 검색
+    path('search/', SearchView.as_view(), name='search'),
+    
+    # 기업 조회
+    path('corp/inquiry/<int:id>', CorpInquiryView.as_view(), name="corp_inquiry"),
+
+    # 기업 비교/분석
     path('analysis/', AnalysisView.as_view(), name='analysis'),
 
     #약관
