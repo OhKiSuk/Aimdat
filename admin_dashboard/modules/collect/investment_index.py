@@ -22,7 +22,12 @@ from decimal import (
     Decimal,
     InvalidOperation
 )
-from django.db.models import Q
+from django.db.models import (
+    DateField,
+    F,
+    Q
+)
+from django.db.models.functions import Cast
 from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
 from services.models.corp_id import CorpId
 from services.models.stock_price import StockPrice
@@ -138,8 +143,12 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
             set_unit = Decimal(100)
                 
         # StockPrice 값 연결
-        if StockPrice.objects.filter(Q(corp_id__stock_code__exact = stock_code) & Q(trade_date__year__exact = year) & Q(trade_date__month__exact = quarter * 3)).exists():
-            stock_price_obj = StockPrice.objects.filter(Q(corp_id__stock_code__exact = stock_code) & Q(trade_date__year__exact = year) & Q(trade_date__month__exact = quarter * 3)).latest('trade_date')
+        if StockPrice.objects.annotate(
+            date_field=Cast(F('trade_date'), output_field=DateField())
+        ).filter(Q(corp_id__stock_code__exact = stock_code) & Q(date_field__year__exact = year) & Q(date_field__month__exact = quarter * 3)).exists():
+            stock_price_obj = StockPrice.objects.annotate(
+                date_field=Cast(F('trade_date'), output_field=DateField())
+            ).filter(Q(corp_id__stock_code__exact = stock_code) & Q(date_field__year__exact = year) & Q(date_field__month__exact = quarter * 3)).latest('date_field')
             market_capitalization = stock_price_obj.market_capitalization # 시가총액
             shares_outstanding = stock_price_obj.total_stock # 발행주식수
             stock_price = stock_price_obj.close_price # 주가
@@ -260,7 +269,7 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
             stock_code_element = element.find('stock_code').text
 
             if str(stock_code_element) == str(stock_code):
-                corp_code = element.find('corp_code').text
+                corp_code = str(element.find('corp_code').text).zfill(8)
         
                 # 분기 기반 보고서 데이터 생성
                 if quarter == 4:
