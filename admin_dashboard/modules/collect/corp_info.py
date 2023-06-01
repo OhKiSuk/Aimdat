@@ -2,15 +2,14 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.06.01
+@author OKS in Aimdat Team
 """
 import csv
 import glob
 import logging
 import os
 import requests
-import retry
 import time
 import xml.etree.ElementTree as ET
 import zipfile
@@ -173,6 +172,14 @@ def save_corp_info():
             # 중복 저장 방지
             if not CorpInfo.objects.filter(corp_id=corp_info['corp_id']).exists():
                 CorpInfo.objects.create(
+                    corp_id = corp_info['corp_id'],
+                    corp_homepage_url = corp_info['corp_homepage_url'],
+                    corp_settlement_month = corp_info['corp_settlement_month'],
+                    corp_ceo_name = corp_info['corp_ceo_name']
+                )
+            else:
+                # 기존 기업 정보 갱신
+                CorpInfo.objects.filter(corp_id=corp_info['corp_id']).update(
                     corp_id = corp_info['corp_id'],
                     corp_homepage_url = corp_info['corp_homepage_url'],
                     corp_settlement_month = corp_info['corp_settlement_month'],

@@ -2,8 +2,8 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.06.01
+@author OKS in Aimdat Team
 """
 import csv
 import glob
@@ -194,13 +194,13 @@ def _parse_txt(stock_codes):
             
             # 계정과목 저장
             for _, row in match_rows.iterrows():
-                if row.filter(regex=r'(누적|말|당기$)').empty:
+                if row.filter(regex=r'(?!.*3개월)당기').empty:
                     fs_dict[row['항목명']] = None 
                 else:
-                    if row.filter(regex=r'(누적|말|당기$)').iloc[0] == 'nan':
+                    if row.filter(regex=r'(?!.*3개월)당기').iloc[0] == 'nan':
                         fs_dict[row['항목명']] = None
                     else:
-                        fs_dict[row['항목명']] = Decimal128(str(row.filter(regex=r'(누적|말|당기$)').iloc[0]).replace(',', ''))
+                        fs_dict[row['항목명']] = Decimal128(str(row.filter(regex=r'(?!.*3개월)당기').iloc[0]).replace(',', ''))
 
             fs_dict_list.append(fs_dict)
     
@@ -224,7 +224,13 @@ def save_dcorp(years, quarters):
         collection = db['financial_statements']
 
         # 데이터 저장
-        result = collection.insert_many(fs_lists)
+        for fs in fs_lists:
+            if collection.find_one({'종목코드': fs['종목코드'], '년도': fs['년도'], '분기': fs['분기'], '재무제표종류': fs['재무제표종류']}):
+                collection.delete_one({'종목코드': fs['종목코드'], '년도': fs['년도'], '분기': fs['분기'], '재무제표종류': fs['재무제표종류']})
+                collection.insert_one(fs)
+            else:
+                collection.insert_one(fs)
+
         client.close()
 
         # 파일 삭제
@@ -241,7 +247,7 @@ def save_dcorp(years, quarters):
                 if len(folder_path) > 0:
                     remove_files(folder_path[0], folder=True)
 
-        return result
+        return True
     else:
         # A403 로깅
         LOGGER.error('[A403] 비금융 재무제표 파싱 실패.')

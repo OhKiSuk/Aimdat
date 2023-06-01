@@ -2,10 +2,9 @@
 @created at 2023.04.04
 @author cslee in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.06.01
+@author OKS in Aimdat Team
 """
-
 import logging
 import requests
 import time
@@ -16,9 +15,13 @@ from decimal import (
     ROUND_DOWN
 )
 
-from admin_dashboard.models.last_collect_date import LastCollectDate
 from config.settings.base import get_secret
-from django.db.models import Q
+from django.db.models import (
+    DateField,
+    F,
+    Q
+)
+from django.db.models.functions import Cast
 from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
 from services.models.corp_id import CorpId
 from services.models.stock_price import StockPrice
@@ -31,14 +34,14 @@ def _check_is_new(stock_code):
     주가정보를 처음 수집하는 기업 구분
     """
     corp_id = CorpId.objects.get(stock_code=stock_code).id
-    if StockPrice.objects.filter(corp_id=corp_id).exists():
+    if StockPrice.objects.filter(corp_id__id=corp_id).exists():
         return False
     else:
         # A302 로깅
         LOGGER.info('[A302] 새로운 주가정보가 수집됨. {}'.format(stock_code))
         return True
     
-def _collect_stock_price(stock_codes, last_collect_date):
+def _collect_stock_price(stock_codes):
     """
     주가 정보가 수집된 적이 없는 신규 기업 종목의 주가 수집
 
@@ -53,11 +56,14 @@ def _collect_stock_price(stock_codes, last_collect_date):
         if is_new:
             beginBasDt = '20200102'
         else:
-            beginBasDt = last_collect_date
+            last_trade_date = StockPrice.objects.filter(corp_id__stock_code=stock_code).annotate(
+                date_field=Cast(F('trade_date'), output_field=DateField())).latest('date_field').trade_date
+
+            beginBasDt = datetime.strptime(last_trade_date, '%Y-%m-%d').strftime('%Y%m%d') 
 
         params = {
             'serviceKey':get_secret('data_portal_key'), 
-            'numOfRows':100000000, 
+            'numOfRows':10000, 
             'pageNo':1, 
             'resultType':'json', 
             'beginBasDt':beginBasDt,
@@ -131,21 +137,14 @@ def save_stock_price():
     주가 데이터 수집 후 저장
 
     성공 시 True 리턴, 실패 시 False 리턴, 기본 리턴값은 False임
-    """
-    # 마지막 수집일 조회
-    last_collect_date = LastCollectDate.objects.filter(collect_type='stock_price').last()
-    if last_collect_date:
-        last_collect_date = last_collect_date.collect_date.strftime('%Y%m%d')
-    else:
-        last_collect_date = datetime(2020, 1, 2).strftime('%Y%m%d')
-    
+    """    
     stock_codes = CorpId.objects.all().values_list('stock_code', flat=True)
-    data_list = _collect_stock_price(stock_codes, last_collect_date)
+    data_list = _collect_stock_price(stock_codes)
 
     if data_list:
         # 데이터 중복저장 방지
         for data in data_list:
-            if not StockPrice.objects.filter(Q(corp_id=data['corp_id']) & Q(trade_date=data['trade_date'])).exists():
+            if not StockPrice.objects.filter(Q(corp_id__exact=data['corp_id']) & Q(trade_date__exact=data['trade_date'])).exists():
                 StockPrice.objects.create(
                     corp_id=data['corp_id'],
                     open_price=data['open_price'],

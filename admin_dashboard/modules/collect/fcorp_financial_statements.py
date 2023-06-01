@@ -2,8 +2,8 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.06.01
+@author OKS in Aimdat Team
 """
 import csv
 import glob
@@ -312,8 +312,15 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
         db = client["aimdat"]
         collection = db["financial_statements"]
 
-        # MongoDB에 저장
-        result = collection.insert_many(crawl_result)
+        # 데이터 저장
+        for fs in crawl_result:
+            if collection.find_one({'종목코드': fs['종목코드'], '년도': fs['년도'], '분기': fs['분기'], '재무제표종류': fs['재무제표종류']}):
+                collection.delete_one({'종목코드': fs['종목코드'], '년도': fs['년도'], '분기': fs['분기'], '재무제표종류': fs['재무제표종류']})
+                collection.insert_one(fs)
+            else:
+                collection.insert_one(fs)
+
+        client.close()
 
         # 사용한 파일 제거
         with open(SECRETS_FILE, 'r') as secrets:
@@ -323,7 +330,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
             if len(file_path) > 0:
                 remove_files(file_path[0])
 
-        return  result
+        return True
     else:
         # A502 로깅
         LOGGER.error('[A503] 금융 재무제표 크롤 실패.')

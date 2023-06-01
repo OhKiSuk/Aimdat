@@ -2,15 +2,15 @@
 @created at 2023.03.24
 @author cslee in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.06.01
+@author OKS in Aimdat Team
 """
 import datetime
 import logging
 import requests
-import retry
 
 from config.settings.base import get_secret
+from django.db.models import Q
 from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
 from services.models.corp_id import CorpId
 from ..api_error.open_api_error import check_open_api_errors
@@ -74,8 +74,15 @@ def save_corp_id():
     
     if len(corp_list) > 0:
         for corp in corp_list:
-            # 중복 저장 방지
-            if not CorpId.objects.filter(stock_code=corp['srtnCd'][1:]).exists():
+
+            if CorpId.objects.filter(Q(corp_name__exact=corp['itmsNm']) | Q(stock_code__exact=corp['srtnCd'][1:]) | Q(corp_isin__exact=corp['isinCd'])).exists():
+                CorpId.objects.filter(Q(corp_name__exact=corp['itmsNm']) | Q(stock_code__exact=corp['srtnCd'][1:]) | Q(corp_isin__exact=corp['isinCd'])).update(
+                    corp_name = corp['itmsNm'],
+                    corp_isin = corp['isinCd'],
+                    stock_code = corp['srtnCd'][1:],
+                    base_date = datetime.datetime.strptime(corp['basDt'], '%Y%m%d').strftime('%Y-%m-%d')
+                )
+            else:
                 CorpId.objects.create(
                     corp_name=corp['itmsNm'],
                     corp_country='대한민국',
@@ -84,6 +91,7 @@ def save_corp_id():
                     stock_code=corp['srtnCd'][1:],
                     base_date=datetime.datetime.strptime(corp['basDt'], '%Y%m%d').strftime('%Y-%m-%d')
                 )
+
         return True
     else:
         # A102 로깅
