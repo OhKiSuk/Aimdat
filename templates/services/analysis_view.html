@@ -1,214 +1,469 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load get_attr %}
+{% load humanize %}
+{% load convert_account %}
+{% load get_index_field_data %}
 {% block content %}
-<div class="my-5 py-3">
-    <div class="font-lg fw-bold">기업분석</div>
-    <div class="mt-5" style="overflow-x: auto; white-space: nowrap;">
-        {% for obj in object_list %}
-        <span class="badge text-bg-primary" style="margin-right: 0.3%; font-size:20px;">
-            분석기업{{ forloop.counter }} : 
-            {{ obj.0.corp_id__corp_name }}({{ obj.0.year }}.{{ obj.0.quarter }}분기)
-        </span>
-        {% endfor %}
+<div class="mask" style="background-color: rgba(0, 0, 0, 0.03); display: none;">
+    <div id="spinner" class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status" style="position:absolute; top: 50%; bottom: 50%;"></div>
     </div>
 </div>
-<hr>
-<div class="d-flex justify-content-end my-5">
-    <button type="button" class="btn btn-primary filter_set" data-bs-toggle="modal" data-bs-target="#filter-modal">항목선택</button>
-</div>
-<canvas id="chart" class="mb-5"></canvas>
-{% include 'includes/footer.html' %}
-<div class="modal" id="filter-modal" tabindex="-1" aria-hidden="true" data-backdrop="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header font-md fw-bold my-3">
-                <div class="my-3">항목선택</div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+<div class="mt-5">
+    <div class="font-md fw-bold mb-3">기업 비교·분석</div>
+    <input class="form-control form-control-lg mb-3" name="corp_name" type="text" placeholder="기업명">
+    <div class="row gap-3 px-2 mb-3">
+        <select class="form-select col" name="year">
+            {% now "Y" as current_year %}
+            <option selected>년도</option>
+            <option value="{{ current_year }}">{{ current_year }}</option>
+            <option value="{{ current_year|add:'-1' }}">{{ current_year|add:'-1' }}</option>
+            <option value="{{ current_year|add:'-2' }}">{{ current_year|add:'-2' }}</option>
+            <option value="{{ current_year|add:'-3' }}">{{ current_year|add:'-3' }}</option>
+        </select>
+
+        <select class="form-select col" name="quarter">
+            <option selected>분기</option>
+            <option value="1">1분기</option>
+            <option value="2">2분기</option>
+            <option value="3">3분기</option>
+            <option value="4">4분기</option>
+        </select>
+
+        <select class="form-select col" name="fs_type">
+            <option selected>재무제표 유형</option>
+            <option value="0">연결</option>
+            <option value="5">별도</option>
+        </select>
+        
+        <button id="id_get_corps" class="btn btn-primary col" data-bs-toggle="modal" data-bs-target="#id_append_corp_modal">추가하기</button>
+    </div>
+    <hr>
+
+    <div class="row">
+        <div class="col"></div>
+        <div class="col">
+            <div class="float-end">
+                <button id="id_reset_analysis" type="button" class="btn btn-sm btn-primary mx-2">초기화</button>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#id_set_field_modal">지표설정</button>
             </div>
-            <form method="POST" class="px-3 my-2">
-                {% csrf_token %}
-                <div class="d-flex flex-wrap align-items-center align-content-between font-sm">
-                    <div class="d-flex align-items-center col-12">
-                        <div class="input-group">
-                            <input type="text" id="year" name="year" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="년도">
-                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false" ></button>
-                            <ul class="dropdown-menu dropdown-menu-end text-center year">
-                                <li><a class="dropdown-item font-sm" data-value="2020" href="#">2020</a></li>
-                                <li><a class="dropdown-item font-sm" data-value="2021" href="#">2021</a></li>
-                                <li><a class="dropdown-item font-sm" data-value="2022" href="#">2022</a></li>
-                                <li><a class="dropdown-item font-sm" data-value="2023" href="#">2023</a></li>
-                            </ul>
-                        </div>
-                        <div class="input-group mx-2">
-                            <input type="text" id="quarter" name="quarter" class="form-control text-center" aria-label="Text input with dropdown button" placeholder="분기">
-                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-offset="0,3" aria-expanded="false"></button>
-                            <ul class="dropdown-menu dropdown-menu-end text-center quarter">
-                                <li><a class="dropdown-item font-sm" data-value="1분기" href="#">1분기</a></li>
-                                <li><a class="dropdown-item font-sm" data-value="2분기" href="#">2분기</a></li>
-                                <li><a class="dropdown-item font-sm" data-value="3분기" href="#">3분기</a></li>
-                                <li><a class="dropdown-item font-sm" data-value="4분기" href="#">4분기</a></li>
-                            </ul>
-                        </div>
-                        <input class="form-control" id="search_input" type="text" placeholder="기업명 검색">
-                        <div id="search_results"></div>
-                    </div>
-                    <div class="fw-semibold font-md col-12 my-2" style="overflow-x: auto; white-space: nowrap;">분석기업</div>
-                    <div id="modal_checked_corp" class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
-                    </div>
-                    <div class="fw-semibold font-md col-12 my-2">재무지표</div>
-                    <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
-                    {% for data in check_item_fs %}
-                        <input id="{{ data.0 }}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{ data.0 }}, {{ data.1 }}">
-                        <label class="btn btn-outline-primary m-1" for="{{ data.0 }}_check" style="border-radius: 0px;">{{ data.1 }}</label>
-                    {% endfor %}
-                    </div>
-                    <div class="fw-semibold font-md col-12 my-2">투자지표</div>
-                    <div class="btn-group-sm d-flex flex-wrap" role="group" aria-label="Small checkbox toggle button group">
-                    {% for data in check_item_rsi %}
-                        <input id="{{ data }}_check" class="btn-check" type="checkbox" name="checked_item" autocomplete="off" value="{{ data }}, {{ data|upper }}">
-                        <label class="btn btn-outline-primary m-1" for="{{ data }}_check" style="border-radius: 0px;">{{ data|upper }}</label>
-                    {% endfor %}
-                    </div>
-                </div>
-                <div class="d-flex justify-content-end">
-                    <button class="btn btn-primary btn-sm submit mt-5 mb-2" type="submit">완료</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
+
+<div class="mt-3">
+    <div class="font-sm text-black-50 fw-bold text-end">(단위: 억원, 배, %)</div>
+    <canvas id="chart" class="mb-5"></canvas>
+</div>
+
+{% if object_list %}
+<table id="id_chart_table" class="table table-bordered">
+    <thead class="text-center">
+        <tr class="bg-light">
+            <th></th>
+            {% for field in field_list %}
+            <th>{{ field|convert_account }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in object_list %}
+        <tr>
+            <td class="text-center fw-bold bg-light">{{ obj.corp_id__corp_name }}({{ obj.year }}년 {{ obj.quarter }}분기, {% if fs_type == "5" %}별도{% else %}연결{% endif %})</td>
+
+            {% for field in field_list %}
+            <td class="text-end">{{ obj|get_index_field_data:field|intcomma }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+<div class="modal modal-lg fade" id="id_append_corp_modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5 fw-bold">기업선택</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover table-bordered" style="display: none;">
+                    <thead class="bg-light">
+                        <tr>
+                            <th></th>
+                            <th>기업명</th>
+                            <th>종목코드</th>
+                            <th>국적</th>
+                            <th>업종명</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                <button id="id_append_corp_button" type="button" class="btn btn-sm btn-primary">확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="id_set_field_modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5 fw-bold">지표설정</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="btn-group-sm d-flex flex-wrap" role="group">
+                    <div class="mb-3">
+                        <div class="font-md fw-bold">계정과목</div>
+                        {% for index in account_index %}
+                        <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
+                        <label class="btn btn-outline-primary m-1" for="{{ index }}" style="border-radius: 0px;">{{ index|convert_account }}</label>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <div class="font-md fw-bold">투자지표</div>
+                        {% for index in investment_index %}
+                        <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
+                        <label class="btn btn-outline-primary m-1" for="{{ index }}" style="border-radius: 0px;">{{ index|convert_account }}</label>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <div class="font-md fw-bold mt-3">배당</div>
+                        {% for index in dividend_index %}
+                        <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
+                        <label class="btn btn-outline-primary m-1" for="{{ index }}" style="border-radius: 0px;">{{ index|convert_account }}</label>
+                        {% endfor %}
+                    </div>
+                </div>           
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                <button id="id_set_field_button" type="button" class="btn btn-sm btn-primary">확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'includes/footer.html' %}
+
 {% endblock %}
 {% block script %}
 <script src="{% static 'js/chart.umd.min.js' %}"></script>
 <script src="{% static 'js/jquery-ui.min.js' %}"></script>
 <script>
-{% if not object_list %}
-alert('검색된 정보가 없습니다.');
-{% endif %}
+$(document).ready(function() {
+    var field_list = []
+    var chart
 
-{% for obj in object_list %}
-$('#modal_checked_corp').append("<input id='{{ obj.0.corp_id__corp_name }}{{ obj.0.year }}{{ obj.0.quarter }}분기_check'" +
-    " class='btn-check' type='checkbox' name='checked_corp' value='{{ obj.0.corp_id }}, {{ obj.0.year }}, {{ obj.0.quarter }}분기' checked>" +
-        "<label class='btn btn-outline-primary m-1' for='{{ obj.0.corp_id__corp_name }}{{ obj.0.year }}{{ obj.0.quarter }}분기_check' style='border-radius: 0px;'>" +
-            "{{ obj.0.corp_id__corp_name }}({{ obj.0.year }}.{{ obj.0.quarter }}분기)</label>");
-{% endfor %}
+    /** 기업 목록 가져오기 */
+    $('#id_get_corps').on('click', function() {
+        var corp_name = $('input[name="corp_name"]').val();
+        var year = $('select[name="year"] option:selected').val();
+        var quarter = $('select[name="quarter"] option:selected').val();
+        var fs_type = $('select[name="fs_type"] option:selected').val();
 
-{% for data in analysis_data %}
-$('#{{ data }}_check').prop('checked', true)
-{% endfor %}
-
-$('.year').on('click', function(e) {
-    const target = e.target;
-    const value = $(target).data('value');
-    $('#year').val(value);
-});
-
-$('.quarter').on('click', function(e) {
-    const target = e.target;
-    const value = $(target).data('value');
-    $('#quarter').val(value);
-});
-
-const ctx = document.getElementById('chart');
-
-var chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: [
-        {% for data in graph_fields %}
-        '{{ data }}',
-        {% endfor %}
-        ],
-        datasets: [
-        {% for obj in object_list %}
-            {
-                label: '{{ obj.0.corp_id__corp_name }}({{ obj.0.year }}.{{ obj.0.quarter }}분기)',
-                data: [
-                    {% for field in analysis_data %}
-                    {{ obj.0|get_attr:field }},
-                    {% endfor %}
-                ],
-            },
-        {% endfor %}
-        ]
-    },
-    options: {
-        scales: {
-            y: {
-                beginAtZero: true,
-            }
+        if (corp_name === '' || year === '년도' || quarter === '분기' || fs_type === '재무제표 유형') {
+            var append_corp_modal_body = $('#id_append_corp_modal .modal-body');
+            append_corp_modal_body.find('tbody').empty();
+            
+            var alert_message = '<tr>'+
+                '<td colspan="5"><span>검색 결과가 존재하지 않습니다.</span></td>'+
+                '</tr>'
+            append_corp_modal_body.find('tbody').append(alert_message);
+            append_corp_modal_body.find('table').show();
         }
-    }
-});
+        else {
+            $.get({
+                url: "{% url 'services:analysis' %}",
+                data: {'corp_info': JSON.stringify({
+                        'corp_name': corp_name,
+                        'year': year,
+                        'quarter': quarter,
+                        'fs_type': fs_type
+                    })
+                },
+                beforeSend: function() {
+                    $(".mask").show();
+                },
+                complete: function() {
+                    $(".mask").hide();
+                },
+                success: function(response) {
+                    var append_corp_modal_body = $('#id_append_corp_modal .modal-body');
+                    append_corp_modal_body.find('tbody').empty();
 
-var max_data = 0;
+                    response.forEach(function(data) {
+                        var tr = '<tr>'+
+                                '<td class="text-center"><input class="form-check-input" type="radio" name="select_corp" value="'+data.stock_code+'"></td>'+
+                                '<td><span class="badge text-bg-primary">'+data.corp_market+'</span>&nbsp;'+data.corp_name+'</td>'+
+                                '<td>'+data.stock_code+'</td>'+
+                                '<td>'+data.corp_country+'</td>'+
+                                '<td>'+data.corp_sectors+'</td>'+
+                            '</tr>';
 
-chart.data.datasets.forEach(function(dataset) {
-    let datasetMax = Math.max.apply(Math, dataset.data);
-
-    if (datasetMax > max_data) {
-        max_data = datasetMax;
-    }
-});
-
-max_data = max_data + max_data / 4;
-
-chart.options.scales.y.suggestedMax = max_data;
-chart.update();
-
-{% with corp_name as name %}
-var corp_list = {{ corp_list|safe }};
-var selected_number = null;
-    $("#search_input").autocomplete({
-        source: {{ name|safe }},
-        appendTo: "#search_results",
-        messages: {
-            noResults: '',
-            results: function() {}
-        },
-        focus: function(event, ui) {
-            $("#search_input").val(ui.item.label);
-            return false;
-        },
-        select: function(event, ui) {
-            $("#search_input").val(ui.item.label);
-            return false;
-        },
-    }).autocomplete("instance")._renderItem = function(ul, item) {
-        return $("<li>")
-            .addClass("dropdown-item select_corp")
-            .append("<div>" + item.label + "</div>")
-            .appendTo(ul)
-            .on("mouseenter", function() {
-                $(this).siblings().removeClass("ui-state-active");
-                $(this).addClass("ui-state-active");
-            })
-            .on("click", function() {
-                $(this).addClass("ui-state-active");
-                $(this).parent().siblings("input").val($(this).text());
-                var year = $('#year').val();
-                var quarter = $('#quarter').val();
-                var selected_number = corp_list[item.label];
-
-                if ( year == '') {
-                    $('#year').val('2022');
-                    year = '2022';
-                }
-                if ( quarter == '') {
-                    $('#quarter').val('4분기');
-                    quarter = '4분기';
-                }
-                if ($("#modal_checked_corp").find("[value='" + selected_number + ", " + year + ", " + quarter + "']").length > 0) {
-                    alert('이미 추가된 기업입니다.')
-                } else {
-                    $("#modal_checked_corp").append("<input id='" + item.label + year + quarter + "_check' class='btn-check' type='checkbox' name='checked_corp' value='" + selected_number + ", " + year + ", " + quarter + "' checked>" +
-                    "<label class='btn btn-outline-primary m-1' for='" + item.label + year + quarter + "_check' style='border-radius: 0px;'>" + item.label + "("+ year + "." + quarter +")</label>");
+                        append_corp_modal_body.find('tbody').append(tr);
+                    });
+                    append_corp_modal_body.find('table').show();
+                },
+                error: function(xhr, status, error) {
+                    var error_message = xhr.responseText;
+                    var append_corp_modal_body = $('#id_append_corp_modal .modal-body');
+                    append_corp_modal_body.find('tbody').empty();
+                    
+                    var alert_message = '<tr>'+
+                        '<td colspan="5"><span>'+error_message+'</span></td>'+
+                        '</tr>'
+                    append_corp_modal_body.find('tbody').append(alert_message);
+                    append_corp_modal_body.find('table').show();
                 }
             });
-    };
+        }
+    });
+
+    /** 기업 추가 */
+    $('#id_append_corp_button').on('click', function() {
+        var stock_code = $('input[type="radio"][name="select_corp"]:checked').prop('checked', true).val();
+        var year = $('select[name="year"] option:selected').val();
+        var quarter = $('select[name="quarter"] option:selected').val();
+        var fs_type = $('select[name="fs_type"] option:selected').val();
+        var tr;
+
+        $.post({
+            url: "{% url 'services:analysis' %}",
+            data: {'selected_corp': JSON.stringify({
+                'stock_code': stock_code,
+                'year': year,
+                'quarter': quarter,
+                'fs_type': fs_type
+            })},
+            beforeSend: function(xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                $(".mask").show();
+            },
+            complete: function() {
+                $(".mask").hide();
+            },
+            success: function(response) {
+                $('#id_append_corp_modal').modal('hide');
+                updatePage(response);
+            },
+            error: function(xhr, status, error) {
+                var errorMessage = xhr.responseText;
+                alert(errorMessage);
+            }
+        });
+    });
     
-    $("#search_input").autocomplete("instance").menu.element.addClass("dropdown-menu");
-{% endwith %}
+    /** 필드 추가/삭제 */
+    $('input[name="field_list"]').on('click', function() {
+        var field_name = $(this).attr('id');
+
+        if ($(this).is(':checked') === true) {
+            field_list.push(field_name);
+        }
+        else {
+            for(var i = 0; i < field_list.length; i++){ 
+                if (field_list[i] === field_name) { 
+                    field_list.splice(i, 1); 
+                    break;
+                }
+            }
+        }
+    });
+
+    /** 필드 필터링 */
+    $('#id_set_field_button').on('click', function() {
+        $.post({
+            url: "{% url 'services:analysis' %}",
+            data: {'field_list': JSON.stringify(field_list)},
+            beforeSend: function(xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                $(".mask").show();
+            },
+            complete: function() {
+                $(".mask").hide();
+            },
+            success: function(response) {
+                $('#id_set_field_modal').modal('hide');
+                updatePage(response)
+            }
+        });
+    });
+
+    /** 기업 분석 초기화 */
+    $('#id_reset_analysis').on('click', function() {
+        $.post({
+            url: "{% url 'services:analysis' %}",
+            data: 'reset',
+            beforeSend: function(xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                $(".mask").show();
+            },
+            complete: function() {
+                $(".mask").hide();
+            },
+            success: function(response) {
+                updatePage('reset');
+            }
+        });
+    });
+});
+</script>
+<script>
+    /** chart init */
+    const ctx = document.getElementById('chart');
+    var initial_data = {
+            labels: [
+                {% for field in field_list %}
+                '{{ field|convert_account }}',
+                {% endfor %}
+            ],
+            datasets: [
+            {% for obj in object_list %}
+                {
+                    label: '{{ obj.corp_id__corp_name }}({{ obj.year }}년 {{ obj.quarter }}분기, {% if fs_type == "5" %}별도{% else %}연결{% endif %})',
+                    data: [
+                        {% for field in field_list %}
+                        {{ obj|get_index_field_data:field }},
+                        {% endfor %}
+                    ],
+                },
+            {% endfor %}
+            ]
+        }
+
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: initial_data,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                }
+            }
+        }
+    });
+
+    chart.update();
+
+/** 차트 업데이트 */
+function updateChart(labels, datasets_list) {
+    chart.data.datasets = []
+    
+    for (var i = 0; i < datasets_list.length; i++) {
+        chart.data.datasets.push(datasets_list[i])
+    }
+
+    chart.data.labels = labels;
+    chart.update();
+}
+
+function removeChart() {
+    chart.data.datasets = []
+    chart.data.labels = []
+    chart.update();
+}
+
+/** 페이지 갱신 */
+function updatePage(response) {
+    var fs_type_name;
+    var labels = []
+    var data = []
+    var datasets = {}
+    var datasets_list = []
+
+    if (response !== 'reset') {
+        $.each(response.field_list, function(index, field_item) {
+            labels.push(convertAccount(field_item));
+        });
+
+        $.each(response.object_list, function(index, obj_item) {
+            data = []
+            datasets = {}
+
+            if (obj_item.fs_type == '0') {
+                fs_type_name = '연결'
+            }
+            else {
+                fs_type_name = '별도'
+            }
+
+            $.each(response.field_list, function(index, field_item) {
+                data.push(obj_item[field_item])
+            });
+
+            datasets['label'] = obj_item.corp_name+'('+obj_item.year+'년 '+obj_item.quarter+'분기,'+fs_type_name+')';
+            datasets['data'] = data
+            datasets_list.push(datasets)
+        });
+        
+        updateChart(labels, datasets_list);
+        $('#id_chart_table tbody').empty();
+        $('#id_chart_table thead').empty();
+        
+        var tbody = '';
+        for (var i = 0; i < datasets_list.length; i++) {
+            tbody += '<tr>'+
+                '<td class="text-center fw-bold bg-light">'+datasets_list[i].label+'</td>';
+
+            for (var j = 0; j < datasets_list[i].data.length; j++) {
+                tbody += '<td class="text-end">'+datasets_list[i].data[j]+'</td>'
+            }
+            tbody += '</tr>'
+        }
+
+        var thead = '<tr class="bg-light">'+'<th></th>';
+        $.each(response.field_list, function(index, field_item) {
+            thead += '<th>'+convertAccount(field_item)+'</th>'
+        });
+        thead += '</th>';
+
+        $('#id_chart_table thead').append(thead);
+        $('#id_chart_table tbody').append(tbody);
+        $('#id_chart_table').show();
+    }
+    /** 검색 기록 초기화  */
+    else {
+        removeChart();
+        $('#id_chart_table tbody').empty();
+        $('#id_chart_table thead').empty();
+        $('#id_chart_table').hide();
+    }
+}
+
+/** 계정과목명 번역 */
+function convertAccount(account_name) {
+    var index_list = {
+        'revenue': '매출액',
+        'operating_profit': '영업이익',
+        'net_profit': '당기순이익',
+        'cost_of_sales': '매출원가',
+        'cost_of_sales_ratio': '매출원가율',
+        'operating_margin': '영업이익률',
+        'net_profit_margin': '순이익률',
+        'roe': 'ROE',
+        'roa': 'ROA',
+        'current_ratio': '유동비율',
+        'quick_ratio': '당좌비율',
+        'debt_ratio': '부채비율',
+        'per': 'PER',
+        'pbr': 'PBR',
+        'psr': 'PSR',
+        'eps': 'EPS',
+        'bps': 'BPS',
+        'ev_ebitda': 'EV/EBITDA',
+        'ev_ocf': 'EV/OCF',
+        'dividend': '배당금',
+        'dividend_ratio': '배당률',
+        'dividend_payout_ratio': '배당성향',
+        'dps': 'DPS'
+    }
+
+    return index_list[account_name]
+}
 </script>
 {% endblock %}

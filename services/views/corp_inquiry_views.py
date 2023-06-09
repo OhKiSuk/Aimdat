@@ -13,7 +13,12 @@ from datetime import (
 )
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import (
+    DateField,
+    F,
+    Q
+)
+from django.db.models.functions import Cast
 from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.generic import DetailView
@@ -45,7 +50,9 @@ class CorpInquiryView(UserPassesTestMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         id = self.kwargs.get(self.pk_url_kwarg)
-        stock_price_obj = StockPrice.objects.filter(Q(corp_id__exact = id)).order_by('trade_date')
+        stock_price_obj = StockPrice.objects.filter(Q(corp_id = id)).annotate(
+            date_field=Cast(F('trade_date'), output_field=DateField())
+        ).order_by('date_field')
         disclosure_data = self.disclosure_data(id)
         
         fs_type_name = self.request.GET.get('fs_type', 'cfs')
@@ -60,7 +67,7 @@ class CorpInquiryView(UserPassesTestMixin, DetailView):
         context['page_obj'] = self.paging_disclosure_data(disclosure_data)
 
         context['corp_info'] = CorpInfo.objects.get(Q(corp_id__exact = id))
-        context['latest_stock_info'] = stock_price_obj.latest('trade_date')
+        context['latest_stock_info'] = stock_price_obj.latest('date_field')
         context['stock_data'] = stock_price_obj
         context['week_52_price'] = stock_price_obj.get(Q(trade_date__exact = str(week_52))) if stock_price_obj.filter(Q(trade_date__exact = str(week_52))).exists() else None
         context['report_data'] = self.recent_report(id, fs_type_name)
