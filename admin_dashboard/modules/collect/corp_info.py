@@ -2,7 +2,7 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.06.01
+@modified at 2023.06.06
 @author OKS in Aimdat Team
 """
 import csv
@@ -123,7 +123,7 @@ def _download_induty_code():
 
     # A005 로깅
     try:
-        download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+        download_button = driver.find_element(By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a')
     except NoSuchElementException:
         LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
 

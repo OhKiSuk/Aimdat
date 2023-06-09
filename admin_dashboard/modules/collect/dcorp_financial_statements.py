@@ -106,7 +106,7 @@ def _get_dcorp_list():
         driver.get(url)
         time.sleep(5)
         
-        download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+        download_button = driver.find_element(By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a')
         # A005 로깅
         try:
             download_button.click()
