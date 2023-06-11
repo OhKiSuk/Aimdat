@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.05.31
+@modified at 2023.06.10
 @author OKS in Aimdat Team
 """
 from django.urls import path
@@ -27,7 +27,7 @@ app_name = 'services'
 
 urlpatterns = [
     # 검색
-    path('search/', SearchView.as_view(), name='search'),
+    path('search', SearchView.as_view(), name='search'),
     
     # 기업 조회
     path('corp/inquiry/<int:id>', CorpInquiryView.as_view(), name="corp_inquiry"),

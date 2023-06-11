@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.05.27
+@modified at 2023.06.10
 @author OKS in Aimdat Team
 """
 import datetime
@@ -30,8 +30,7 @@ class SearchView(UserPassesTestMixin, ListView):
     """
     model = InvestmentIndex
     template_name = 'services/search_view.html'
-    paginate_by = 100
-    ordering = ['corp_id__corp_name']
+    paginate_by = 50
     
     def test_func(self):
         if self.request.user.is_authenticated:
@@ -45,36 +44,27 @@ class SearchView(UserPassesTestMixin, ListView):
     def handle_no_permission(self):
         return redirect('account:login')
     
+    def get_ordering(self):
+        ordering = json.loads(self.request.GET.get('ordering', '"-corp_id__corp_name"'))
+
+        if ordering == 'corp_name' or ordering == '-corp_name':
+            if str(ordering).startswith('-'):
+                ordering = 'corp_id__corp_name'
+            else:
+                ordering = '-corp_id__corp_name'
+
+        return ordering
+    
     def get_queryset(self):
         queryset = super().get_queryset()
         q = Q()
 
         # 지표 목록
-        index_dict_list = {
-            '매출액': 'revenue',
-            '영업이익': 'operating_profit',
-            '당기순이익': 'net_profit',
-            '매출원가': 'cost_of_sales',
-            '매출원가율': 'cost_of_sales_ratio',
-            '영업이익률': 'operating_margin',
-            '순이익률': 'net_profit_margin',
-            'ROE': 'roe',
-            'ROA': 'roa',
-            '유동비율': 'current_ratio',
-            '당좌비율': 'quick_ratio',
-            '부채비율': 'debt_ratio',
-            'PER': 'per',
-            'PBR': 'pbr',
-            'PSR': 'psr',
-            'EPS': 'eps',
-            'BPS': 'bps',
-            'EV/EBITDA': 'ev_ebitda',
-            'EV/OCF': 'ev_ocf',
-            '배당금': 'dividend',
-            '배당률': 'dividend_ratio',
-            '배당성향': 'dividend_payout_ratio',
-            'DPS': 'dps'
-        }
+        index_list = [field.name for field in InvestmentIndex._meta.fields if field.name not in ['id', 'corp_id', 'year', 'quarter', 'fs_type']]
+
+        # DB에 저장된 최근 년도 및 분기 값
+        recent_year= InvestmentIndex.objects.all().aggregate(recent_year=Max('year'))['recent_year']
+        recent_quarter = InvestmentIndex.objects.filter(year=recent_year).aggregate(recent_quarter=Max('quarter'))['recent_quarter']
 
         # 조건식에 기업명 값이 있을 경우 설정(기본 값: 없음)
         if 'corp_name' in self.request.session:
@@ -83,17 +73,16 @@ class SearchView(UserPassesTestMixin, ListView):
             else:
                 q &= Q(corp_id__corp_name__icontains=self.request.session['corp_name'])
 
-        # 조건식에 재무제표 년도, 분기, 유형 값 설정(기본 값: 당년도 최근 분기 별도 재무제표)
+        # 조건식에 재무제표 년도, 분기, 유형 값 설정(기본 값: DB에 저장된 최근 별도 재무제표 목록)
         if 'year' in self.request.session:
             q &= Q(year__exact=self.request.session['year'])
         else:
-            q &= Q(year__exact=datetime.datetime.now().year)
+            q &= Q(year__exact=recent_year)
 
         if 'quarter' in self.request.session:
             q &= Q(quarter__exact=self.request.session['quarter'])
         else:
-            quarter = InvestmentIndex.objects.filter(year=datetime.datetime.now().year).aggregate(max_value=Max('quarter'))['max_value']
-            q &= Q(quarter__exact=quarter)
+            q &= Q(quarter__exact=recent_quarter)
 
         if 'fs_type' in self.request.session:
             q &= Q(fs_type__exact=self.request.session['fs_type'])
@@ -106,30 +95,30 @@ class SearchView(UserPassesTestMixin, ListView):
 
             indexes_en = []
             for index_name in self.request.session['index']:
-                for index_name_ko, index_name_en in index_dict_list.items():
-                    if index_name_ko == index_name:
+                for index in index_list:
+                    if index == index_name:
                         min = indexes[index_name]['min']
                         max = indexes[index_name]['max']
 
                         if max == '이상':
-                            q &= Q(**{index_name_en+'__gte': Decimal(min)})
+                            q &= Q(**{index+'__gte': Decimal(min)})
                         elif min == '이하':
-                            q &= Q(**{index_name_en+'__lte': Decimal(max)})
+                            q &= Q(**{index+'__lte': Decimal(max)})
                         elif min == '전체' and max == '전체':
                             # 모델 값에 저장 된 가장 작은 수 및 가장 큰 수
-                            investment_index_max = InvestmentIndex.objects.aggregate(max_number=Max(index_name_en))['max_number']
-                            investment_index_min = InvestmentIndex.objects.aggregate(min_number=Min(index_name_en))['min_number']
+                            investment_index_max = InvestmentIndex.objects.aggregate(max_number=Max(index))['max_number']
+                            investment_index_min = InvestmentIndex.objects.aggregate(min_number=Min(index))['min_number']
 
-                            q &= Q(**{index_name_en+'__range': (Decimal(investment_index_min), Decimal(investment_index_max))})
+                            q &= Q(**{index+'__range': (Decimal(investment_index_min), Decimal(investment_index_max))})
                         else:
-                            q &= Q(**{index_name_en+'__range': (Decimal(min), Decimal(max))})
+                            q &= Q(**{index+'__range': (Decimal(min), Decimal(max))})
                     
-                        indexes_en.append(index_name_en)                     
+                        indexes_en.append(index)                     
             
             queryset = queryset.filter(q).values('corp_id', 'year', 'quarter', *indexes_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
             return queryset
         else:
-            default_index = ['revenue', 'operating_profit', 'net_profit', 'current_ratio', 'debt_ratio', 'dividend', 'dividend_ratio']
+            default_index = ['revenue', 'operating_profit', 'operating_margin', 'net_profit_margin', 'current_ratio', 'debt_ratio', 'dividend', 'dividend_ratio']
 
             for index_name in default_index:
                 # 모델 값에 저장 된 가장 작은 수 및 가장 큰 수
@@ -145,35 +134,25 @@ class SearchView(UserPassesTestMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # 지표 구분
-        account_index = {
-            '매출액': 'revenue',
-            '영업이익': 'operating_profit',
-            '당기순이익': 'net_profit',
-            '매출원가': 'cost_of_sales'
-        }
-        investment_index = {
-            '매출원가율': 'cost_of_sales_ratio',
-            '영업이익률': 'operating_margin',
-            '순이익률': 'net_profit_margin',
-            'ROE': 'roe',
-            'ROA': 'roa',
-            '유동비율': 'current_ratio',
-            '당좌비율': 'quick_ratio',
-            '부채비율': 'debt_ratio',
-            'PER': 'per',
-            'PBR': 'pbr',
-            'PSR': 'psr',
-            'EPS': 'eps',
-            'BPS': 'bps',
-            'EV/EBITDA': 'ev_ebitda',
-            'EV/OCF': 'ev_ocf',
-        }
-        dividend_index = {
-            '배당금': 'dividend',
-            '배당률': 'dividend_ratio',
-            '배당성향': 'dividend_payout_ratio',
-            'DPS': 'dps'
-        }
+        account_index = ['revenue', 'operating_profit', 'net_profit']
+        investment_index = [
+            'cost_of_sales_ratio',
+            'operating_margin',
+            'net_profit_margin',
+            'roe',
+            'roa',
+            'current_ratio',
+            'quick_ratio',
+            'debt_ratio',
+            'per',
+            'pbr',
+            'psr',
+            'eps',
+            'bps',
+            'ev_ebitda',
+            'ev_ocf',
+        ]
+        dividend_index = ['dividend', 'dividend_ratio', 'dividend_payout_ratio', 'dps']
 
         # Session에 기업명 값이 있을 경우
         if 'corp_name' in self.request.session:
@@ -200,13 +179,14 @@ class SearchView(UserPassesTestMixin, ListView):
             context['index'] = self.request.session['index']
         else:
             context['index'] = {
-                '매출액': {'min': '전체', 'max': '전체'},
-                '영업이익': {'min': '전체', 'max': '전체'},
-                '당기순이익': {'min': '전체', 'max': '전체'},
-                '유동비율': {'min': '전체', 'max': '전체'},
-                '부채비율': {'min': '전체', 'max': '전체'},
-                '배당금': {'min': '전체', 'max': '전체'},
-                '배당률': {'min': '전체', 'max': '전체'},
+                'revenue': {'min': '전체', 'max': '전체'},
+                'operating_profit': {'min': '전체', 'max': '전체'},
+                'operating_margin': {'min': '전체', 'max': '전체'},
+                'net_profit_margin': {'min': '전체', 'max': '전체'},
+                'current_ratio': {'min': '전체', 'max': '전체'},
+                'debt_ratio': {'min': '전체', 'max': '전체'},
+                'dividend': {'min': '전체', 'max': '전체'},
+                'dividend_ratio': {'min': '전체', 'max': '전체'},
             }
 
         context['account_index'] = account_index
