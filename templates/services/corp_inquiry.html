@@ -418,8 +418,6 @@
                 var pagination = $(responseHTML).find('.pagination');
                 var page_index = $(responseHTML).find('ul').find('a:contains('+page_number+')').parent('li').index();
 
-                console.log(page_index)
-
                 $('#disclosure_info tbody').remove();
                 $('#disclosure_info thead').after(tbody);
                 

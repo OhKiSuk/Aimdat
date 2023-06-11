@@ -581,7 +581,7 @@
                         var responseHTML = $.parseHTML(response);
                         var tbody = $(responseHTML).find('#table tbody');
 
-                        $('#table tbody').empty();
+                        $('#table tbody').remove();
                         $('#table thead').after(tbody);
                     }
                 });
@@ -623,9 +623,7 @@
                 var pagination = $(responseHTML).find('.pagination');
                 var page_index = $(responseHTML).find('ul').find('a:contains('+page_number+')').parent('li').index();
 
-                console.log(page_index)
-
-                $('#table tbody').empty();
+                $('#table tbody').remove();
                 $('#table thead').after(tbody);
                 
                 $('.pagination').remove();
