@@ -56,6 +56,11 @@ class CorpInquiryView(UserPassesTestMixin, DetailView):
         disclosure_data = self.disclosure_data(id)
         
         fs_type_name = self.request.GET.get('fs_type', 'cfs')
+        # 별도, 연결 구분
+        if fs_type_name == 'sfs':
+            fs_type = 5
+        else:
+            fs_type = 0
         
         # 윤년 계산
         if (datetime.now().year % 4 == 0 and datetime.now().year % 100 != 0) or datetime.now().year % 400 == 0:
@@ -70,26 +75,26 @@ class CorpInquiryView(UserPassesTestMixin, DetailView):
         context['latest_stock_info'] = stock_price_obj.latest('date_field')
         context['stock_data'] = stock_price_obj
         context['week_52_price'] = stock_price_obj.get(Q(trade_date__exact = str(week_52))) if stock_price_obj.filter(Q(trade_date__exact = str(week_52))).exists() else None
-        context['report_data'] = self.recent_report(id, fs_type_name)
+        context['report_data'] = self.recent_report(id, fs_type)
+        context['fs_date'] = InvestmentIndex.objects.filter(corp_id=id, fs_type=fs_type).order_by('-year', '-quarter').values('year', 'quarter')
         
         return context
 
-    def recent_report(self, id, fs_type_name):
+    def recent_report(self, id, fs_type):
         """
         최근 3년, 4분기 데이터 전체 조회
         """
-        # 별도, 연결 구분
-        if fs_type_name == 'sfs':
-            fs_type = 5
-        else:
-            fs_type = 0
-
-        exclude_fields = ['id', 'corp_id', 'fs_type']  # 제외할 필드 목록
+        exclude_fields = ['id', 'corp_id', 'fs_type', 'year', 'quarter']  # 제외할 필드 목록
         fields = [f.name for f in InvestmentIndex._meta.fields if f.name not in exclude_fields]
 
-        data = InvestmentIndex.objects.filter(corp_id=id, fs_type=fs_type).order_by('year', 'quarter').values(*fields)
+        fs_dict_list = []
+        for field in fields:
+            fs_dict = {}
+            data = InvestmentIndex.objects.filter(corp_id=id, fs_type=str(fs_type)).order_by('-year', '-quarter').values_list(field, flat=True)
+            fs_dict[field] = data
+            fs_dict_list.append(fs_dict)
 
-        return data
+        return fs_dict_list
 
     # 공시 데이터 API 요청
     def disclosure_data(self, id):
