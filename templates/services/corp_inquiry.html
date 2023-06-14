@@ -422,7 +422,7 @@
                 $('#disclosure_info thead').after(tbody);
                 
                 $('.pagination').remove();
-                $('#disclosure_info').after(pagination);
+                $('#disclosure_info table').after(pagination);
 
                 $('.pagination').children('li').removeClass('active');
                 $('.pagination').children('li:eq('+page_index+')').addClass('active');
