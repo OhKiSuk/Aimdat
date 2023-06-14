@@ -2,7 +2,7 @@
 @created at 2023.03.28
 @author JSU in Aimdat Team
 
-@modified at 2023.06.08
+@modified at 2023.06.12
 @author OKS in Aimdat Team
 """
 import json
@@ -182,6 +182,13 @@ class AnalysisView(UserPassesTestMixin, ListView):
                 self.request.session['field_list'] = field_list
             else:
                 self.request.session['field_list'] = ['revenue', 'operating_profit', 'operating_margin', 'dividend', 'dividend_ratio']
+            
+            fields = self.request.session['field_list']
+
+            return JsonResponse({
+                'object_list': list(self.get_queryset().values('corp_id', 'year', 'quarter', 'fs_type', *fields, corp_name=F('corp_id__corp_name'))),
+                'field_list': fields
+            }, safe=False)
 
         elif request.POST.get('checked_corp'):
             # 검색 페이지에서 비교할 기업을 선택하여 기업 분석 버튼을 클릭했을 경우
