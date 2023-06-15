@@ -2,8 +2,8 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.06.01
-@author OKS in Aimdat Team
+@modified at 2023.06.15
+@author JSU in Aimdat Team
 """
 import csv
 import glob
@@ -23,7 +23,7 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 
 from services.models.corp_id import CorpId
 from ..remove.remove_files import remove_files
@@ -61,7 +61,12 @@ def _get_ifrs_xbrl_txt(years, quarters):
 
     # 크롤 시작
     url = 'https://opendart.fss.or.kr/disclosureinfo/fnltt/dwld/main.do'
-    driver.get(url)
+    try:
+        driver.get(url)
+    except TimeoutException as e:
+        print(e)
+    except WebDriverException as e:
+        print(e)
     time.sleep(2)
     
     for y in years:
@@ -73,8 +78,8 @@ def _get_ifrs_xbrl_txt(years, quarters):
                 try:
                     btn_report = driver.find_element(By.XPATH, "//a[@title='{} {}보고서 {} 다운로드']".format(y, q, r))
                 except NoSuchElementException:
-                    # A402 로깅
-                    LOGGER.error('[A402] 비금융 재무제표 다운로드 실패. {}, {}, {}'.format(y, q, r))
+                    # A403 로깅
+                    LOGGER.error('[A403] 비금융 재무제표 다운로드 실패. {}, {}, {}'.format(y, q, r))
                 
                 btn_report.click()
                 time.sleep(0.5)
@@ -221,7 +226,7 @@ def save_dcorp(years, quarters):
     if len(fs_lists) > 0:
         client = pymongo.MongoClient('localhost:27017')
         db = client['aimdat']
-        collection = db['financial_statements']
+        collection = db['financial_statements6']
 
         # 데이터 저장
         for fs in fs_lists:
@@ -248,21 +253,19 @@ def save_dcorp(years, quarters):
                     remove_files(folder_path[0], folder=True)
 
         return True
-    else:
-        # A403 로깅
-        LOGGER.error('[A403] 비금융 재무제표 파싱 실패.')
 
-        with open(SECRETS_FILE, 'r') as secrets:
-                download_path = json.load(secrets)['download_folder']
+    # 파일 삭제
+    with open(SECRETS_FILE, 'r') as secrets:
+            download_path = json.load(secrets)['download_folder']
 
-                # 삭제할 파일 경로
-                file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
-                folder_path = glob.glob(download_path+'\\fs_zips')
+            # 삭제할 파일 경로
+            file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
+            folder_path = glob.glob(download_path+'\\fs_zips')
 
-                if len(file_path) > 0:
-                    remove_files(file_path[0])
+            if len(file_path) > 0:
+                remove_files(file_path[0])
 
-                if len(folder_path) > 0:
-                    remove_files(folder_path[0], folder=True)
+            if len(folder_path) > 0:
+                remove_files(folder_path[0], folder=True)
 
     return False

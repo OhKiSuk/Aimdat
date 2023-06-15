@@ -2,8 +2,8 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.06.06
-@author OKS in Aimdat Team
+@modified at 2023.06.15
+@author JSU in Aimdat Team
 """
 import csv
 import glob
@@ -153,6 +153,8 @@ def _parse_induty_code(corp_id, induty_code):
 def save_corp_info():
     """
     기업 정보 저장
+
+    성공 시 True 리턴, 실패 시 False 리턴, 기본 리턴값은 False임
     """
     _download_corp_code()
     _unzip_corp_code()
@@ -197,12 +199,9 @@ def save_corp_info():
         remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
 
         return True
-    else:
-        # A202 로깅
-        LOGGER.error('[A202] 기업정보가 정상 수집되지 않음')
 
-        # corp_code 관련 파일 제거
-        remove_files(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
-        remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
+    # corp_code 관련 파일 제거
+    remove_files(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
+    remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
 
     return False

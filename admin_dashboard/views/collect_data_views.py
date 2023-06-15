@@ -2,7 +2,7 @@
 @created at 2023.03.25
 @author cslee in Aimdat Team
 
-@modified at 2023.05.25
+@modified at 2023.06.15
 @author JSU in Aimdat Team
 """
 
@@ -59,12 +59,15 @@ class CollectCorpIdView(TemplateView):
             result = save_corp_id()
 
             if result:
-                # A101 로깅
-                LOGGER.info('[A101] 기업 식별자 정보를 성공적으로 수집. ' + str(self.request.user))
                 LastCollectDate.objects.create(
                     collect_user = request.user.email,
                     collect_type = 'corp_id'
                 )
+                # A101 로깅
+                LOGGER.info('[A101] 기업 식별자 정보를 성공적으로 수집. {}'.format(str(request.user)))
+            else:
+                # A102 로깅
+                LOGGER.error('[A102] 기업 식별자 정보가 정상 수집되지 않음. {}'.format(str(request.user)))
 
         # 로그 출력        
         with open(BASE_DIR / 'aimdat/logs/aimdat_admin_dashboard.log', 'r', encoding='utf-8') as f:
@@ -75,7 +78,7 @@ class CollectCorpIdView(TemplateView):
 
         context = {
             'last_corp_collect_date': lastest_collect_date,
-            'logs': logs
+            'logs': logs.reverse()
         }
 
         return render(self.request, self.template_name, context=context)
@@ -100,12 +103,15 @@ class CollectCorpInfoView(TemplateView):
             result = save_corp_info()
 
             if result:
-                # A201 로깅
-                LOGGER.info('[A201] 기업 정보를 성공적으로 수집. ' + str(self.request.user))
                 LastCollectDate.objects.create(
                     collect_user = request.user.email,
                     collect_type = 'corp_info'
                 )
+                # A201 로깅
+                LOGGER.info('[A201] 기업 정보를 성공적으로 수집. {}'.format(str(request.user)))
+            else:
+                # A202 로깅
+                LOGGER.error('[A202] 기업정보가 정상 수집되지 않음. {}'.format(str(request.user)))
 
         # 로그 출력
         with open(BASE_DIR / 'aimdat/logs/aimdat_admin_dashboard.log', 'r', encoding='utf-8') as f:
@@ -116,7 +122,7 @@ class CollectCorpInfoView(TemplateView):
 
         context = {
             'last_corp_collect_date': lastest_collect_date,
-            'logs': logs
+            'logs': logs.reverse()
         }
 
         return render(self.request, self.template_name, context=context)
@@ -141,12 +147,15 @@ class CollectStockPriceView(View):
             result = save_stock_price()
             
             if result:
-                # A301 로깅
-                LOGGER.info('[A301] 주가 정보를 성공적으로 수집. ' + str(self.request.user))
                 LastCollectDate.objects.create(
                     collect_user = request.user.email,
                     collect_type = 'stock_price'
                 )
+                # A301 로깅
+                LOGGER.info('[A301] 주가 정보를 성공적으로 수집. {}'.format(str(request.user)))
+            else:
+                # A302 로깅
+                LOGGER.error('[A302] 주가 정보가 정상 수집되지 않음. {}'.format(str(request.user)))
 
         # 로그 출력
         with open(BASE_DIR / 'aimdat/logs/aimdat_admin_dashboard.log', 'r', encoding='utf-8') as f:
@@ -157,7 +166,7 @@ class CollectStockPriceView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs
+            'logs': logs.reverse()
         }
             
         return render(self.request, self.template_name, context=context)
@@ -215,13 +224,16 @@ class CollectFcorpFinancialStatementsView(View):
                 for fs in fs_types:
                     result = save_fcorp(y, q, fs)
 
-        if result:
-            # A501 로깅
-            LOGGER.info('[A501] 금융 재무제표를 성공적으로 수집. {}, {}, {}, {}'.format(str(self.request.user), str(year), str(quarter), str(fs_type)))
-            LastCollectDate.objects.create(
-                collect_user = request.user.email,
-                collect_type = 'fcorp_fs'
-            )
+                    if result:
+                        LastCollectDate.objects.create(
+                            collect_user = request.user.email,
+                            collect_type = 'fcorp_fs'
+                        )
+                        # A501 로깅
+                        LOGGER.info('[A501] 금융 재무제표를 성공적으로 수집. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), str(fs_type)))
+                    else:
+                        # A502 로깅
+                        LOGGER.info('[A502] 금융 재무제표가 정상 수집되지 않음. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), str(fs_type)))
 
         lastest_collect_date = LastCollectDate.objects.filter(collect_type='fcorp_fs').last()
         if lastest_collect_date:
@@ -238,7 +250,7 @@ class CollectFcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs
+            'logs': logs.reverse()
         }
 
         return render(self.request, self.template_name, context=context)
@@ -260,7 +272,7 @@ class CollectFcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs
+            'logs': logs.reverse()
         }
         
         return render(self.request, self.template_name, context=context)
@@ -314,12 +326,15 @@ class CollectDcorpFinancialStatementsView(View):
         result = save_dcorp(years, quarters)
 
         if result:
-            # A401 로깅
-            LOGGER.info('[A401] 비금융 재무제표를 성공적으로 수집. {}, {}, {}'.format(str(self.request.user), str(year), str(quarter)))
             LastCollectDate.objects.create(
                 collect_user = request.user.email,
                 collect_type = 'dcorp_fs'
             )
+            # A401 로깅
+            LOGGER.info('[A401] 비금융 재무제표를 성공적으로 수집. {}, {}, {}'.format(str(request.user), str(year), str(quarter)))
+        else:
+            # A402 로깅
+            LOGGER.error('[A402] 비금융 재무제표가 정상 수집되지 않음. {}, {}, {}'.format(str(request.user), str(year), str(quarter)))
 
         lastest_collect_date = LastCollectDate.objects.filter(collect_type='dcorp_fs').last()
         if lastest_collect_date:
@@ -336,7 +351,7 @@ class CollectDcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs
+            'logs': logs.reverse()
         }
 
         return render(self.request, self.template_name, context=context)
@@ -358,7 +373,7 @@ class CollectDcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs
+            'logs': logs.reverse()
         }
 
         return render(self.request, self.template_name, context=context)
@@ -411,46 +426,46 @@ class CollectInvestmentIndexView(View):
                 for f in fs_types:
                     result = save_investment_index(y, q, f)
 
-        if result:
-            for data in result:
-                InvestmentIndex.objects.create(
-                    corp_id=CorpId.objects.get(stock_code=data['stock_code']),
-                    year=year, 
-                    quarter=quarter,
-                    fs_type=fs_type, 
-                    revenue=data['revenue'], 
-                    operating_profit=data['operating_profit'],
-                    net_profit=data['net_profit'],                                                                 
-                    cost_of_sales_ratio=data['cost_of_sales_ratio'], 
-                    operating_margin=data['operating_margin'],
-                    net_profit_margin=data['net_profit_margin'], 
-                    roe=data['roe'],
-                    roa=data['roa'], 
-                    current_ratio=data['current_ratio'], 
-                    quick_ratio=data['quick_ratio'],
-                    debt_ratio=data['debt_ratio'], 
-                    per=data['per'], 
-                    pbr=data['pbr'],
-                    psr=data['psr'], 
-                    eps=data['eps'], 
-                    bps=data['bps'], 
-                    dps=data['dps'], 
-                    ev_ebitda=data['ev_ebitda'],
-                    ev_ocf=data['ev_ocf'], 
-                    dividend=data['dividend'],
-                    dividend_ratio=data['dividend_ratio'], 
-                    dividend_payout_ratio=data['payout_ratio']
-                )
+                    if result:
+                        for data in result:
+                            LastCollectDate.objects.create(
+                                    collect_user = request.user.email,
+                                    collect_type = 'investment_index'
+                            )
 
-            # A601 로깅
-            LOGGER.info('[A601] 투자지표를 성공적으로 수집. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), fs_type))
-            LastCollectDate.objects.create(
-                    collect_user = request.user.email,
-                    collect_type = 'investment_index'
-                )
-        else:
-            # A602 로깅
-            LOGGER.error('[A602] 투자지표 수집 실패. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), fs_type))
+                            InvestmentIndex.objects.create(
+                                corp_id=CorpId.objects.get(stock_code=data['stock_code']),
+                                year=data['year'], 
+                                quarter=data['quarter'],
+                                fs_type=data['fs_type'], 
+                                revenue=data['revenue'], 
+                                operating_profit=data['operating_profit'],
+                                net_profit=data['net_profit'],
+                                cost_of_sales_ratio=data['cost_of_sales_ratio'], 
+                                operating_margin=data['operating_margin'],
+                                net_profit_margin=data['net_profit_margin'], 
+                                roe=data['roe'],
+                                roa=data['roa'], 
+                                current_ratio=data['current_ratio'], 
+                                quick_ratio=data['quick_ratio'],
+                                debt_ratio=data['debt_ratio'], 
+                                per=data['per'], 
+                                pbr=data['pbr'],
+                                psr=data['psr'], 
+                                eps=data['eps'], 
+                                bps=data['bps'], 
+                                dps=data['dps'], 
+                                ev_ebitda=data['ev_ebitda'],
+                                ev_ocf=data['ev_ocf'], 
+                                dividend=data['dividend'],
+                                dividend_ratio=data['dividend_ratio'], 
+                                dividend_payout_ratio=data['payout_ratio']
+                            )
+                        # A601 로깅
+                        LOGGER.info('[A601] 투자지표를 성공적으로 수집. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), result[0]['fs_type']))
+                    else:
+                        # A602 로깅
+                        LOGGER.error('[A602] 투자지표가 정상 수집되지 않음. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), fs_type))
 
         try:
             lastest_fs_date = LastCollectDate.objects.filter(collect_type='investment_index').last().collect_date.strftime('%Y-%m-%d')

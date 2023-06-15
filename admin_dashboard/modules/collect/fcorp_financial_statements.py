@@ -2,8 +2,8 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.06.01
-@author OKS in Aimdat Team
+@modified at 2023.06.15
+@author JSU in Aimdat Team
 """
 import csv
 import glob
@@ -12,7 +12,6 @@ import logging
 import os
 import pymongo
 import re
-import retry
 import time
 
 from bson.decimal128 import Decimal128
@@ -21,13 +20,12 @@ from django.db.models import Q
 from bs4 import BeautifulSoup
 from pathlib import Path
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
-from ssl import SSLError
 from webdriver_manager.chrome import ChromeDriverManager
 from services.models.corp_id import CorpId
 from ..remove.remove_files import remove_files
@@ -82,7 +80,6 @@ def _get_fcorp_list():
         LOGGER.error('[A006] 산업분류코드 파싱 실패.')
         return HttpResponseServerError
     
-@retry.retry(exceptions=SSLError, tries=10, delay=3)
 def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     """
     open dart의 단일회사 재무제표 조회에서 금융 기업 목록 검색 후 재무제표 파싱
@@ -93,7 +90,12 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     fs_result = []
     # 검색 후 재무제표 획득
     for stock_code in crawl_crp_list:
-        driver.get(url)
+        try:
+            driver.get(url)
+        except TimeoutException as e:
+            LOGGER.info(e, stock_code, year, quarter, fs_type)
+        except WebDriverException as e:
+            LOGGER.info(e, stock_code, year, quarter, fs_type)
 
         find_corp_button = driver.find_element(By.ID, 'btnOpenFindCrp')
         find_corp_button.click()
@@ -108,9 +110,14 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
 
         try:
             element_present = EC.presence_of_element_located((By.XPATH, '//input[@type="checkbox"][@name="checkCorpSelect"]'))
-            WebDriverWait(driver, timeout=1).until(element_present)
         except NoSuchElementException:
+            # A504 로깅
+            LOGGER.error('[A504] 종목코드로 검색된 회사명이 없음. {}, {}, {}'.format(stock_code, year, quarter, fs_type))
             continue
+        try:
+            WebDriverWait(driver, timeout=1).until(element_present)
+        except TimeoutException as e:
+            LOGGER.info(e, stock_code, year, quarter, fs_type)
 
         # 새로운 체크박스 중 첫 번째 체크박스 클릭
         checkbox = driver.find_element(By.XPATH, '(//input[@type="checkbox"][@name="checkCorpSelect"])[1]')
@@ -150,7 +157,8 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
         try:
             iframe = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, '//div[@class="if_result02"]/iframe')))
         except TimeoutException:
-            # iframe 결과가 없는 기업들은 재무제표가 존재하지 않으므로 넘어간다.
+            # A505 로깅
+            LOGGER.error('[A505] 재무제표 조회 결과가 반환되지 않음. {}, {}, {}, {}'.format(stock_code, year, quarter, fs_type))
             continue
 
         driver.switch_to.frame(iframe)
@@ -163,33 +171,34 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
             fs_dict = dict()
 
             # 재무제표 여부 확인
-            if len(table.find_all(name='th', string=re.compile(r'과\s*목'))) > 0 or\
-                len(table.find_all(name='th', string=re.compile(r'제\s*[0-9]+'))) > 0 or \
-                len(table.find_all(name='th', string=re.compile(r'구\s*분'))) > 0:
+            if len(table.find_all(string=re.compile(r'과(\s|&nbsp;)*목(\s|&nbsp;)*$'))) > 0 or \
+                len(table.find_all(string=re.compile(r'제(\s|&nbsp;)*[0-9]+(\s|&nbsp;)*(\(당\))?기?말?(\s|&nbsp;)*((1|3)분기|반기)?(\s|&nbsp;)*말?$'))) > 0 or \
+                len(table.find_all(string=re.compile(r'구(\s|&nbsp;)*분(\s|&nbsp;)*$'))) > 0:
 
                 # 종목코드 지정
                 fs_dict['종목코드'] = str(stock_code)
 
                 # 재무제표 금액 단위 파싱
-                unit = inner_html.find(string=re.compile(r'단\s*위'))
+                unit = inner_html.find(string=re.compile(r'\((\s|&nbsp;)?단위'))
                 if unit:
-                    fs_dict['단위'] = re.sub(r'\s|단위|:|\(|\)', '', unit.get_text()).strip()
+                    fs_dict['단위'] = re.sub(r'(\s|&nbsp;)|단위|:|\(|\)', '', unit.get_text()).strip()
 
                 # 재무제표의 년도, 분기 설정
                 fs_dict['년도'] = year
                 fs_dict['분기'] = quarter
 
-                if len(table.find_all(string=re.compile(r'부\s*채\s*총\s*계'))) > 0:
+                if len(table.find_all(string=re.compile(r'(\s|&nbsp;)*부(\s|&nbsp;)*채(\s|&nbsp;)*총(\s|&nbsp;)*계'))) > 0:
                     if fs_type == 5:
                         fs_dict['재무제표종류'] = '별도재무상태표'
                     elif fs_type == 0:
                         fs_dict['재무제표종류'] = '연결재무상태표'
-                elif len(table.find_all(string=re.compile(r'주\s*당\s*순?\s*이\s*익'))) > 0:
+                elif len(table.find_all(string=re.compile(r'주(\s|&nbsp;)*당'))) > 0 and len(table.find_all(string=re.compile(r'미처분'))) == 0 and len(table.find_all(string=re.compile(r'임의적립금'))) == 0 and len(table.find_all(string=re.compile(r'주식할인발행차금'))) == 0 or\
+                      len(table.find_all(string=re.compile(r'금융수익'))) > 0 and len(table.find_all(string=re.compile(r'미처분'))) == 0 and len(table.find_all(string=re.compile(r'임의적립금'))) == 0 and len(table.find_all(string=re.compile(r'주식할인발행차금'))) == 0 and len(table.find_all(string=re.compile(r'현금성자산'))) == 0:
                         if fs_type == 5:
                             fs_dict['재무제표종류'] = '별도포괄손익계산서'
                         elif fs_type == 0:
                             fs_dict['재무제표종류'] = '연결포괄손익계산서'
-                elif len(table.find_all(string=re.compile(r'.*?현\s*?금\s*?성\s*?자\s*?산'))) > 0:
+                elif len(table.find_all(string=re.compile(r'현(\s|&nbsp;)*금(\s|&nbsp;)*성(\s|&nbsp;)*자(\s|&nbsp;)*산'))) > 0 or len(table.find_all(string=re.compile(r'기(\s|&nbsp;)*초(\s|&nbsp;)*의?(\s|&nbsp;)*현(\s|&nbsp;)*금'))) > 0:
                     if fs_type == 5:
                         fs_dict['재무제표종류'] = '별도현금흐름표'
                     elif fs_type == 0:
@@ -198,15 +207,14 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                     continue
                 
                 rows = table.find_all('tr')
-                
                 # 차변/대변 존재 여부 확인
-                if len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'제\s*[0-9]+'))) > 0 or \
-                    len(table.find_all(name='th', attrs={'colspan': '2'}, string=re.compile(r'(3\s?개\s*월|누\s*적\s*)'))) > 0:
-
+                if len(table.find_all(attrs={'colspan': '2'})) and len(table.find_all(string=re.compile(r'제(\s|&nbsp;)*[0-9]+(\s|&nbsp;)*(\(당\))?기?말?(\s|&nbsp;)*((1|3)분기|반기)?(\s|&nbsp;)*말?$'))) > 0 or \
+                    len(table.find_all(attrs={'colspan': '2'})) and len(table.find_all(string=re.compile(r'(3(\s|&nbsp;)?개(\s|&nbsp;)*월|누(\s|&nbsp;)*적(\s|&nbsp;)*)'))) > 0:
                     for row in rows:
-
                         # 재무제표 표 헤더 건너뛰기
-                        if row.find_all(name='th'):
+                        if row.find_all(name='th') or len(row.find_all(string=re.compile(r'과(\s|&nbsp;)*목$'))) > 0 or\
+                              len(row.find_all(string=re.compile(r'제(\s|&nbsp;)*[0-9]+(\s|&nbsp;)*(\(당\))?기?말?(\s|&nbsp;)*((1|3)분기|반기)?(\s|&nbsp;)*말?$'))) > 0 or\
+                                  len(row.find_all(string=re.compile(r'(3(\s|&nbsp;)?개(\s|&nbsp;)*월|누(\s|&nbsp;)*적(\s|&nbsp;)*)'))) > 0:
                             continue
                         
                         tds = row.find_all('td')
@@ -220,11 +228,11 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                         rowspan_tds = [td for td in tds if td.has_attr('rowspan')]
                         if len(rowspan_tds) > 0 or len(row.find_all(name='td')) == 1:
                             # A503 로깅
-                            LOGGER.info('[A503] 합쳐진 row가 발견됨. {}, {}'.format(str(stock_code), tds[0].get_text()))
+                            LOGGER.info('[A503] 합쳐진 row가 발견됨. {}, {}, {}, {}, {}'.format(stock_code, year, quarter, fs_type, tds[0].get_text()))
                             continue
 
-                        # 재무제표 내에 주석이 존재하는 지 확인
-                        if table.find(name='th', string=re.compile(r'\s*주\s*석')):
+                        # 표 헤더 부분의 주석 존재 확인
+                        if table.find(string=re.compile(r'주(\s|&nbsp;)*석$')):
                             debit = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', '')) # 차변(왼쪽)
                             credit = re.findall(r'\(?\d+\)?', tds[3].get_text().replace(',', '')) # 대변(오른쪽)
 
@@ -259,9 +267,10 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                                     fs_dict[account_subject] = Decimal128(str(credit[0]).replace('(', '').replace(')', ''))
                 else:
                     for row in rows:
-
                         # 재무제표 표 헤더 건너뛰기
-                        if row.find_all(name='th'):
+                        if row.find_all(name='th') or len(row.find_all(string=re.compile(r'과(\s|&nbsp;)*목$'))) > 0 or\
+                              len(row.find_all(string=re.compile(r'제(\s|&nbsp;)*[0-9]+(\s|&nbsp;)*(\(당\))?기?말?(\s|&nbsp;)*((1|3)분기|반기)?(\s|&nbsp;)*말?$'))) > 0 or\
+                                  len(row.find_all(string=re.compile(r'(3(\s|&nbsp;)?개(\s|&nbsp;)*월|누(\s|&nbsp;)*적(\s|&nbsp;)*)'))) > 0:
                             continue
                         
                         tds = row.find_all('td')
@@ -271,8 +280,8 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                         else:
                             account_subject = tds[0].get_text() # 계정과목
 
-                        # 재무제표 내에 주석이 존재하는 지 확인
-                        if table.find(name='th', string=re.compile(r'\s*주\s*석')):
+                        # 표 헤더 부분의 주석 존재 확인
+                        if table.find(string=re.compile(r'주(\s|&nbsp;)*석$')):
                             value = re.findall(r'\(?\d+\)?', tds[2].get_text().replace(',', ''))
 
                             # 각 계정과목의 값 존재 여부 확인
@@ -310,7 +319,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
     if crawl_result:
         client = pymongo.MongoClient("mongodb://localhost:27017/")
         db = client["aimdat"]
-        collection = db["financial_statements"]
+        collection = db["financial_statements6"]
 
         # 데이터 저장
         for fs in crawl_result:
@@ -331,15 +340,13 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
                 remove_files(file_path[0])
 
         return True
-    else:
-        # A502 로깅
-        LOGGER.error('[A503] 금융 재무제표 크롤 실패.')
 
-        with open(SECRETS_FILE, 'r') as secrets:
-            download_path = json.load(secrets)['download_folder']
-            file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
+    # 사용한 파일 제거
+    with open(SECRETS_FILE, 'r') as secrets:
+        download_path = json.load(secrets)['download_folder']
+        file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
 
-            if len(file_path) > 0:
-                remove_files(file_path[0])
+        if len(file_path) > 0:
+            remove_files(file_path[0])
 
     return False

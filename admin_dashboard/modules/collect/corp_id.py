@@ -2,8 +2,8 @@
 @created at 2023.03.24
 @author cslee in Aimdat Team
 
-@modified at 2023.06.01
-@author OKS in Aimdat Team
+@modified at 2023.06.15
+@author JSU in Aimdat Team
 """
 import datetime
 import logging
@@ -67,8 +67,7 @@ def save_corp_id():
     """
     기업 식별자 저장
 
-    성공 시 fail_logs와 True 리턴, 실패 시 fail_logs와 False 리턴
-    기본 리턴값은 fail_logs, False임
+    성공 시 True 리턴, 실패 시 False 리턴, 기본 리턴값은 False임
     """
     corp_list = _collect_corp_id()
     
@@ -93,8 +92,5 @@ def save_corp_id():
                 )
 
         return True
-    else:
-        # A102 로깅
-        LOGGER.error('[A102] 기업 식별자 정보가 정상 수집되지 않음.')
     
     return False

@@ -2,8 +2,8 @@
 @created at 2023.04.04
 @author cslee in Aimdat Team
 
-@modified at 2023.06.01
-@author OKS in Aimdat Team
+@modified at 2023.06.15
+@author JSU in Aimdat Team
 """
 import logging
 import requests
@@ -37,8 +37,8 @@ def _check_is_new(stock_code):
     if StockPrice.objects.filter(corp_id__id=corp_id).exists():
         return False
     else:
-        # A302 로깅
-        LOGGER.info('[A302] 새로운 주가정보가 수집됨. {}'.format(stock_code))
+        # A303 로깅
+        LOGGER.info('[A303] 새로운 주가정보가 수집됨. {}'.format(stock_code))
         return True
     
 def _collect_stock_price(stock_codes):
@@ -102,8 +102,8 @@ def _collect_stock_price(stock_codes):
         'basDt', 'clpr', 'vs', 'fltRt', 'mkp', 'hipr', 'lopr', 'trqu', 'trPrc', 'lstgStCnt', 'mrktTotAmt'
 
         if len(dict_list) < 1:
-            # A303 로깅
-            LOGGER.error('[A303] 주가 정보가 정상 수집되지 않음. {}'.format(str(stock_code)))
+            # A306 로깅
+            LOGGER.error('[A306] 주가 정보가 수집되지 않은 종목. {}'.format(str(stock_code)))
             continue
         
         for x in dict_list:
