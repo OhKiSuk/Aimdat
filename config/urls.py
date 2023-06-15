@@ -13,7 +13,7 @@ from django.urls import (
 from services.views.search_views import SearchView
 
 urlpatterns = [
-    path('', SearchView.as_view(), name='index'),
+    path('services/', SearchView.as_view(), name='index'),
     path('admin/', custom_admin_site.urls),
     path('tinymce/', include('tinymce.urls')),
     path('account/', include('account.urls')),

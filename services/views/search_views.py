@@ -2,19 +2,19 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.06.10
+@modified at 2023.06.14
 @author OKS in Aimdat Team
 """
 import datetime
 import json
 
 from decimal import Decimal
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import (
     Q,
     Max,
     Min
 )
+from django.http import HttpResponse
 from django.shortcuts import (
     redirect, 
     render
@@ -24,7 +24,7 @@ from django.views.generic.list import ListView
 
 from ..models.investment_index import InvestmentIndex
 
-class SearchView(UserPassesTestMixin, ListView):
+class SearchView(ListView):
     """
     기업 조건 검색 뷰
     """
@@ -40,9 +40,6 @@ class SearchView(UserPassesTestMixin, ListView):
                 return True
             
         return False
-    
-    def handle_no_permission(self):
-        return redirect('account:login')
     
     def get_ordering(self):
         ordering = json.loads(self.request.GET.get('ordering', '"-corp_id__corp_name"'))
@@ -196,6 +193,9 @@ class SearchView(UserPassesTestMixin, ListView):
         return context
     
     def post(self, request):
+        if not self.test_func():
+            return redirect('account:login')
+
         if request.body.decode('utf-8') == 'reset' or request.body.decode('utf-8') == '{}':
             # 세션 초기화
             remove_session_keys = ['index', 'corp_name', 'year', 'quarter', 'fs_type']
@@ -224,3 +224,13 @@ class SearchView(UserPassesTestMixin, ListView):
         context = self.get_context_data()
         
         return render(request, 'services/search_view.html', context=context)
+    
+    def get(self, request):
+
+        if request.GET.get('page') or request.GET.get('ordering'):
+            if not self.test_func():
+                return HttpResponse('', status=500)
+        
+        self.object_list = self.get_queryset()
+        context = self.get_context_data()
+        return render(request, self.template_name, context=context)

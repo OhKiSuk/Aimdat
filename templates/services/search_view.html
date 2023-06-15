@@ -577,6 +577,9 @@
                         'page': JSON.stringify(page_number),
                         'ordering': JSON.stringify(orderby)
                     },
+                    error: function() {
+                        location.href = "{% url 'account:login' %}"
+                    },
                     success: function(response) {
                         var responseHTML = $.parseHTML(response);
                         var tbody = $(responseHTML).find('#table tbody');
@@ -616,6 +619,9 @@
             data: {
                 'page': JSON.stringify(page_number),
                 'ordering': JSON.stringify(orderby)
+            },
+            error: function() {
+                location.href = "{% url 'account:login' %}"
             },
             success: function(response) {
                 var responseHTML = $.parseHTML(response);
