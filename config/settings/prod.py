@@ -13,6 +13,10 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'aimdatservice@gmail.com'
 EMAIL_HOST_PASSWORD = 'tnflzkxk1!'
 
+DEBUG = False
+STATIC_ROOT = BASE_DIR / 'static/'
+STATICFILES_DIRS = []
+
 # 기본 송신 이메일 설정
 DEFAULT_FROM_EMAIL = 'aimdatservice@gmail.com'
 
