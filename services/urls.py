@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.06.10
+@modified at 2023.06.16
 @author OKS in Aimdat Team
 """
 from django.urls import path
@@ -15,7 +15,6 @@ from .views.inquiry_views import (
     InquiryDetailView, 
     InquiryView
 )
-from .views.introduce_views import IntroduceView
 from .views.mypage_views import MyPageView
 from .views.search_views import SearchView
 from .views.terms_views import (
@@ -41,9 +40,6 @@ urlpatterns = [
 
     #FAQ
     path('faq/', FaqView.as_view(), name='faq'),
-
-    #서비스 소개
-    path('introduce/', IntroduceView.as_view(), name='introduce'),
 
     #마이페이지
     path("mypage/", MyPageView.as_view(), name="mypage"),
