@@ -2,10 +2,11 @@
 @created at 2023.03.28
 @author JSU in Aimdat Team
 
-@modified at 2023.06.12
-@author OKS in Aimdat Team
+@modified at 2023.06.16
+@author JSU in Aimdat Team
 """
 import json
+import logging
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import (
@@ -24,6 +25,9 @@ from django.utils import timezone
 from django.views.generic import ListView
 
 from ..models.investment_index import InvestmentIndex
+
+
+LOGGER = logging.getLogger(__name__)
 
 class AnalysisView(UserPassesTestMixin, ListView):
     model = InvestmentIndex
@@ -163,9 +167,13 @@ class AnalysisView(UserPassesTestMixin, ListView):
                 analysis_list = [{result.corp_id.id: {'year': year, 'quarter': quarter, 'fs_type': fs_type}}]
 
             request.session['analysis_list'] = analysis_list
+            # U302 로깅
+            LOGGER.info('[U302] 분석 시도한 기업 정보. {}'.format(analysis_list))
 
             if 'field_list' in self.request.session:
                 fields = self.request.session['field_list']
+                # U301 로깅
+                LOGGER.info('[U301] 분석 시도한 필터 정보. {}'.format(fields))
             else:
                 fields = ['revenue', 'operating_profit', 'operating_margin', 'dividend', 'dividend_ratio']
 
@@ -184,6 +192,8 @@ class AnalysisView(UserPassesTestMixin, ListView):
                 self.request.session['field_list'] = ['revenue', 'operating_profit', 'operating_margin', 'dividend', 'dividend_ratio']
             
             fields = self.request.session['field_list']
+            # U301 로깅
+            LOGGER.info('[U301] 분석 시도한 필터 정보. {}'.format(fields))
 
             return JsonResponse({
                 'object_list': list(self.get_queryset().values('corp_id', 'year', 'quarter', 'fs_type', *fields, corp_name=F('corp_id__corp_name'))),
@@ -228,6 +238,8 @@ class AnalysisView(UserPassesTestMixin, ListView):
                                     appended_list.append(corp_id)
 
                 request.session['analysis_list'] = analysis_list
+                # U302 로깅
+                LOGGER.info('[U302] 분석 시도한 기업 정보. {}'.format(analysis_list))
 
             else:
                 corp_info_list = []
@@ -242,6 +254,8 @@ class AnalysisView(UserPassesTestMixin, ListView):
                     corp_info_list.append(corp_info_dict)
 
                 request.session['analysis_list'] = corp_info_list
+                # U302 로깅
+                LOGGER.info('[U302] 분석 시도한 기업 정보. {}'.format(corp_info_list))
 
         self.object_list = self.get_queryset()
         context = self.get_context_data()

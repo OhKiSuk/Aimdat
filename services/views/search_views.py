@@ -2,11 +2,11 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.06.14
-@author OKS in Aimdat Team
+@modified at 2023.06.16
+@author JSU in Aimdat Team
 """
-import datetime
 import json
+import logging
 
 from decimal import Decimal
 from django.db.models import (
@@ -23,6 +23,8 @@ from django.utils import timezone
 from django.views.generic.list import ListView
 
 from ..models.investment_index import InvestmentIndex
+
+LOGGER = logging.getLogger(__name__)
 
 class SearchView(ListView):
     """
@@ -60,7 +62,7 @@ class SearchView(ListView):
         index_list = [field.name for field in InvestmentIndex._meta.fields if field.name not in ['id', 'corp_id', 'year', 'quarter', 'fs_type']]
 
         # DB에 저장된 최근 년도 및 분기 값
-        recent_year= InvestmentIndex.objects.all().aggregate(recent_year=Max('year'))['recent_year']
+        recent_year = InvestmentIndex.objects.all().aggregate(recent_year=Max('year'))['recent_year']
         recent_quarter = InvestmentIndex.objects.filter(year=recent_year).aggregate(recent_quarter=Max('quarter'))['recent_quarter']
 
         # 조건식에 기업명 값이 있을 경우 설정(기본 값: 없음)
@@ -130,6 +132,10 @@ class SearchView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        # DB에 저장된 최근 년도 및 분기 값
+        recent_year = InvestmentIndex.objects.all().aggregate(recent_year=Max('year'))['recent_year']
+        recent_quarter = InvestmentIndex.objects.filter(year=recent_year).aggregate(recent_quarter=Max('quarter'))['recent_quarter']
+
         # 지표 구분
         account_index = ['revenue', 'operating_profit', 'net_profit']
         investment_index = [
@@ -159,12 +165,12 @@ class SearchView(ListView):
         if 'year' in self.request.session:
             context['year'] = self.request.session['year']
         else:
-            context['year'] = datetime.datetime.now().year
+            context['year'] = recent_year
 
         if 'quarter' in self.request.session:
             context['quarter'] = self.request.session['quarter']
         else:
-            context['quarter'] = InvestmentIndex.objects.filter(year=datetime.datetime.now().year).aggregate(max_value=Max('quarter'))
+            context['quarter'] = recent_quarter
 
         if 'fs_type' in self.request.session:
             context['fs_type'] = self.request.session['fs_type']
@@ -218,7 +224,18 @@ class SearchView(ListView):
                     else:
                         index_session[index_name] = indexes[index_name]
                     
+                if 'corp_name' not in indexes.keys():
+                    if 'corp_name' in self.request.session:
+                        del self.request.session['corp_name']
+                if 'fs_options' not in indexes.keys():
+                    if 'year' in self.request.session and 'quarter' in self.request.session and 'fs_type' in self.request.session:
+                        del self.request.session['year']
+                        del self.request.session['quarter']
+                        del self.request.session['fs_type']
+                
                 self.request.session['index'] = index_session
+                # U101 로깅
+                LOGGER.info('[U101] 검색에 사용한 정보. {}'.format(indexes))
 
         self.object_list = self.get_queryset()
         context = self.get_context_data()

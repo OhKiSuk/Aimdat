@@ -226,7 +226,7 @@ def save_dcorp(years, quarters):
     if len(fs_lists) > 0:
         client = pymongo.MongoClient('localhost:27017')
         db = client['aimdat']
-        collection = db['financial_statements6']
+        collection = db['financial_statements']
 
         # 데이터 저장
         for fs in fs_lists:

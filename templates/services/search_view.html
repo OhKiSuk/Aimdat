@@ -4,7 +4,6 @@
 {% load get_attr %}
 {% load convert_account %}
 {% block style %}
-<link rel="stylesheet" href="{% static 'css/datatables.min.css' %}">
 <style>
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button {
@@ -47,7 +46,7 @@
             {% else %}
             <span class="badge text-bg-primary">
                 {{ year }}년 
-                {{ quarter.max_value }}분기, 
+                {{ quarter }}분기, 
                 별도
             </span>
             {% endif %}
@@ -57,10 +56,10 @@
                     {{ key|convert_account }}: 
                     {% if value.min == '전체' %}
                     {{ value.min }}
-                    {% elif value.min == '이상' %}
-                    {{ value.max }} 이상
-                    {% elif value.max == '이하' %}
-                    {{ value.min }} 이하
+                    {% elif value.min == '이하' %}
+                    {{ value.max }} 이하
+                    {% elif value.max == '이상' %}
+                    {{ value.min }} 이상
                     {% else %}
                     {{ value.min }} ~ {{ value.max }}
                     {% endif %}
@@ -284,10 +283,11 @@
 {% endblock %}
 {% block script %}
 <script src="{% static 'js/search_view.js' %}"></script>
-<script src="{% static 'js/datatables.min.js' %}"></script>
 <script src="{% static 'js/jquery-ui.min.js' %}"></script>
 <script>
     var indexes = {}
+    var filter_name = '';
+    var filter_name_en = '';
 
     /** Index 삭제 함수 */
     function removeIndex(remove_this, filter_name) {
@@ -346,10 +346,51 @@
     });
 </script>
 <script>
-    /** 필터 추가(계정과목, 투자지표, 배당) */
     $(document).ready(function() {
+        /** 기존 설정 기업 */
+        {% if request.session.corp_name %}
+        filter_name = 'corp_name'
+        apply_index = '<span class="badge text-bg-primary mx-1">' +
+            '<span>'+'기업명: {{ request.session.corp_name }}</span>'+
+            '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');></span>'+
+            '</span>';
+
+        $('#id_apply_filters').append(apply_index);
+        indexes[filter_name] = '{{ request.session.corp_name }}';
+        {% endif %}
+
+        /** 기존 설정 재무제표 */
+        {% if request.session.fs_type == '0' %}
+        fs_type = '연결'
+        {% else %}
+        fs_type = '별도'
+        {% endif %}
+        
+        filter_name = 'fs_options'
+        
+        apply_index = '<span class="badge text-bg-primary mx-1">' +
+            '<span>{% if request.session.year and request.session.quarter and request.session.fs_type %}{{ request.session.year }}년 {{ request.session.quarter }}분기 {% else %}{{ year }}년 {{ quarter }}분기 {% endif %} , '+fs_type+'</span>'+
+            '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');></span>'+
+            '</span>';
+
+        $('#id_apply_filters').append(apply_index);
+
+        indexes[filter_name] = {'year': '{{ request.session.year }}', 'quarter': '{{ request.session.quarter }}', 'fs_type': '{{ request.session.fs_type }}'};        
+
+        /** 기존 설정 필터 */
+        {% for key, value in index.items %}
+        filter_name_en = '{{ key }}';
+        apply_index = '<span class="badge text-bg-primary text-white mx-1">' +
+            '<span>{{ key|convert_account }}: {% if value.min == "전체" %} {{ value.min }} {% elif value.min == "이하" %} {{ value.max }} 이하 {% elif value.max == "이상" %} {{ value.min }} 이상 {% else %} {{ value.min }} ~ {{ value.max }} {% endif %}</span>' +
+            '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');></span>'+
+            '</span>';
+
+        $('#id_apply_filters').append(apply_index);
+        indexes['{{ key }}'] = {'min': '{{ value.min }}', 'max': '{{ value.max }}'}
+        {% endfor %}
+
+        /** 필터 추가(계정과목, 투자지표, 배당) */
         $('#id_add_index').on('click', function() {
-            console.log(indexes)
             min_val = $('#id_min').val();
             max_val = $('#id_max').val();
             filter_name_ko = $('#id_insert_index > div').eq(0).children('span:eq(0)').text();
@@ -363,7 +404,7 @@
                     else {
                         apply_index = '<span class="badge text-bg-primary text-white mx-1">' +
                                         '<span>'+filter_name_ko+': '+min_val+' ~ '+max_val+'</span>'+
-                                        '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick="removeIndex(this, filter_name_en);"></span>'+
+                                        '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');></span>'+
                                     '</span>';
 
                         $('#id_apply_filters').append(apply_index);
@@ -382,7 +423,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-primary text-white mx-1">' +
                                     '<span>'+filter_name_ko+': '+min_val+' 이상'+'</span>'+
-                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick="removeIndex(this, filter_name_en);"></span>'+
+                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -397,7 +438,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-primary text-white mx-1">' +
                                     '<span>'+filter_name_ko+': '+max_val+' 이하'+'</span>'+
-                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick="removeIndex(this, filter_name_en);"></span>'+
+                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -411,7 +452,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-primary text-white mx-1">' +
                                     '<span>'+filter_name_ko+': 전체'+'</span>'+
-                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick="removeIndex(this, filter_name_en);"></span>'+
+                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -447,7 +488,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-primary mx-1">' +
                                     '<span>'+year+'년 '+quarter+' 분기, '+fs_type_name+'</span>'+
-                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick="removeIndex(this, filter_name);"></span>'+
+                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -470,7 +511,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-primary mx-1">' +
                                     '<span>'+'종목코드: '+corp_name+'</span>'+
-                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick="removeIndex(this, filter_name);"></span>'+
+                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -484,7 +525,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-primary mx-1">' +
                                     '<span>'+'기업명: '+corp_name+'</span>'+
-                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick="removeIndex(this, filter_name);"></span>'+
+                                    '<span class="btn-close btn-close-white mx-1 text-end remove_index" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -508,6 +549,9 @@
                 data: JSON.stringify(indexes),
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                },
+                error: function() {
+                    location.href = "{% url 'account:login' %}"
                 }
             }).done(function(response) {
                 $('#filter-modal').modal('hide');

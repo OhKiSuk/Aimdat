@@ -319,7 +319,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
     if crawl_result:
         client = pymongo.MongoClient("mongodb://localhost:27017/")
         db = client["aimdat"]
-        collection = db["financial_statements6"]
+        collection = db["financial_statements"]
 
         # 데이터 저장
         for fs in crawl_result:

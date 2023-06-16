@@ -2,10 +2,11 @@
 @created at 2023.03.22
 @author JSU in Aimdat Team
 
-@modified at 2023.05.31
-@author OKS in Aimdat Team
+@modified at 2023.06.16
+@author JSU in Aimdat Team
 """
 import requests
+import logging
 
 from datetime import (
     datetime, 
@@ -28,6 +29,8 @@ from ..models.corp_id import CorpId
 from ..models.corp_info import CorpInfo
 from ..models.investment_index import InvestmentIndex
 from ..models.stock_price import StockPrice
+
+LOGGER = logging.getLogger(__name__)
 
 class CorpInquiryView(UserPassesTestMixin, DetailView):
     model = CorpId
@@ -77,6 +80,9 @@ class CorpInquiryView(UserPassesTestMixin, DetailView):
         context['week_52_price'] = stock_price_obj.get(Q(trade_date__exact = str(week_52))) if stock_price_obj.filter(Q(trade_date__exact = str(week_52))).exists() else None
         context['report_data'] = self.recent_report(id, fs_type)
         context['fs_date'] = InvestmentIndex.objects.filter(corp_id=id, fs_type=fs_type).order_by('-year', '-quarter').values('year', 'quarter')
+
+        # U201 로깅
+        LOGGER.info('[U201] 상세 분석 시도한 기업 정보. {}'.format(self.context_object_name))
         
         return context
 
