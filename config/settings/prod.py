@@ -2,6 +2,7 @@
 @created at 2023.06.16
 @author OKS in Aimdat Team
 """
+import environ
 from .base import *
 
 ALLOWED_HOSTS = ['43.201.161.242']
@@ -13,12 +14,27 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'aimdatservice@gmail.com'
 EMAIL_HOST_PASSWORD = 'tnflzkxk1!'
 
+# 기본 송신 이메일 설정
+DEFAULT_FROM_EMAIL = 'aimdatservice@gmail.com'
+
 DEBUG = False
 STATIC_ROOT = BASE_DIR / 'static/'
 STATICFILES_DIRS = []
 
-# 기본 송신 이메일 설정
-DEFAULT_FROM_EMAIL = 'aimdatservice@gmail.com'
+# Database 설정
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / '.env')
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': '5432'
+    }
+}
 
 # Logging
 LOGGING = {
