@@ -60,7 +60,7 @@ def _get_fcorp_list():
 
         with open(SECRETS_FILE, 'r') as secrets:
             download_path = json.load(secrets)['download_folder']
-            file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')[0]
+            file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
 
             with open(file_path, 'r', newline='') as file:
                 file_content = csv.reader(file)

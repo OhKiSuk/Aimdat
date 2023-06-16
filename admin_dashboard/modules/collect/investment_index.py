@@ -48,7 +48,7 @@ def _download_corp_code():
         response = requests.get(url, params=params)
         downlaod_path = get_secret('download_folder')
     
-        with open(downlaod_path+'\\corpCode.zip', 'wb') as file:
+        with open(downlaod_path+'/corpCode.zip', 'wb') as file:
             file.write(response.content)
     except:
         LOGGER.error('[A003] CORPCODE 다운로드 실패.')
@@ -61,7 +61,7 @@ def _unzip_corp_code():
 
     # A004 로깅
     try:
-        with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
+        with zipfile.ZipFile(download_path+'/corpCode.zip', 'r') as zip_file:
             zip_file.extract('CORPCODE.xml', download_path)
     except:
         LOGGER.error('[A004] CORPCODE 압축 해제 실패.')
@@ -274,7 +274,7 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
 
         # XML 파일 트리 생성
         download_path = get_secret('download_folder')
-        corp_code_tree = ET.parse(download_path+'\\CORPCODE.xml')
+        corp_code_tree = ET.parse(download_path+'/CORPCODE.xml')
         corp_code_root = corp_code_tree.getroot()
 
         # corp_code 확인

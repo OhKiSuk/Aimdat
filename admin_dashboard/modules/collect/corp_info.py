@@ -41,7 +41,7 @@ def _download_corp_code():
 
     # A003 로깅
     try:
-        with open(downlaod_path+'\\corpCode.zip', 'wb') as file:
+        with open(downlaod_path+'/corpCode.zip', 'wb') as file:
             file.write(response.content)
     except:
         LOGGER.error('[A003] CORPCODE 다운로드 실패.')
@@ -54,7 +54,7 @@ def _unzip_corp_code():
 
     # A004 로깅
     try:
-        with zipfile.ZipFile(download_path+'\\corpCode.zip', 'r') as zip_file:
+        with zipfile.ZipFile(download_path+'/corpCode.zip', 'r') as zip_file:
             zip_file.extract('CORPCODE.xml', download_path)
     except:
         LOGGER.error('[A004] CORPCODE 압축 해제 실패.')
@@ -70,7 +70,7 @@ def _collect_corp_info(stock_codes):
 
     # corp_code 조회
     download_path = get_secret('download_folder')
-    corp_code_tree = ET.parse(download_path+'\\CORPCODE.xml')
+    corp_code_tree = ET.parse(download_path+'/CORPCODE.xml')
     corp_code_root = corp_code_tree.getroot()
 
     corp_info_data_list = []
@@ -135,7 +135,7 @@ def _parse_induty_code(corp_id, induty_code):
     산업분류코드를 파싱 후 저장
     """
     download_path = get_secret('download_folder')
-    file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')[0]
+    file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
 
     with open(file_path, 'r', newline='') as file:
         # A006 로깅

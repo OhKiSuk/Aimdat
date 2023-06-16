@@ -42,12 +42,12 @@ with open(SECRETS_FILE, 'r') as secrets:
 
 def _get_ifrs_xbrl_txt(years, quarters):
     # path 지정
-    path = DOWNLOAD_PATH+'\\fs_zips\\'
+    path = DOWNLOAD_PATH+'/fs_zips/'
 
     # 임시 폴더 생성
     if os.path.exists(path):
         shutil.rmtree(path)
-    os.mkdir(DOWNLOAD_PATH+'\\fs_zips')
+    os.mkdir(DOWNLOAD_PATH+'/fs_zips')
 
     # 데이터 저장 위치 설정
     option = webdriver.ChromeOptions()
@@ -121,7 +121,7 @@ def _get_dcorp_list():
 
         with open(SECRETS_FILE, 'r') as secrets:
             download_path = json.load(secrets)['download_folder']
-            file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')[0]
+            file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
 
             with open(file_path, 'r', newline='') as file:
                 file_content = csv.reader(file)
@@ -147,7 +147,7 @@ def _parse_txt(stock_codes):
     txt 파일에서 재무제표 추출 후 dict로 변환
     """
     # path 지정 및 파일 선택
-    path = DOWNLOAD_PATH+'\\fs_zips\\'
+    path = DOWNLOAD_PATH+'/fs_zips/'
     f_list = os.listdir(path)
     txt_files = [file for file in f_list if file.endswith('.txt')]
 
@@ -243,8 +243,8 @@ def save_dcorp(years, quarters):
                 download_path = json.load(secrets)['download_folder']
 
                 # 삭제할 파일 경로
-                file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
-                folder_path = glob.glob(download_path+'\\fs_zips')
+                file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')
+                folder_path = glob.glob(download_path+'/fs_zips')
 
                 if len(file_path) > 0:
                     remove_files(file_path[0])
@@ -259,8 +259,8 @@ def save_dcorp(years, quarters):
             download_path = json.load(secrets)['download_folder']
 
             # 삭제할 파일 경로
-            file_path = glob.glob(download_path+'\\고용노동부_표준산업분류코드_*.csv')
-            folder_path = glob.glob(download_path+'\\fs_zips')
+            file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')
+            folder_path = glob.glob(download_path+'/fs_zips')
 
             if len(file_path) > 0:
                 remove_files(file_path[0])
