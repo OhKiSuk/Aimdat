@@ -78,7 +78,7 @@ class CollectCorpIdView(TemplateView):
 
         context = {
             'last_corp_collect_date': lastest_collect_date,
-            'logs': logs.reverse()
+            'logs': logs
         }
 
         return render(self.request, self.template_name, context=context)
@@ -122,7 +122,7 @@ class CollectCorpInfoView(TemplateView):
 
         context = {
             'last_corp_collect_date': lastest_collect_date,
-            'logs': logs.reverse()
+            'logs': logs
         }
 
         return render(self.request, self.template_name, context=context)
@@ -166,7 +166,7 @@ class CollectStockPriceView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs.reverse()
+            'logs': logs
         }
             
         return render(self.request, self.template_name, context=context)
@@ -250,7 +250,7 @@ class CollectFcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs.reverse()
+            'logs': logs
         }
 
         return render(self.request, self.template_name, context=context)
@@ -272,7 +272,7 @@ class CollectFcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs.reverse()
+            'logs': logs
         }
         
         return render(self.request, self.template_name, context=context)
@@ -351,7 +351,7 @@ class CollectDcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs.reverse()
+            'logs': logs
         }
 
         return render(self.request, self.template_name, context=context)
@@ -373,7 +373,7 @@ class CollectDcorpFinancialStatementsView(View):
 
         context = {
             'lastest_collect_date': lastest_collect_date,
-            'logs': logs.reverse()
+            'logs': logs
         }
 
         return render(self.request, self.template_name, context=context)
