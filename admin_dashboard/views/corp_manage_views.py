@@ -2,8 +2,8 @@
 @created at 2023.03.19
 @author OKS in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.06.16
+@author OKS in Aimdat Team
 """
 
 import logging
@@ -27,9 +27,11 @@ from django.views.generic import (
 
 from services.models.corp_id import CorpId
 from services.models.corp_info import CorpInfo
+from services.models.investment_index import InvestmentIndex
 from ..forms.corp_manage_forms import (
     CorpIdChangeForm, 
-    CorpInfoChangeForm
+    CorpInfoChangeForm,
+    InvestmentIndexChangeForm
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -259,3 +261,38 @@ class ManageCorpFinancialStatementsAddView(View):
                 message = {'message': '계정과목 추가에 실패했습니다.'}
             
             return JsonResponse(message)
+        
+class ManageInvestmentIndexView(TemplateView):
+    """
+    투자지표 목록 뷰
+    """
+    template_name = 'admin_dashboard/corp_manage/manage_index_list.html'
+
+    def get(self, request):
+        content = InvestmentIndex.objects.all().order_by('-year', '-quarter', 'fs_type')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(content, 20)
+        page_obj = paginator.get_page(page)
+
+        return render(self.request, self.template_name, context={'content': page_obj})
+    
+class ManageInvestmentIndexUpdateView(UpdateView):
+    """
+    투자지표 수정 뷰
+    """
+    model = InvestmentIndex
+    template_name = 'admin_dashboard/corp_manage/manage_index_update.html'
+    form_class = InvestmentIndexChangeForm
+    success_url = reverse_lazy('admin:manage_index_list')
+
+    def form_valid(self, form):
+        if not self.request.user.is_admin:
+            # A711 로깅
+            LOGGER.info('[A711] 투자지표 수정 실패. {}, {}'.format(str(self.request.user), str(form)))
+            raise PermissionDenied()
+        else:
+            # A710 로깅
+            LOGGER.info('[A710] 투자지표를 성공적으로 수정. {}, {}'.format(str(self.request.user), str(form)))
+            form.save()
+            return redirect('admin:manage_index_list')

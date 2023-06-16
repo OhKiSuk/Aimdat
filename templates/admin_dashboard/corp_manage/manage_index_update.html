@@ -1,0 +1,52 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% load convert}
+{% block content %}
+<div class="row mt-3">
+    <span class="font-lg fw-bold">투자지표 목록 관리</span>
+</div>
+<div class="row mt-3">
+    <div class="col-9">
+        <div class="bg-white p-3">
+            <div>
+                <span class="font-md fw-bold">투자지표 수정</span>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="my-3 row">
+                    <div class="col-sm-2">기업명</div>
+                    <div class="col-sm-10">
+                        {{ form.instance.corp_id.corp_name }}
+                    </div>
+                </div>
+                {% for field in form %}
+                    {% if field.name == 'corp_id' %}
+                        <input type="hidden" name="{{ field.name }}" value="{{ form.instance.corp_id.id }}">
+                    {% else %}
+                        <div class="my-3 row">
+                            <label for="id_{{ field.id_for_label }}" class="col-sm-2 col-form-label {{ field.label_class }}">{{ field.label }}</label>
+                            <div class="col-sm-10">
+                                {{ field }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                <input id="submit_form" type="submit" hidden/>
+            </form>
+
+            <div class="mb-5 text-end">
+                <button id="id_change" class="btn btn-primary font-sm" type="submit">확인</button>
+                <a href="{% url 'admin:manage_index_list' %}" class="btn btn-secondary font-sm">취소</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+    $('#id_change').click(function() {
+        $('#submit_form').click();
+    });
+</script>
+{% endblock %}

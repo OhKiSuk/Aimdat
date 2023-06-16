@@ -1,5 +1,5 @@
 """
-@modified at 2023.05.17
+@modified at 2023.06.16
 @author OKS in Aimdat Team
 """
 from account.forms.login_forms import CustomAuthenticationForm
@@ -47,6 +47,8 @@ from ..views.corp_manage_views import (
     ManageCorpFinancialStatementsDeleteView,
     ManageCorpFinancialStatementsSearchView,
     ManageCorpFinancialStatementsUpdateView,
+    ManageInvestmentIndexView,
+    ManageInvestmentIndexUpdateView
 )
 from ..views.inquiry_manage_views import (
     InquiryListView, 
@@ -90,6 +92,10 @@ class CustomAdminSite(AdminSite):
             path('manage/corp/fs/delete/', custom_admin_site.admin_view(ManageCorpFinancialStatementsDeleteView.as_view()), name='manage_corp_fs_delete'),
             path('manage/corp/fs/search/', custom_admin_site.admin_view(ManageCorpFinancialStatementsSearchView.as_view()), name='manage_corp_fs_search'),
             path('manage/corp/fs/update/', custom_admin_site.admin_view(ManageCorpFinancialStatementsUpdateView.as_view()), name='manage_corp_fs_update'),
+
+            # 투자지표 관리
+            path('manage/index/list', custom_admin_site.admin_view(ManageInvestmentIndexView.as_view()), name='manage_index_list'),
+            path('manage/index/update/<int:pk>/', custom_admin_site.admin_view(ManageInvestmentIndexUpdateView.as_view()), name='manage_index_update'),
 
             #문의사항 관리
             path('inquiry/manage/', custom_admin_site.admin_view(InquiryListView.as_view()), name='inquiry_manage'),
