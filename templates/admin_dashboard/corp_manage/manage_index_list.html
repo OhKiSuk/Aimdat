@@ -7,6 +7,12 @@
 <div class="row mt-3">
     <div class="col-9">
         <div class="bg-white p-3">
+            <div class="my-3 float-end">
+                <div class="input-group font-sm">
+                    <input class="form-control" id="id_search_corp_name" type="text" placeholder="기업명·종목코드 입력" onkeyup="searchCorpName(this)">
+                    <button class="btn btn-sm btn-primary" onclick="searchCorpName(this)">검색</button>
+                </div>
+            </div>
             <table class="table table-bordered table-hover mt-3">
                 <thead>
                     <tr class="bg-sub fw-bold font-sm text-white text-center">
@@ -18,7 +24,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for obj in content.object_list %}
+                    {% if page_obj %}
+                    {% for obj in page_obj.object_list %}
                     <tr class="font-sm text-center">
                         <td>
                             <a href="{% url 'admin:manage_index_update' obj.id %}">{{ obj.corp_id.corp_name }}</a>
@@ -33,43 +40,127 @@
                         {% endif %}
                     </tr>
                     {% endfor %}
+                    {% else %}
+                    <tr class="text-center">
+                        <td colspan="5">검색결과가 존재하지 않습니다.</td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
             
-            <ul class="pagination pagination-sm justify-content-center">
-                {% if content.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ content.previous_page_number }}">이전</a>
+            <ul class="pagination justify-content-center pagination-sm">
+                {% if page_obj.has_previous %}
+                <li class="page-item" onclick="paging(this)">
+                    <a class="page-link" href="javascript:void(0);">이전</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
-                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="javascript:void(0);">이전</a>
                 </li>
                 {% endif %}
-                {% for page_number in content.paginator.page_range %}
-                {% if page_number >= content.number|add:-5 and page_number <= content.number|add:5 %}
-                {% if page_number == content.number %}
-                <li class="page-item active" aria-current="page">
-                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                {% for page_number in page_obj.paginator.page_range %}
+                {% if page_number > page_obj.number|add:-5 and page_number < page_obj.number|add:5 %}
+                {% if page_number == page_obj.number %}
+                <li class="page-item active" aria-current="page" onclick="paging(this)">
+                    <a class="page-link" href='javascript:void(0);'>{{ page_number }}</a>
                 </li>
                 {% else %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+                <li class="page-item" onclick="paging(this)">
+                    <a class="page-link" href='javascript:void(0);'>{{ page_number }}</a>
                 </li>
                 {% endif %}
                 {% endif %}
                 {% endfor %}
-                {% if content.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ content.next_page_number }}">다음</a>
+                {% if page_obj.has_next %}
+                <li class="page-item" onclick="paging(this)">
+                    <a class="page-link" href="javascript:void(0);">다음</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
-                    <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+                    <a class="page-link" tabindex="-1" aria-disabled="true" href="javascript:void(0);">다음</a>
                 </li>
                 {% endif %}
             </ul>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block script %}
+<script>
+    var search;
+
+    /** 검색 */
+    function searchCorpName(search_this) {
+        if ($(search_this).prop('tagName') == 'INPUT' && event.keyCode == 13 || $(search_this).prop('tagName') == 'BUTTON') {
+            var page = $('ul li').find('li[class*="active"]').children('a').text();
+            search = $('#id_search_corp_name').val();
+            
+            $.get({
+                url: "{% url 'admin:manage_index_list' %}",
+                data: {
+                    'page': JSON.stringify(page),
+                    'search': JSON.stringify(search)
+                },
+                success: function(response) {
+                    var responseHTML = $.parseHTML(response);
+                    var tbody = $(responseHTML).find('table tbody');
+                    var pagination = $(responseHTML).find('.pagination');
+
+                    $('table tbody').remove();
+                    $('table thead').after(tbody);
+
+                    $('.pagination').remove();
+                    $('table').after(pagination);
+                }
+            });
+        }
+    }
+
+    /** 페이징 */
+    function paging(paging_this) {
+        var page_number = $(paging_this).children('a').text();
+        search = $('#id_search_corp_name').val();
+
+        if (page_number == "이전") {
+            page_number = Number($(paging_this).parent('ul').find('li[class*="active"]').children('a').text()) - 1;
+
+            if (page_number <= 1) {
+                page_number = 1
+            }
+        }
+        else if (page_number == "다음") {
+            var max_page = '{{ page_obj.paginator.num_pages }}'
+            page_number = Number($(paging_this).parent('ul').find('li[class*="active"]').children('a').text()) + 1;
+
+            if (page_number >= Number(max_page)) {
+                page_number = Number(max_page);
+            }
+        }
+        else {
+            page_number = Number(page_number);
+        }
+        $.get({
+            url: "{% url 'admin:manage_index_list' %}",
+            data: {
+                'page': JSON.stringify(page_number),
+                'search': JSON.stringify(search)
+            },
+            success: function(response) {
+                var responseHTML = $.parseHTML(response);
+                var tbody = $(responseHTML).find('table tbody');
+                var pagination = $(responseHTML).find('.pagination');
+                var page_index = $(responseHTML).find('.pagination').find('a:contains('+page_number+')').parent('li').index();
+
+                $('table tbody').remove();
+                $('table thead').after(tbody);
+                
+                $('.pagination').remove();
+                $('table').after(pagination);
+
+                $('.pagination').children('li').removeClass('active');
+                $('.pagination').children('li:eq('+page_index+')').addClass('active');
+            }
+        });
+    }
+</script>
 {% endblock %}

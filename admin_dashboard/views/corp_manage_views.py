@@ -5,7 +5,7 @@
 @modified at 2023.06.16
 @author OKS in Aimdat Team
 """
-
+import json
 import logging
 import pymongo
 
@@ -13,6 +13,7 @@ from bson.decimal128 import Decimal128
 from bson.objectid import ObjectId
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import (
     render, 
@@ -43,13 +44,24 @@ class ManageCorpIdListView(TemplateView):
     template_name = 'admin_dashboard/corp_manage/manage_corp_id_list.html'
 
     def get(self, request):
-        content = CorpId.objects.all().order_by('-corp_name')
+
+        # 검색
+        if request.GET.get('search'):
+            search = json.loads(request.GET.get('search'))
+            
+            # 종목코드, 기업명 구분
+            if str(search).isdecimal() and len(search) == 6:
+                content = CorpId.objects.filter(Q(stock_code__exact=search)).order_by('-corp_name')
+            else:
+                content = CorpId.objects.filter(Q(corp_name__icontains=search)).order_by('-corp_name')
+        else:
+            content = CorpId.objects.all().order_by('-corp_name')
 
         page = request.GET.get('page', 1)
         paginator = Paginator(content, 20)
         page_obj = paginator.get_page(page)
 
-        return render(self.request, self.template_name, context={'content': page_obj})
+        return render(self.request, self.template_name, context={'page_obj': page_obj})
     
 class ManageCorpIdUpdateView(UpdateView):
     """
@@ -78,13 +90,24 @@ class ManageCorpInfoListView(TemplateView):
     template_name = 'admin_dashboard/corp_manage/manage_corp_info_list.html'
 
     def get(self, request):
-        content = CorpInfo.objects.all().order_by('-corp_id__corp_name')
+
+        # 검색
+        if request.GET.get('search'):
+            search = json.loads(request.GET.get('search'))
+            
+            # 종목코드, 기업명 구분
+            if str(search).isdecimal() and len(search) == 6:
+                content = CorpInfo.objects.filter(Q(corp_id__stock_code__exact=search)).order_by('-corp_id__corp_name')
+            else:
+                content = CorpInfo.objects.filter(Q(corp_id__corp_name__icontains=search)).order_by('-corp_id__corp_name')
+        else:
+            content = CorpInfo.objects.all().order_by('-corp_id__corp_name')
 
         page = request.GET.get('page', 1)
         paginator = Paginator(content, 20)
         page_obj = paginator.get_page(page)
 
-        return render(self.request, self.template_name, context={'content': page_obj})
+        return render(self.request, self.template_name, context={'page_obj': page_obj})
     
 class ManageCorpInfoUpdateView(UpdateView):
     model = CorpInfo
@@ -269,13 +292,24 @@ class ManageInvestmentIndexView(TemplateView):
     template_name = 'admin_dashboard/corp_manage/manage_index_list.html'
 
     def get(self, request):
-        content = InvestmentIndex.objects.all().order_by('-year', '-quarter', 'fs_type')
+
+        # 검색
+        if request.GET.get('search'):
+            search = json.loads(request.GET.get('search'))
+            
+            # 종목코드, 기업명 구분
+            if str(search).isdecimal() and len(search) == 6:
+                content = InvestmentIndex.objects.filter(Q(corp_id__stock_code__exact=search)).order_by('-year', '-quarter', 'fs_type')
+            else:
+                content = InvestmentIndex.objects.filter(Q(corp_id__corp_name__icontains=search)).order_by('-year', '-quarter', 'fs_type')
+        else:
+            content = InvestmentIndex.objects.all().order_by('-year', '-quarter', 'fs_type')
 
         page = request.GET.get('page', 1)
         paginator = Paginator(content, 20)
         page_obj = paginator.get_page(page)
 
-        return render(self.request, self.template_name, context={'content': page_obj})
+        return render(self.request, self.template_name, context={'page_obj': page_obj})
     
 class ManageInvestmentIndexUpdateView(UpdateView):
     """

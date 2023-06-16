@@ -80,11 +80,11 @@ class CustomAdminSite(AdminSite):
             path('collect/corp/investment/index/', custom_admin_site.admin_view(CollectInvestmentIndexView.as_view()), name='collect_corp_invsetment_index'),
             
             # 기업 식별 목록 관리
-            path('manage/corp/id/list/', custom_admin_site.admin_view(ManageCorpIdListView.as_view()), name='manage_corp_id_list'),
+            path('manage/corp/id/list', custom_admin_site.admin_view(ManageCorpIdListView.as_view()), name='manage_corp_id_list'),
             path('manage/corp/id/update/<int:pk>/', custom_admin_site.admin_view(ManageCorpIdUpdateView.as_view()), name='manage_corp_id_update'),
 
             # 기업 정보 관리
-            path('manage/corp/info/list/', custom_admin_site.admin_view(ManageCorpInfoListView.as_view()), name='manage_corp_info_list'),
+            path('manage/corp/info/list', custom_admin_site.admin_view(ManageCorpInfoListView.as_view()), name='manage_corp_info_list'),
             path('manage/corp/info/update/<int:pk>/', custom_admin_site.admin_view(ManageCorpInfoUpdateView.as_view()), name='manage_corp_info_update'),
 
             # 기업 재무제표 관리
