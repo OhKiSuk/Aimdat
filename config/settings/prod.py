@@ -1,19 +1,20 @@
 """
-@created at 2023.02.25
+@created at 2023.06.16
 @author OKS in Aimdat Team
 """
 from .base import *
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['43.201.161.242']
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 1025
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST = 'aimdatservice@gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'aimdatservice@gmail.com'
+EMAIL_HOST_PASSWORD = 'tnflzkxk1!'
 
 # 기본 송신 이메일 설정
-DEFAULT_FROM_EMAIL = 'no-reply@aimdat.com'
+DEFAULT_FROM_EMAIL = 'aimdatservice@gmail.com'
 
 # Logging
 LOGGING = {
