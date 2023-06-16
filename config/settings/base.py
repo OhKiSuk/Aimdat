@@ -211,7 +211,7 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 
 #Login Redirect URL
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/account/login/'
 
 #Logout Redirect URL
-LOGOUT_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/account/login/'
