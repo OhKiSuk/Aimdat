@@ -54,6 +54,9 @@ def _get_ifrs_xbrl_txt(years, quarters):
     option.add_experimental_option("prefs", {
         "download.default_directory": path
     })
+    option.add_argument("--headless")
+    option.add_argument('--no-sandbox')
+    option.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options = option)
 
     # 수집할 데이터
@@ -107,7 +110,11 @@ def _get_dcorp_list():
     try:
         #고용노동부_표준산업분류코드 csv 다운로드
         url = 'https://www.data.go.kr/data/15049591/fileData.do'
-        driver = webdriver.Chrome(ChromeDriverManager().install())
+        option = webdriver.ChromeOptions()
+        option.add_argument("--headless")
+        option.add_argument('--no-sandbox')
+        option.add_argument('--disable-dev-shm-usage')
+        driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
         driver.get(url)
         time.sleep(5)
         

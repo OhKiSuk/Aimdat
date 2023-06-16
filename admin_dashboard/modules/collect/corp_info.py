@@ -117,7 +117,11 @@ def _download_induty_code():
     공공데이터포털 고용노동부_표준산업분류코드에서 산업분류코드 다운로드
     """
     url = 'https://www.data.go.kr/data/15049591/fileData.do'
-    driver = webdriver.Chrome(ChromeDriverManager().install())
+    option = webdriver.ChromeOptions()
+    option.add_argument("--headless")
+    option.add_argument('--no-sandbox')
+    option.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
     driver.get(url)
     time.sleep(5)
 

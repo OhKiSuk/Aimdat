@@ -45,7 +45,11 @@ def _get_fcorp_list():
     try:
         #고용노동부_표준산업분류코드 csv 다운로드
         url = 'https://www.data.go.kr/data/15049591/fileData.do'
-        driver = webdriver.Chrome(ChromeDriverManager().install())
+        option = webdriver.ChromeOptions()
+        option.add_argument("--headless")
+        option.add_argument('--no-sandbox')
+        option.add_argument('--disable-dev-shm-usage')
+        driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
         driver.get(url)
         time.sleep(5)
 
@@ -85,7 +89,11 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     open dart의 단일회사 재무제표 조회에서 금융 기업 목록 검색 후 재무제표 파싱
     """
     url = 'https://opendart.fss.or.kr/disclosureinfo/fnltt/singl/main.do'
-    driver = webdriver.Chrome(ChromeDriverManager().install())
+    option = webdriver.ChromeOptions()
+    option.add_argument("--headless")
+    option.add_argument('--no-sandbox')
+    option.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
     
     fs_result = []
     # 검색 후 재무제표 획득
