@@ -2,7 +2,7 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.06.15
+@modified at 2023.06.17
 @author JSU in Aimdat Team
 """
 import csv
@@ -118,6 +118,9 @@ def _download_induty_code():
     """
     url = 'https://www.data.go.kr/data/15049591/fileData.do'
     option = webdriver.ChromeOptions()
+    option.add_experimental_option("prefs", {
+        "download.default_directory": get_secret('download_folder')
+    })
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
@@ -132,7 +135,7 @@ def _download_induty_code():
         LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
 
     time.sleep(3)
-    download_button.click()
+    driver.execute_script("arguments[0].click();", download_button)
 
 def _parse_induty_code(corp_id, induty_code):
     """
@@ -141,7 +144,7 @@ def _parse_induty_code(corp_id, induty_code):
     download_path = get_secret('download_folder')
     file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
 
-    with open(file_path, 'r', newline='') as file:
+    with open(file_path, 'r', newline='', encoding='CP949') as file:
         # A006 로깅
         try:
             file_content = csv.reader(file)

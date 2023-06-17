@@ -2,7 +2,7 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.06.15
+@modified at 2023.06.17
 @author JSU in Aimdat Team
 """
 import csv
@@ -111,6 +111,9 @@ def _get_dcorp_list():
         #고용노동부_표준산업분류코드 csv 다운로드
         url = 'https://www.data.go.kr/data/15049591/fileData.do'
         option = webdriver.ChromeOptions()
+        option.add_experimental_option("prefs", {
+            "download.default_directory": DOWNLOAD_PATH
+        })
         option.add_argument("--headless")
         option.add_argument('--no-sandbox')
         option.add_argument('--disable-dev-shm-usage')
@@ -121,7 +124,7 @@ def _get_dcorp_list():
         download_button = driver.find_element(By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a')
         # A005 로깅
         try:
-            download_button.click()
+            driver.execute_script("arguments[0].click();", download_button)
             time.sleep(3)
         except:
             LOGGER.error('[A005] 산업분류코드 다운로드 실패.')
@@ -130,7 +133,7 @@ def _get_dcorp_list():
             download_path = json.load(secrets)['download_folder']
             file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
 
-            with open(file_path, 'r', newline='') as file:
+            with open(file_path, 'r', newline='', encoding='CP949') as file:
                 file_content = csv.reader(file)
 
                 # 비금융기업만 파싱(대한민국 금융업: 64 ~ 66)
