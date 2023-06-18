@@ -5,7 +5,7 @@
 import environ
 from .base import *
 
-ALLOWED_HOSTS = ['43.201.161.242']
+ALLOWED_HOSTS = 'aimdat.com'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'aimdatservice@gmail.com'
