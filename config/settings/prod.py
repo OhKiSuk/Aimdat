@@ -1,30 +1,35 @@
 """
 @created at 2023.06.16
 @author OKS in Aimdat Team
+
+@modified ata 2023.06.19
+@author OKS in Aimdat Team
 """
 import environ
 from .base import *
 
-ALLOWED_HOSTS = 'aimdat.com'
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'aimdatservice@gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'aimdatservice@gmail.com'
-EMAIL_HOST_PASSWORD = 'tnflzkxk1!'
-
-# 기본 송신 이메일 설정
-DEFAULT_FROM_EMAIL = 'aimdatservice@gmail.com'
-
-DEBUG = False
-STATIC_ROOT = BASE_DIR / 'static/'
-STATICFILES_DIRS = []
-
-# Database 설정
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
+ALLOWED_HOSTS = ['aimdat.com']
+
+# 디버깅
+DEBUG = False
+
+# Static 경로 설정
+STATIC_ROOT = BASE_DIR / 'static/'
+STATICFILES_DIRS = []
+
+# 이메일 설정
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST')
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
+
+# Database 설정
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
