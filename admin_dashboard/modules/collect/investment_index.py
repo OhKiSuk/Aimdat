@@ -2,8 +2,8 @@
 @created at 2023.05.10
 @author JSU in Aimdat Team
 
-@modified at 2023.06.15
-@author JSU in Aimdat Team
+@modified at 2023.06.19
+@author OKS in Aimdat Team
 """
 import logging
 import os
@@ -33,6 +33,8 @@ from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
 from services.models.corp_id import CorpId
 from services.models.stock_price import StockPrice
 
+DOWNLOAD_PATH = get_secret('download_folder')
+
 LOGGER = logging.getLogger(__name__)
 
 def _download_corp_code():
@@ -46,9 +48,8 @@ def _download_corp_code():
     # A003 로깅
     try:
         response = requests.get(url, params=params)
-        downlaod_path = get_secret('download_folder')
     
-        with open(downlaod_path+'/corpCode.zip', 'wb') as file:
+        with open(os.path.join(DOWNLOAD_PATH, 'corpCode.zip'), 'wb') as file:
             file.write(response.content)
     except:
         LOGGER.error('[A003] CORPCODE 다운로드 실패.')
@@ -57,12 +58,11 @@ def _unzip_corp_code():
     """
     Opendart의 고유번호 파일 압축해제
     """
-    download_path = get_secret('download_folder')
 
     # A004 로깅
     try:
-        with zipfile.ZipFile(download_path+'/corpCode.zip', 'r') as zip_file:
-            zip_file.extract('CORPCODE.xml', download_path)
+        with zipfile.ZipFile(os.path.join(DOWNLOAD_PATH, 'corpCode.zip'), 'r') as zip_file:
+            zip_file.extract('CORPCODE.xml', DOWNLOAD_PATH)
     except:
         LOGGER.error('[A004] CORPCODE 압축 해제 실패.')
 
@@ -273,8 +273,7 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
         url = 'https://opendart.fss.or.kr/api/alotMatter.xml'
 
         # XML 파일 트리 생성
-        download_path = get_secret('download_folder')
-        corp_code_tree = ET.parse(download_path+'/CORPCODE.xml')
+        corp_code_tree = ET.parse(os.path.join(DOWNLOAD_PATH, 'CORPCODE.xml'))
         corp_code_root = corp_code_tree.getroot()
 
         # corp_code 확인
@@ -479,8 +478,8 @@ def save_investment_index(year, quarter, fs_type):
     data = _parse_investment_index(year, quarter, fs_type, stock_codes)
 
     # 사용한 corpCode 파일 제거
-    remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
-    remove_files(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
+    remove_files(os.path.join(DOWNLOAD_PATH, 'corpCode.zip'))
+    remove_files(os.path.join(DOWNLOAD_PATH, 'CORPCODE.xml'))
 
     if data:
         return data
