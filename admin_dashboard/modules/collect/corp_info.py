@@ -2,8 +2,8 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.06.17
-@author JSU in Aimdat Team
+@modified at 2023.06.19
+@author OKS in Aimdat Team
 """
 import csv
 import glob
@@ -25,6 +25,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from ..api_error.open_dart_api_error import check_open_dart_api_error
 from ..remove.remove_files import remove_files
 
+DOWNLOAD_PATH = get_secret('download_folder')
+
 LOGGER = logging.getLogger(__name__)
 
 def _download_corp_code():
@@ -37,11 +39,9 @@ def _download_corp_code():
     }
     response = requests.get(url, params=params)
 
-    downlaod_path = get_secret('download_folder')
-
     # A003 로깅
     try:
-        with open(downlaod_path+'/corpCode.zip', 'wb') as file:
+        with open(os.path.join(DOWNLOAD_PATH, 'corpCode.zip'), 'wb') as file:
             file.write(response.content)
     except:
         LOGGER.error('[A003] CORPCODE 다운로드 실패.')
@@ -50,12 +50,11 @@ def _unzip_corp_code():
     """
     Opendart의 고유번호 파일 압축해제
     """
-    download_path = get_secret('download_folder')
 
     # A004 로깅
     try:
-        with zipfile.ZipFile(download_path+'/corpCode.zip', 'r') as zip_file:
-            zip_file.extract('CORPCODE.xml', download_path)
+        with zipfile.ZipFile(os.path.join(DOWNLOAD_PATH, 'corpCode.zip'), 'r') as zip_file:
+            zip_file.extract('CORPCODE.xml', DOWNLOAD_PATH)
     except:
         LOGGER.error('[A004] CORPCODE 압축 해제 실패.')
 
@@ -69,8 +68,7 @@ def _collect_corp_info(stock_codes):
     }
 
     # corp_code 조회
-    download_path = get_secret('download_folder')
-    corp_code_tree = ET.parse(download_path+'/CORPCODE.xml')
+    corp_code_tree = ET.parse(os.path.join(DOWNLOAD_PATH, 'CORPCODE.xml'))
     corp_code_root = corp_code_tree.getroot()
 
     corp_info_data_list = []
@@ -119,7 +117,7 @@ def _download_induty_code():
     url = 'https://www.data.go.kr/data/15049591/fileData.do'
     option = webdriver.ChromeOptions()
     option.add_experimental_option("prefs", {
-        "download.default_directory": get_secret('download_folder')
+        "download.default_directory": DOWNLOAD_PATH
     })
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
@@ -141,8 +139,7 @@ def _parse_induty_code(corp_id, induty_code):
     """
     산업분류코드를 파싱 후 저장
     """
-    download_path = get_secret('download_folder')
-    file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))[0]
 
     with open(file_path, 'r', newline='', encoding='CP949') as file:
         # A006 로깅
@@ -195,20 +192,19 @@ def save_corp_info():
                     corp_ceo_name = corp_info['corp_ceo_name']
                 )
 
-        download_path = get_secret('download_folder')
-        file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))[0]
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))[0]
 
         # 고용노동부_표준산업분류코드 제거
         remove_files(file_path)
 
         # corp_code 관련 파일 제거
-        remove_files(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
-        remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
+        remove_files(os.path.join(DOWNLOAD_PATH, 'CORPCODE.xml'))
+        remove_files(os.path.join(DOWNLOAD_PATH, 'corpCode.zip'))
 
         return True
 
     # corp_code 관련 파일 제거
-    remove_files(os.path.join(get_secret('download_folder'), 'CORPCODE.xml'))
-    remove_files(os.path.join(get_secret('download_folder'), 'corpCode.zip'))
+    remove_files(os.path.join(DOWNLOAD_PATH, 'CORPCODE.xml'))
+    remove_files(os.path.join(DOWNLOAD_PATH, 'corpCode.zip'))
 
     return False

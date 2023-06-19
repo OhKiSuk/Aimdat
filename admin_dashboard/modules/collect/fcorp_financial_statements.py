@@ -2,12 +2,11 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.06.17
-@author JSU in Aimdat Team
+@modified at 2023.06.19
+@author OKS in Aimdat Team
 """
 import csv
 import glob
-import json
 import logging
 import os
 import pymongo
@@ -15,10 +14,10 @@ import re
 import time
 
 from bson.decimal128 import Decimal128
+from bs4 import BeautifulSoup
+from config.settings.base import get_secret
 from django.http import HttpResponseServerError
 from django.db.models import Q
-from bs4 import BeautifulSoup
-from pathlib import Path
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
@@ -29,13 +28,8 @@ from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
 from services.models.corp_id import CorpId
 from ..remove.remove_files import remove_files
-from config.settings.base import get_secret
 
-#django 앱 최상위 경로
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-
-#secrets.json 경로
-SECRETS_FILE = os.path.join(BASE_DIR, 'secrets.json')
+DOWNLOAD_PATH = get_secret('download_folder')
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +42,7 @@ def _get_fcorp_list():
         url = 'https://www.data.go.kr/data/15049591/fileData.do'
         option = webdriver.ChromeOptions()
         option.add_experimental_option("prefs", {
-            "download.default_directory": get_secret('download_folder')
+            "download.default_directory": DOWNLOAD_PATH
         })
         option.add_argument("--headless")
         option.add_argument('--no-sandbox')
@@ -66,18 +60,16 @@ def _get_fcorp_list():
         driver.execute_script("arguments[0].click();", download_button)
         time.sleep(3)
 
-        with open(SECRETS_FILE, 'r') as secrets:
-            download_path = json.load(secrets)['download_folder']
-            file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))[0]
 
-            with open(file_path, 'r', newline='', encoding='CP949') as file:
-                file_content = csv.reader(file)
+        with open(file_path, 'r', newline='', encoding='CP949') as file:
+            file_content = csv.reader(file)
 
-                # 금융업 목록만 파싱(대한민국 금융업: 64 ~ 66)
-                fcorp_sector_list = []
-                for row in file_content:
-                    if row[1].startswith(('64', '65', '66')):
-                        fcorp_sector_list.append(row[2])
+            # 금융업 목록만 파싱(대한민국 금융업: 64 ~ 66)
+            fcorp_sector_list = []
+            for row in file_content:
+                if row[1].startswith(('64', '65', '66')):
+                    fcorp_sector_list.append(row[2])
 
         #현재 등록된 기업 목록 중 금융업종의 종목코드 검색
         stock_code_list = CorpId.objects.filter(Q(corp_sectors__in=fcorp_sector_list)).values_list('stock_code', flat=True)
@@ -344,21 +336,17 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
         client.close()
 
         # 사용한 파일 제거
-        with open(SECRETS_FILE, 'r') as secrets:
-            download_path = json.load(secrets)['download_folder']
-            file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))
 
-            if len(file_path) > 0:
-                remove_files(file_path[0])
+        if len(file_path) > 0:
+            remove_files(file_path[0])
 
         return True
 
     # 사용한 파일 제거
-    with open(SECRETS_FILE, 'r') as secrets:
-        download_path = json.load(secrets)['download_folder']
-        file_path = glob.glob(os.path.join(download_path, '고용노동부_표준산업분류코드_*.csv'))
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))
 
-        if len(file_path) > 0:
-            remove_files(file_path[0])
+    if len(file_path) > 0:
+        remove_files(file_path[0])
 
     return False

@@ -2,12 +2,11 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.06.17
-@author JSU in Aimdat Team
+@modified at 2023.06.19
+@author OKS in Aimdat Team
 """
 import csv
 import glob
-import json
 import logging
 import os
 import pandas
@@ -17,9 +16,9 @@ import shutil
 import zipfile
 
 from bson.decimal128 import Decimal128
+from config.settings.base import get_secret
 from django.db.models import Q
 from django.http import HttpResponseServerError
-from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
@@ -28,26 +27,18 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from services.models.corp_id import CorpId
 from ..remove.remove_files import remove_files
 
-#django 앱 최상위 경로
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-
-#secrets.json 경로
-SECRETS_FILE = os.path.join(BASE_DIR, 'secrets.json')
+DOWNLOAD_PATH = get_secret('download_folder')
 
 LOGGER = logging.getLogger(__name__)
 
-#download path
-with open(SECRETS_FILE, 'r') as secrets:
-    DOWNLOAD_PATH = json.load(secrets)['download_folder']
-
 def _get_ifrs_xbrl_txt(years, quarters):
     # path 지정
-    path = DOWNLOAD_PATH+'/fs_zips/'
+    path = os.path.join(DOWNLOAD_PATH, 'fs_zips')
 
     # 임시 폴더 생성
     if os.path.exists(path):
         shutil.rmtree(path)
-    os.mkdir(DOWNLOAD_PATH+'/fs_zips')
+    os.mkdir(os.path.join(DOWNLOAD_PATH, 'fs_zips'))
 
     # 데이터 저장 위치 설정
     option = webdriver.ChromeOptions()
@@ -94,7 +85,7 @@ def _get_ifrs_xbrl_txt(years, quarters):
     zip_files = [file for file in f_list if file.endswith('.zip')]
 
     for zip_file in zip_files:
-        with zipfile.ZipFile(path + zip_file, 'r') as zip:
+        with zipfile.ZipFile(os.path.join(path, zip_file), 'r') as zip:
             files = zip.infolist()
 
             # 한글 깨짐 방지
@@ -129,18 +120,16 @@ def _get_dcorp_list():
         except:
             LOGGER.error('[A005] 산업분류코드 다운로드 실패.')
 
-        with open(SECRETS_FILE, 'r') as secrets:
-            download_path = json.load(secrets)['download_folder']
-            file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')[0]
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))[0]
 
-            with open(file_path, 'r', newline='', encoding='CP949') as file:
-                file_content = csv.reader(file)
+        with open(file_path, 'r', newline='', encoding='CP949') as file:
+            file_content = csv.reader(file)
 
-                # 비금융기업만 파싱(대한민국 금융업: 64 ~ 66)
-                fcorp_sector_list = []
-                for row in file_content:
-                    if not row[1].startswith(('64', '65', '66')):
-                        fcorp_sector_list.append(row[2])
+            # 비금융기업만 파싱(대한민국 금융업: 64 ~ 66)
+            fcorp_sector_list = []
+            for row in file_content:
+                if not row[1].startswith(('64', '65', '66')):
+                    fcorp_sector_list.append(row[2])
 
         #현재 등록된 기업 목록 중 비금융업종의 종목코드 검색
         stock_code_list = CorpId.objects.filter(Q(corp_sectors__in=fcorp_sector_list)).values_list('stock_code', flat=True)
@@ -157,13 +146,13 @@ def _parse_txt(stock_codes):
     txt 파일에서 재무제표 추출 후 dict로 변환
     """
     # path 지정 및 파일 선택
-    path = DOWNLOAD_PATH+'/fs_zips/'
+    path = os.path.join(DOWNLOAD_PATH, 'fs_zips')
     f_list = os.listdir(path)
     txt_files = [file for file in f_list if file.endswith('.txt')]
 
     fs_dict_list = []
     for txt_file in txt_files:
-        df = pandas.read_csv(path + txt_file, sep='\t', encoding='CP949', dtype='unicode', header=0)
+        df = pandas.read_csv(os.path.join(path, txt_file), sep='\t', encoding='CP949', dtype='unicode', header=0)
 
         # 손익계산서 건너뛰기
         if '_02_' in txt_file:
@@ -249,33 +238,25 @@ def save_dcorp(years, quarters):
         client.close()
 
         # 파일 삭제
-        with open(SECRETS_FILE, 'r') as secrets:
-                download_path = json.load(secrets)['download_folder']
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))
+        folder_path = glob.glob(os.path.join(DOWNLOAD_PATH, 'fs_zips'))
 
-                # 삭제할 파일 경로
-                file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')
-                folder_path = glob.glob(download_path+'/fs_zips')
+        if len(file_path) > 0:
+            remove_files(file_path[0])
 
-                if len(file_path) > 0:
-                    remove_files(file_path[0])
-
-                if len(folder_path) > 0:
-                    remove_files(folder_path[0], folder=True)
+        if len(folder_path) > 0:
+            remove_files(folder_path[0], folder=True)
 
         return True
 
     # 파일 삭제
-    with open(SECRETS_FILE, 'r') as secrets:
-            download_path = json.load(secrets)['download_folder']
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))
+    folder_path = glob.glob(os.path.join(DOWNLOAD_PATH, 'fs_zips'))
 
-            # 삭제할 파일 경로
-            file_path = glob.glob(download_path+'/고용노동부_표준산업분류코드_*.csv')
-            folder_path = glob.glob(download_path+'/fs_zips')
+    if len(file_path) > 0:
+        remove_files(file_path[0])
 
-            if len(file_path) > 0:
-                remove_files(file_path[0])
-
-            if len(folder_path) > 0:
-                remove_files(folder_path[0], folder=True)
+    if len(folder_path) > 0:
+        remove_files(folder_path[0], folder=True)
 
     return False
