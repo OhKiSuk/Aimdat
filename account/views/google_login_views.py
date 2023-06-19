@@ -46,7 +46,7 @@ class GoogleLoginView(UserPassesTestMixin, View):
         params = {
             'response_type': 'code',
             'client_id': get_secret("google_client_id"),
-            'redirect_uri': 'http://127.0.0.1:8000/account/google/login/callback/',
+            'redirect_uri': 'https://aimdat.com/account/google/login/callback/',
             'scope': 'https://www.googleapis.com/auth/userinfo.email',
             'state': request.session['state'],
             'access_type': 'offline'
@@ -76,7 +76,7 @@ class GoogleCallbackView(UserPassesTestMixin, View):
             'code': request.GET.get('code'),
             'client_id': get_secret("google_client_id"),
             'client_secret': get_secret("google_client_secret"),
-            'redirect_uri': 'http://127.0.0.1:8000/account/google/login/callback/',
+            'redirect_uri': 'https://aimdat.com/account/google/login/callback/',
             'grant_type': 'authorization_code'
         }
 

@@ -44,7 +44,7 @@ class NaverLoginView(UserPassesTestMixin, View):
         request.session['state'] = csrf.get_token(request)
         response_type = 'code'
         client_id =  get_secret("naver_client_id")
-        redirect_uri = 'http://127.0.0.1:8000/account/naver/login/callback/'
+        redirect_uri = 'https://aimdat.com/account/naver/login/callback/'
         state = request.session['state']
         login_url = f"{url}?response_type={response_type}&client_id={client_id}&redirect_uri={redirect_uri}&state={state}"
 
