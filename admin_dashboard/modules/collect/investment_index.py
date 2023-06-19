@@ -73,7 +73,7 @@ def _parse_investment_index(year, quarter, fs_type, stock_codes):
     # MongoDB 연결
     client = pymongo.MongoClient('localhost:27017')
     db = client['aimdat']
-    collection = db['financial_statements6']
+    collection = db['financial_statements']
 
     # 정규식 패턴
     not_digit_pattern = re.compile(r'\D')
