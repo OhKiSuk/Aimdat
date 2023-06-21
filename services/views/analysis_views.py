@@ -2,13 +2,12 @@
 @created at 2023.03.28
 @author JSU in Aimdat Team
 
-@modified at 2023.06.16
-@author JSU in Aimdat Team
+@modified at 2023.06.21
+@author OKS in Aimdat Team
 """
 import json
 import logging
 
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import (
     F, 
     Q
@@ -17,10 +16,8 @@ from django.http import (
     HttpResponse,
     JsonResponse
 )
-from django.shortcuts import (
-    redirect, 
-    render
-)
+from django.shortcuts import render
+
 from django.utils import timezone
 from django.views.generic import ListView
 
@@ -29,7 +26,7 @@ from ..models.investment_index import InvestmentIndex
 
 LOGGER = logging.getLogger(__name__)
 
-class AnalysisView(UserPassesTestMixin, ListView):
+class AnalysisView(ListView):
     model = InvestmentIndex
     template_name = 'services/analysis_view.html'
     
@@ -41,9 +38,6 @@ class AnalysisView(UserPassesTestMixin, ListView):
                 return True
             
         return False
-    
-    def handle_no_permission(self):
-        return redirect('account:login')
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -106,6 +100,7 @@ class AnalysisView(UserPassesTestMixin, ListView):
 
         # 검색 기록 초기화
         if 'reset' in request.body.decode('utf-8'):
+
             remove_session_keys = ['analysis_list', 'field_list']
             session_keys = request.session.keys()
             for key in remove_session_keys:
@@ -114,6 +109,8 @@ class AnalysisView(UserPassesTestMixin, ListView):
 
         # 분석할 기업정보를 분석 페이지에서 추가했을 경우
         elif request.POST.get('selected_corp'):
+            if not self.test_func():
+                return HttpResponse('로그인이 필요한 서비스입니다.', status=500)
 
             selected_corp = json.loads(request.POST.get('selected_corp'))
             if 'stock_code' not in selected_corp:
@@ -184,6 +181,9 @@ class AnalysisView(UserPassesTestMixin, ListView):
 
         # 지표 설정
         elif request.POST.get('field_list'):
+            if not self.test_func():
+                return HttpResponse('로그인이 필요한 서비스입니다.', status=500)
+
             field_list = json.loads(request.POST.get('field_list'))
 
             if field_list:

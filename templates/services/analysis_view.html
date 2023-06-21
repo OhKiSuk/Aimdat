@@ -58,27 +58,29 @@
 </div>
 
 {% if object_list %}
-<table id="id_chart_table" class="table table-bordered">
-    <thead class="text-center">
-        <tr class="bg-light">
-            <th></th>
-            {% for field in field_list %}
-            <th>{{ field|convert_account }}</th>
+<div id="id_table_wrapper" style="overflow-x: auto;">
+    <table id="id_chart_table" class="table table-bordered">
+        <thead class="text-center">
+            <tr class="bg-light">
+                <th></th>
+                {% for field in field_list %}
+                <th>{{ field|convert_account }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for obj in object_list %}
+            <tr>
+                <td class="text-center fw-bold bg-light">{{ obj.corp_id__corp_name }}({{ obj.year }}년 {{ obj.quarter }}분기, {% if fs_type == "5" %}별도{% else %}연결{% endif %})</td>
+    
+                {% for field in field_list %}
+                <td class="text-end">{{ obj|get_index_field_data:field|intcomma }}</td>
+                {% endfor %}
+            </tr>
             {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for obj in object_list %}
-        <tr>
-            <td class="text-center fw-bold bg-light">{{ obj.corp_id__corp_name }}({{ obj.year }}년 {{ obj.quarter }}분기, {% if fs_type == "5" %}별도{% else %}연결{% endif %})</td>
-
-            {% for field in field_list %}
-            <td class="text-end">{{ obj|get_index_field_data:field|intcomma }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 {% endif %}
 <div class="modal modal-lg fade" id="id_append_corp_modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -254,6 +256,9 @@ $(document).ready(function() {
             error: function(xhr, status, error) {
                 var errorMessage = xhr.responseText;
                 alert(errorMessage);
+                if (errorMessage == '로그인이 필요한 서비스입니다.') {
+                    location.href = "{% url 'account:login' %}"
+                }
             }
         });
     });
@@ -286,6 +291,10 @@ $(document).ready(function() {
             },
             complete: function() {
                 $(".mask").hide();
+            },
+            error: function() {
+                alert('로그인이 필요한 서비스입니다.');
+                location.href = "{% url 'account:login' %}"
             },
             success: function(response) {
                 $('#id_set_field_modal').modal('hide');

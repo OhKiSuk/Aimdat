@@ -2,8 +2,8 @@
 @created at 2023.03.22
 @author JSU in Aimdat Team
 
-@modified at 2023.06.16
-@author JSU in Aimdat Team
+@modified at 2023.06.21
+@author OKS in Aimdat Team
 """
 import requests
 import logging
@@ -12,7 +12,6 @@ from datetime import (
     datetime, 
     timedelta
 )
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.paginator import Paginator
 from django.db.models import (
     DateField,
@@ -20,7 +19,7 @@ from django.db.models import (
     Q
 )
 from django.db.models.functions import Cast
-from django.shortcuts import redirect
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views.generic import DetailView
 from config.settings.base import get_secret
@@ -32,7 +31,7 @@ from ..models.stock_price import StockPrice
 
 LOGGER = logging.getLogger(__name__)
 
-class CorpInquiryView(UserPassesTestMixin, DetailView):
+class CorpInquiryView(DetailView):
     model = CorpId
     template_name = 'services/corp_inquiry.html'
     context_object_name = 'corp_id'
@@ -46,9 +45,6 @@ class CorpInquiryView(UserPassesTestMixin, DetailView):
                 return True
             
         return False
-    
-    def handle_no_permission(self):
-        return redirect('account:login')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -128,3 +124,11 @@ class CorpInquiryView(UserPassesTestMixin, DetailView):
         page_obj = paginator.get_page(page_number)
 
         return page_obj
+    
+    def get(self, request, *args, **kwargs):
+
+        if request.GET.get('page') or request.GET.get('fs_type'):
+            if not self.test_func():
+                return HttpResponse('', status=500)
+        
+        return super().get(request, *args, **kwargs)

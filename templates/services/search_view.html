@@ -79,37 +79,39 @@
     </div>
 </div>
 
-<table class="table table-hover align-middle font-sm text-center mt-3" id="table">
-    <thead>
-        <tr class="bg-sub fw-bold" style="color: white;">
-            <th class="text-center" style="width:5%">No.</th>
-            <th class="text-center" style="width:15%" data-account-name="corp_name">회사명</th>
-            {% for key in index.keys %}
-            <th class="text-center" data-account-name="{{ key }}">{{ key|convert_account }}</th>
+<div id="id_table_wrapper" style="overflow-x: auto;">
+    <table class="table table-hover align-middle font-sm text-center mt-3" id="table">
+        <thead>
+            <tr class="bg-sub fw-bold" style="color: white;">
+                <th class="text-center" style="width:5%">No.</th>
+                <th class="text-center" style="width:15%" data-account-name="corp_name">회사명</th>
+                {% for key in index.keys %}
+                <th class="text-center" data-account-name="{{ key }}">{{ key|convert_account }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for obj in object_list %}
+            <tr>
+                <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                <td class="d-flex flex-wrap justify-content-start">
+                    <div class="d-flex align-items-center col-12">
+                        <input class="form-check-input" type="checkbox" name="checked_corp" value="{{ obj.corp_id }},{{ obj.year }},{{ obj.quarter }},{% if request.session.fs_type %}{{ request.session.fs_type }}{% else %}5{% endif %}" 
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="분석할 기업을 선택하세요.">&nbsp;
+                        <a href="{% url 'services:corp_inquiry' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{ obj.corp_id_id__corp_name }}</a>
+                    </div>
+                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{ obj.corp_id_id__corp_country }}</span>
+                    <span class="badge text-bg-primary" style="margin-right: 1%;">{{ obj.corp_id_id__corp_market }}</span>
+                    <span class="badge text-bg-primary">{{ obj.corp_id_id__corp_sectors }}</span>
+                </td>
+                {% for key in index.keys %}
+                <td>{{ obj|get_attr:key|floatformat:'2'|intcomma }}</td>
+                {% endfor %}
+            </tr>
             {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for obj in object_list %}
-        <tr>
-            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
-            <td class="d-flex flex-wrap justify-content-start">
-                <div class="d-flex align-items-center col-12">
-                    <input class="form-check-input" type="checkbox" name="checked_corp" value="{{ obj.corp_id }},{{ obj.year }},{{ obj.quarter }},{% if request.session.fs_type %}{{ request.session.fs_type }}{% else %}5{% endif %}" 
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="분석할 기업을 선택하세요.">&nbsp;
-                    <a href="{% url 'services:corp_inquiry' obj.corp_id %}" class="text-decoration-none" style="color:black;">{{ obj.corp_id_id__corp_name }}</a>
-                </div>
-                <span class="badge text-bg-primary" style="margin-right: 1%;">{{ obj.corp_id_id__corp_country }}</span>
-                <span class="badge text-bg-primary" style="margin-right: 1%;">{{ obj.corp_id_id__corp_market }}</span>
-                <span class="badge text-bg-primary">{{ obj.corp_id_id__corp_sectors }}</span>
-            </td>
-            {% for key in index.keys %}
-            <td>{{ obj|get_attr:key }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 
 <ul class="pagination justify-content-center pagination-sm">
     {% if page_obj.has_previous %}
@@ -551,11 +553,13 @@
                     xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
                 },
                 error: function() {
+                    alert('로그인이 필요한 서비스입니다.');
                     location.href = "{% url 'account:login' %}"
+                },
+                success: function() {
+                    $('#filter-modal').modal('hide');
+                    location.reload();
                 }
-            }).done(function(response) {
-                $('#filter-modal').modal('hide');
-                location.reload();
             });
         });
 
@@ -567,8 +571,13 @@
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
                 },
-            }).done(function() {
-                location.reload();
+                error: function() {
+                    alert('로그인이 필요한 서비스입니다.');
+                    location.href = "{% url 'account:login' %}"
+                },
+                success: function() {
+                    location.reload();
+                }
             });
         });
 
@@ -622,6 +631,7 @@
                         'ordering': JSON.stringify(orderby)
                     },
                     error: function() {
+                        alert('로그인이 필요한 서비스입니다.');
                         location.href = "{% url 'account:login' %}"
                     },
                     success: function(response) {
@@ -629,7 +639,7 @@
                         var tbody = $(responseHTML).find('#table tbody');
 
                         $('#table tbody').remove();
-                        $('#table thead').after(tbody);
+                        $('#table tbody').after(tbody);
                     }
                 });
             }
@@ -665,6 +675,7 @@
                 'ordering': JSON.stringify(orderby)
             },
             error: function() {
+                alert('로그인이 필요한 서비스입니다.');
                 location.href = "{% url 'account:login' %}"
             },
             success: function(response) {
@@ -677,7 +688,7 @@
                 $('#table thead').after(tbody);
                 
                 $('.pagination').remove();
-                $('#table').after(pagination);
+                $('#id_table_wrapper').after(pagination);
 
                 $('.pagination').children('li').removeClass('active');
                 $('.pagination').children('li:eq('+page_index+')').addClass('active');

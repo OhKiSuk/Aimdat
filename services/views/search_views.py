@@ -2,8 +2,8 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.06.16
-@author JSU in Aimdat Team
+@modified at 2023.06.21
+@author OKS in Aimdat Team
 """
 import json
 import logging
@@ -15,10 +15,7 @@ from django.db.models import (
     Min
 )
 from django.http import HttpResponse
-from django.shortcuts import (
-    redirect, 
-    render
-)
+from django.shortcuts import render
 from django.utils import timezone
 from django.views.generic.list import ListView
 
@@ -200,7 +197,7 @@ class SearchView(ListView):
     
     def post(self, request):
         if not self.test_func():
-            return redirect('account:login')
+            return HttpResponse('', status=500)
 
         if request.body.decode('utf-8') == 'reset' or request.body.decode('utf-8') == '{}':
             # 세션 초기화

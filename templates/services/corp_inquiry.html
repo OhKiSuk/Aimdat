@@ -122,46 +122,48 @@
                 </div>
             </div>
             {% if fs_date %}
-            <table class="table table-bordered text-center font-sm">
-                <thead class="bg-light">
-                    <tr class="fw-bold">
-                        <th style="position: sticky; border-right: 2px solid rgba(0, 0, 0, 30%); width: 15%;"></th>
-                        {% for date in fs_date %}
-                        <th>{{ date.year }}년 {{ date.quarter }}분기</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for data in report_data %}
-                    <tr>
-                        {% for key, values in data.items %}
-                        <td class="fw-bold" style="border-right: 2px solid rgba(0, 0, 0, 30%);">{{ key|convert_account }}</td>
-                            {% for value in values %}
-                                {% if value is not None %}
-                                <td>{{ value|floatformat:'2'|intcomma }}</td>
-                                {% else %}
-                                <td>-</td>
-                                {% endif %}
+            <div id="id_table_wrapper" style="overflow-x: auto;">
+                <table class="table table-bordered text-center font-sm">
+                    <thead class="bg-light">
+                        <tr class="fw-bold">
+                            <th style="position: sticky; border-right: 2px solid rgba(0, 0, 0, 30%); width: 15%;"></th>
+                            {% for date in fs_date %}
+                            <th>{{ date.year }}년 {{ date.quarter }}분기</th>
                             {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in report_data %}
+                        <tr>
+                            {% for key, values in data.items %}
+                            <td class="fw-bold" style="border-right: 2px solid rgba(0, 0, 0, 30%);">{{ key|convert_account }}</td>
+                                {% for value in values %}
+                                    {% if value is not None %}
+                                    <td>{{ value|floatformat:'2'|intcomma }}</td>
+                                    {% else %}
+                                    <td>-</td>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
                         {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <table class="table table-bordered text-center font-sm">
-                <thead class="bg-light">
-                    <tr class="fw-bold">
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="fw-bold">재무제표가 존재하지 않습니다.</td>
-                    </tr>
-                </tbody>
-            </table>
-            {% endif %}
+                    </tbody>
+                </table>
+                {% else %}
+                <table class="table table-bordered text-center font-sm">
+                    <thead class="bg-light">
+                        <tr class="fw-bold">
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">재무제표가 존재하지 않습니다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
         </div>
         
         <!-- 공시정보 -->
@@ -375,12 +377,17 @@
                 data: {
                     fs_type: $(this).attr('id')
                 },
-            }).done(function(response) {
-                var responseHTML = $.parseHTML(response);
-                var table = $(responseHTML).find('#id_fs_info > table');
+                error: function() {
+                    alert('로그인이 필요한 서비스입니다.');
+                    location.href = "{% url 'account:login' %}"
+                },
+                success: function() {
+                    var responseHTML = $.parseHTML(response);
+                    var table = $(responseHTML).find('#id_table_wrapper table');
 
-                $('#id_fs_info > table').remove();
-                $('#id_fs_info').append(table);
+                    $('#id_table_wrapper table').remove();
+                    $('#id_table_wrapper').append(table);
+                }
             });
         });
     });
@@ -411,6 +418,10 @@
             url: "{% url 'services:corp_inquiry' corp_id.id %}",
             data: {
                 'page': JSON.stringify(page_number),
+            },
+            error: function() {
+                alert('로그인이 필요한 서비스입니다.');
+                location.href = "{% url 'account:login' %}"
             },
             success: function(response) {
                 var responseHTML = $.parseHTML(response);
