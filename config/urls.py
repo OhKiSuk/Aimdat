@@ -2,15 +2,22 @@
 @modified at 2023.03.11
 @author OKS in Aimdat Team
 
-@modified at 2023.03.31
+@modified at 2023.06.22
 @author OKS in Aimdat Team
 """
 from admin_dashboard.admin.base_admin import custom_admin_site
+from django.contrib.sitemaps.views import sitemap
 from django.urls import (
     include,
     path
 )
 from services.views.search_views import SearchView
+from .sitemaps import StaticSitemap, CorpInquriySitemap
+
+sitemaps = {
+    "services": StaticSitemap(app_name='services'),
+    "corp_inquiry": CorpInquriySitemap
+}
 
 urlpatterns = [
     path('services/', SearchView.as_view(), name='index'),
@@ -18,6 +25,8 @@ urlpatterns = [
     path('tinymce/', include('tinymce.urls')),
     path('account/', include('account.urls')),
     path('services/', include('services.urls')),
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap")
+    
 ]
 
 handler400 = 'services.views.error_views.custom_400'
