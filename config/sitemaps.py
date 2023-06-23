@@ -9,6 +9,7 @@ from services.models.corp_id import CorpId
 class StaticSitemap(Sitemap):
     changefreq = "daily"
     priority = 0.5
+    protocol = 'https'
 
     def __init__(self, app_name):
         self.app_name = app_name

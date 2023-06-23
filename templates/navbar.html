@@ -14,15 +14,19 @@
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
                     <li>
-                        <a class="fw-bold text-white font-sm" href="{% url 'services:mypage' %}">마이페이지</a>
+                        <a class="fw-bold text-white font-sm text-decoration-none" href="{% url 'services:mypage' %}">마이페이지</a>
                     </li>
                     <div class="vr mx-2 text-white"></div>
                     <li>
-                        <a class="fw-bold text-white font-sm" href="{% url 'account:logout' %}">로그아웃</a>
+                        <a class="fw-bold text-white font-sm text-decoration-none" href="{% url 'account:logout' %}">로그아웃</a>
                     </li>
                     {% else %}
                     <li>
-                        <a class="fw-bold text-white font-sm" href="{% url 'account:login' %}">로그인</a>
+                        <a class="fw-bold text-white font-sm text-decoration-none" href="{% url 'account:login' %}">로그인</a>
+                    </li>
+                    <div class="vr mx-2 text-white"></div>
+                    <li>
+                        <a class="fw-bold text-white font-sm text-decoration-none" href="{% url 'account:signup' %}">회원가입</a>
                     </li>
                     {% endif %}
                 </ul>
