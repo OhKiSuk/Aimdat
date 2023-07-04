@@ -275,6 +275,8 @@
         </div>
     </div>
 </div>
+
+<input id="page" type="hidden" data-page="{{ page_obj.number }}">
 {% endblock %}
 {% block script %}
 <script src="{% static 'js/search_view.js' %}"></script>
@@ -533,7 +535,7 @@
 </script>
 <script>
     var orderby;
-    var page_number = 1;
+    var page_number = Number($('#page').data('page'));
 
     $(document).ready(function() {
         /** 검색 */
@@ -593,7 +595,6 @@
         /** 정렬 */
         $('#table thead th').on('click', function () {
             var account_name = $(this).data('account-name');
-            var page_number = Number($('.pagination').find('li[class*="active"]').children('a').text());
 
             if (account_name != null) {
                 // DESC
@@ -629,15 +630,17 @@
                     success: function(response) {
                         var responseHTML = $.parseHTML(response);
                         var tbody = $(responseHTML).find('#table tbody');
+                        var page = $(responseHTML).find('#page');
 
                         $('#table tbody').remove();
                         $('#table thead').after(tbody);
+
+                        $('#page').remove();
+                        $('#id_table_wrapper').after(page);
                     }
                 });
             }
         });
-
-
     });
 
     /** 페이징 */
@@ -661,6 +664,7 @@
                 success: function(response) {
                     var responseHTML = $.parseHTML(response);
                     var rows = $(responseHTML).find("#table tbody tr");
+                    var page = $(responseHTML).find("#page");
 
                     rows.each(function() {
                         table.find("tbody").append($(this));
@@ -672,6 +676,9 @@
                         $("#load_more_button").prop("disabled", true);
                         $("#load_more_button").text("더보기( {{ paginator.count }} / {{ paginator.count }} )");
                     }
+
+                    $('#page').remove();
+                    $('#id_table_wrapper').after(page);
                 }
             });
         }
