@@ -181,12 +181,7 @@ class SearchView(ListView):
             context['index'] = {
                 'revenue': {'min': '전체', 'max': '전체'},
                 'operating_profit': {'min': '전체', 'max': '전체'},
-                'operating_margin': {'min': '전체', 'max': '전체'},
-                'net_profit_margin': {'min': '전체', 'max': '전체'},
-                'current_ratio': {'min': '전체', 'max': '전체'},
-                'debt_ratio': {'min': '전체', 'max': '전체'},
-                'dividend': {'min': '전체', 'max': '전체'},
-                'dividend_ratio': {'min': '전체', 'max': '전체'},
+                'operating_margin': {'min': '전체', 'max': '전체'}
             }
 
         context['account_index'] = account_index
