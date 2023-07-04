@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.07.04
+@modified at 2023.07.05
 @author OKS in Aimdat Team
 """
 import json
@@ -50,6 +50,15 @@ class SearchView(ListView):
                 ordering = '-corp_id__corp_name'
 
         return ordering
+    
+    def get_paginate_by(self, queryset):
+
+        if self.request.GET.get('page'):
+            page = self.request.GET.get('page')
+
+            return self.paginate_by * int(page)
+        else:
+            return super().get_paginate_by(queryset)
     
     def get_queryset(self):
         queryset = super().get_queryset()
