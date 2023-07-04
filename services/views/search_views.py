@@ -3,7 +3,7 @@
 @author JSU in Aimdat Team
 
 @modified at 2023.07.04
-@author JSU in Aimdat Team
+@author OKS in Aimdat Team
 """
 import json
 import logging
@@ -114,7 +114,7 @@ class SearchView(ListView):
             queryset = queryset.filter(q).values('corp_id', 'year', 'quarter', *indexes_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
             return queryset
         else:
-            default_index = ['revenue', 'operating_profit', 'operating_margin', 'net_profit_margin', 'current_ratio', 'debt_ratio', 'dividend', 'dividend_ratio']
+            default_index = ['revenue', 'operating_profit', 'operating_margin']
 
             for index_name in default_index:
                 # 모델 값에 저장 된 가장 작은 수 및 가장 큰 수
