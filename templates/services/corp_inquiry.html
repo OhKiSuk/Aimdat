@@ -3,41 +3,62 @@
 {% load convert_account %}
 {% load get_attr %}
 {% load humanize %}
+{% block style %}
+<style>
+    @media (max-width: 800px) {
+        #info_content {
+            display: block;
+        }
+
+        #stock_info {
+            width: 100%;
+        }
+
+        #stock_value {
+            display: flex;
+        }
+
+        #chart_info {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
 {% block content %}
 <div class="mt-5 card">
     <div class="card-body">
         <div>
-            <span class="font-md fw-bold">{{ corp_id.corp_name }}</span>
-            <a class="bi bi-house-door-fill" href="https://{{ corp_info.corp_homepage_url }}"></a>
+            <span class="font-md fw-semibold">{{ corp_id.corp_name }}</span>
+            <a class="bi bi-house" href="https://{{ corp_info.corp_homepage_url }}"></a>
             <div class="btn-group dropend">
                 <button type="button" class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"></button>
                 <ul class="dropdown-menu">
                     <div class="font-min px-3">
-                        <div><span class="fw-bold">결산월:</span> {{ corp_info.corp_settlement_month }}월</div>
-                        <div><span class="fw-bold">CEO 명:</span> {{ corp_info.corp_ceo_name }}</div>
+                        <div><span class="fw-semibold">결산월:</span> {{ corp_info.corp_settlement_month }}월</div>
+                        <div><span class="fw-semibold">CEO 명:</span> {{ corp_info.corp_ceo_name }}</div>
                     </div>
                 </ul>
             </div>
-            <span class="badge border border-1 fw-bold text-black-50">{{ corp_id.stock_code }}</span>
-            <span class="badge border border-1 fw-bold text-black-50">{{ corp_id.corp_isin }}</span>
-            <span class="badge border border-1 fw-bold text-black-50">{{ corp_id.corp_market }}</span>
-            <span class="badge border border-1 fw-bold text-black-50">{{ corp_id.corp_sectors }}</span>
+            <span class="badge text-bg-light">{{ corp_id.stock_code }}</span>
+            <span class="badge text-bg-light">{{ corp_id.corp_isin }}</span>
+            <span class="badge text-bg-light">{{ corp_id.corp_market }}</span>
+            <span class="badge text-bg-light">{{ corp_id.corp_sectors }}</span>
         </div>
         <div>
-            <span class="font-md fw-bold">{{ latest_stock_info.close_price|floatformat:'0'|intcomma }}</span>
+            <span class="font-md fw-semibold">{{ latest_stock_info.close_price|floatformat:'0'|intcomma }}</span>
 
             {% if latest_stock_info.change_price < 0 %}
-            <span class="font-sm fw-bold"><b class="text-primary">▼</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            <span class="font-sm fw-semibold"><b class="text-primary">▼</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
             {% elif latest_stock_info.change_price == 0 %}
-            <span class="font-sm fw-bold"><b class="text-black">-</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            <span class="font-sm fw-semibold"><b class="text-black">-</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
             {% else %}
-            <span class="font-sm fw-bold"><b class="text-danger">▲</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            <span class="font-sm fw-semibold"><b class="text-danger">▲</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
             {% endif %}
 
-            <span class="font-sm fw-bold text-black-50">{{ latest_stock_info.trade_date }} 기준</span>
+            <span class="font-sm fw-semibold text-black-50">{{ latest_stock_info.trade_date }} 기준</span>
         </div>
         <div class="mt-2">
-            <div class="font-sm fw-bold">기업소개</div>
+            <div class="font-sm fw-semibold">기업소개</div>
             <div class="font-sm">
                 {% if corp_info.corp_summary is None %}
                 내용이 없습니다.
@@ -49,14 +70,14 @@
 
         <hr class="my-3">
 
-        <div class="row">
-            <div class="col-4" style="border-right: 1px solid rgba(0, 0, 0, 20%);">
+        <div id="info_content" class="row">
+            <div id="stock_info" class="col-4" style="border-right: 1px solid rgba(0, 0, 0, 20%);">
                 <div class="row mb-4">
-                    <div class="col font-md fw-bold">주식정보</div>
-                    <div class="col font-sm fw-bold text-black-50 text-end">(단위: 원, 주)</div>
+                    <div class="col font-md fw-semibold">주식정보</div>
+                    <div class="col font-sm fw-semibold text-black-50 text-end">(단위: 원, 주)</div>
                 </div>
-                <div class="row">
-                    <div class="col fw-bold">
+                <div id="stock_value" class="row">
+                    <div class="col fw-semibold">
                         <div>52주 최고/최저</div>
                         <div>거래량</div>
                         <div>거래대금</div>
@@ -77,10 +98,10 @@
                 </div>
             </div>
             
-            <div class="col-8">
+            <div id="chart_info" class="col-8">
                 <div class="row mb-4">
-                    <div class="col font-md fw-bold">차트</div>
-                    <div class="col fw-bold">
+                    <div class="col font-md fw-semibold">차트</div>
+                    <div class="col fw-semibold">
                         <nav id="id_chart_menu" class="nav font-sm float-end">
                             <a class="nav-link" href="javascript:void(0);">1개월</a>
                             <a class="nav-link" href="javascript:void(0);">3개월</a>
@@ -110,7 +131,7 @@
         <!-- 재무정보 -->
         <div id="id_fs_info">
             <div class="row my-2">
-                <div class="col font-sm d-flex align-items-center fw-bold text-black-50 text-start">IFRS 기준, (단위: 억원, 배, %)</div>
+                <div class="col font-sm d-flex align-items-center fw-semibold text-black-50 text-start">IFRS 기준, (단위: 억원, 배, %)</div>
                 <div class="col text-end">
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="btnradio" id="cfs" autocomplete="off" checked>
@@ -125,7 +146,7 @@
             <div id="id_table_wrapper" style="overflow-x: auto;">
                 <table class="table table-bordered text-center font-sm">
                     <thead class="bg-light">
-                        <tr class="fw-bold">
+                        <tr class="fw-semibold">
                             <th style="position: sticky; border-right: 2px solid rgba(0, 0, 0, 30%); width: 15%;"></th>
                             {% for date in fs_date %}
                             <th>{{ date.year }}년 {{ date.quarter }}분기</th>
@@ -136,7 +157,7 @@
                         {% for data in report_data %}
                         <tr>
                             {% for key, values in data.items %}
-                            <td class="fw-bold" style="border-right: 2px solid rgba(0, 0, 0, 30%);">{{ key|convert_account }}</td>
+                            <td class="fw-semibold" style="border-right: 2px solid rgba(0, 0, 0, 30%);">{{ key|convert_account }}</td>
                                 {% for value in values %}
                                     {% if value is not None %}
                                     <td>{{ value|floatformat:'2'|intcomma }}</td>
@@ -152,13 +173,13 @@
                 {% else %}
                 <table class="table table-bordered text-center font-sm">
                     <thead class="bg-light">
-                        <tr class="fw-bold">
+                        <tr class="fw-semibold">
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="fw-bold">재무제표가 존재하지 않습니다.</td>
+                            <td class="fw-semibold">재무제표가 존재하지 않습니다.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -169,18 +190,18 @@
         <!-- 공시정보 -->
         <div id="disclosure_info" style="display: none;">
             <div class="my-2">
-                <div class="font-sm fw-bold text-black-50">공시정보는 최대 3년 이내, 100개만 제공됩니다.</div>
+                <div class="font-min">공시정보는 최대 3년 이내, 100개만 제공됩니다.</div>
             </div>
-            <table class="table table-bordered text-center font-sm">
+            <table class="table table-hover text-center font-sm" id="table">
                 <thead>
-                    <tr class="bg-sub fw-bold" style="color: white;">
+                    <tr class="fw-semibold">
                         <td style="width: 10%;">No.</td>
                         <td style="width: 65%;">제목</td>
                         <td style="width: 15%;">제출인</td>
                         <td style="width: 10%;">공시일</td>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-group-divider">
                     {% if page_obj %}
                         {% for data in page_obj %}
                         <tr>
@@ -201,39 +222,9 @@
                     {% endif %}
                 </tbody>
             </table>
-            <ul class="pagination justify-content-center pagination-sm">
-                {% if page_obj.has_previous %}
-                <li class="page-item" onclick="paging(this)">
-                    <a class="page-link" href="javascript:void(0);">이전</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <a class="page-link" tabindex="-1" aria-disabled="true" href="javascript:void(0);">이전</a>
-                </li>
-                {% endif %}
-                {% for page_number in page_obj.paginator.page_range %}
-                {% if page_number > page_obj.number|add:-5 and page_number < page_obj.number|add:5 %}
-                {% if page_number == page_obj.number %}
-                <li class="page-item active" aria-current="page" onclick="paging(this)">
-                    <a class="page-link" href='javascript:void(0);'>{{ page_number }}</a>
-                </li>
-                {% else %}
-                <li class="page-item" onclick="paging(this)">
-                    <a class="page-link" href='javascript:void(0);'>{{ page_number }}</a>
-                </li>
-                {% endif %}
-                {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                <li class="page-item" onclick="paging(this)">
-                    <a class="page-link" href="javascript:void(0);">다음</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <a class="page-link" tabindex="-1" aria-disabled="true" href="javascript:void(0);">다음</a>
-                </li>
-                {% endif %}
-            </ul>
+            <div class="d-grid gap-2">
+                <button id="load_more_button" class="btn btn-light" onclick="paging()">더보기( {{ object_list|length }} / {{ paginator.count }} )</button>
+            </div>
         </div>
     </div>
 </div>
@@ -393,52 +384,40 @@
     });
 
     /** 공시 페이징 */
-    function paging(paging_this) {
-        var page_number = $(paging_this).children('a').text();
+    function paging() {
+        var table = $('#table');
+        var totalPages = {{ paginator.num_pages }};
 
-        if (page_number == "이전") {
-            page_number = Number($(paging_this).parent('ul').find('li[class*="active"]').children('a').text()) - 1;
+        page_number += 1;
 
-            if (page_number <= 1) {
-                page_number = 1
-            }
+        if (page_number <= totalPages) {
+            $.get({
+                url: "{% url 'services:search' %}",
+                data: {
+                    'page': JSON.stringify(page_number),
+                    'ordering': JSON.stringify(orderby)
+                },
+                error: function() {
+                    alert('로그인이 필요한 서비스입니다.');
+                    location.href = "{% url 'account:login' %}"
+                },
+                success: function(response) {
+                    var responseHTML = $.parseHTML(response);
+                    var rows = $(responseHTML).find("#table tbody tr");
+
+                    rows.each(function() {
+                        table.find("tbody").append($(this));
+                    })
+                    
+                    $("#load_more_button").text("더보기( " + {{ object_list|length }} * page_number + " / {{ paginator.count }} )");
+                    
+                    if (page_number == totalPages) {
+                        $("#load_more_button").prop("disabled", true);
+                        $("#load_more_button").text("더보기( {{ paginator.count }} / {{ paginator.count }} )");
+                    }
+                }
+            });
         }
-        else if (page_number == "다음") {
-            var max_page = '{{ page_obj.paginator.num_pages }}'
-            page_number = Number($(paging_this).parent('ul').find('li[class*="active"]').children('a').text()) + 1;
-
-            if (page_number >= Number(max_page)) {
-                page_number = Number(max_page);
-            }
-        }
-        else {
-            page_number = Number(page_number);
-        }
-        $.get({
-            url: "{% url 'services:corp_inquiry' corp_id.id %}",
-            data: {
-                'page': JSON.stringify(page_number),
-            },
-            error: function() {
-                alert('로그인이 필요한 서비스입니다.');
-                location.href = "{% url 'account:login' %}"
-            },
-            success: function(response) {
-                var responseHTML = $.parseHTML(response);
-                var tbody = $(responseHTML).find('#disclosure_info tbody');
-                var pagination = $(responseHTML).find('.pagination');
-                var page_index = $(responseHTML).find('ul').find('a:contains('+page_number+')').parent('li').index();
-
-                $('#disclosure_info tbody').remove();
-                $('#disclosure_info thead').after(tbody);
-                
-                $('.pagination').remove();
-                $('#disclosure_info table').after(pagination);
-
-                $('.pagination').children('li').removeClass('active');
-                $('.pagination').children('li:eq('+page_index+')').addClass('active');
-            }
-        });
     }
 </script>
 {% endblock %}

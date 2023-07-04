@@ -1,3 +1,13 @@
+html {
+    font-size: 16px;
+}
+
+@media (max-width: 1000px) {
+    html {
+        font-size: 12px;
+    }
+}
+
 .bg-main {
     background-color: #044FBF;
 }
@@ -11,19 +21,24 @@
 }
 
 .font-lg {
-    font-size: 30px;
+    font-family: 'NanumSquareExtraBold';
+    font-size: 1.75rem;
+
 }
 
 .font-md {
-    font-size: 20px;
+    font-family: 'NanumSquare';
+    font-size: 1.25rem;
 }
 
 .font-sm {
-    font-size: 14px;
+    font-family: 'NanumSquareAcr';
+    font-size: 1rem;
 }
 
 .font-min {
-    font-size: 12px;
+    font-family: 'NanumSquareLight';
+    font-size: 0.9rem;
 }
 
 .font-gray {
@@ -46,4 +61,8 @@
 
 .collapse ul > li > a {
     text-decoration: none;
+}
+
+.button {
+    background-color: #044FBF;
 }

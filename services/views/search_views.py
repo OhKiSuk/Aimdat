@@ -2,8 +2,8 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.06.21
-@author OKS in Aimdat Team
+@modified at 2023.07.04
+@author JSU in Aimdat Team
 """
 import json
 import logging
@@ -29,7 +29,7 @@ class SearchView(ListView):
     """
     model = InvestmentIndex
     template_name = 'services/search_view.html'
-    paginate_by = 50
+    paginate_by = 20
     
     def test_func(self):
         if self.request.user.is_authenticated:

@@ -20,10 +20,11 @@
             <button id="add_inquiry" class="btn btn-primary font-sm" type="submit">문의하기</button>
             <a href="{% url 'services:mypage' %}" class="btn btn-secondary font-sm">취소</a>
         </div>
-
-        {% include 'includes/footer.html' %}
     </div>
 </div>
+
+{% include 'includes/footer.html' %}
+
 {% endblock %}
 {% block script %}
 <script>
