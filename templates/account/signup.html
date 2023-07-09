@@ -1,4 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/signup.css' %}">
+{% endblock %}
 {% block content %}
 <div class="mt-5 signup">
     <div class="text-center font-lg fw-bold">회원가입</div>

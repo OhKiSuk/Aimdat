@@ -1,0 +1,15 @@
+/*
+    Aimdat Team, 2023.07.09
+*/
+
+/* Desktop Settings */
+@media (min-width: 1000px) {
+    .login {
+        padding-left: 20%;
+        padding-right: 20%;
+    }
+}
+
+a {
+    text-decoration: none !important;
+}

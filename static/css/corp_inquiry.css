@@ -1,0 +1,21 @@
+/*
+    Aimdat Team, 2023.07.05
+*/
+
+@media (max-width: 1000px) {
+    #info_content {
+        display: block;
+    }
+
+    #stock_value {
+        display: flex;
+    }
+
+    #chart_info {
+        width: 100%;
+    }
+}
+
+@media (min-width: 1000px) {
+   
+}

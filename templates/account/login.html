@@ -1,9 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load get_first_message %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
 {% block content %}
 <div class="mt-5 login">
-    <div class="text-center font-lg fw-bold">로그인</div>
+    <div class="text-center fs-lg fw-bold">로그인</div>
     <form action="{% url 'account:login' %}" method="post">
         {% include 'includes/form_errors.html' %}
         {% csrf_token %}
@@ -36,7 +39,7 @@
         </nav>
 
         <div class="mt-5 social text-center">
-            <span class="fw-bold font-gray">소셜 로그인 시 공용 PC에서 사용할 경우 개인정보 보호를 위해 반드시 로그아웃을 하시길 바랍니다.</span>
+            <span class="fw-bold text-black-50">소셜 로그인 시 공용 PC에서 사용할 경우 개인정보 보호를 위해 반드시 로그아웃을 하시길 바랍니다.</span>
             <br class="mb-3">
             <a href="{% url 'account:naver_login' %}">
                 <img src="{% static 'image/social/naver_button.png' %}" height="48px">

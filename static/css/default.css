@@ -1,10 +1,20 @@
-html {
-    font-size: 16px;
-}
+/*
+    Aimdat Team, 2023.07.05
+*/
 
+/* Mobile Default Settings */
 @media (max-width: 1000px) {
     html {
         font-size: 12px;
+        font-family: 'NanumSquareLight', sans-serif;
+    }
+}
+
+/* Desktop Default Settings */
+@media (min-width: 1000px) {
+    html {
+        font-size: 16px;
+        font-family: 'NanumSquareLight', sans-serif;
     }
 }
 
@@ -12,57 +22,23 @@ html {
     background-color: #044FBF;
 }
 
-.bg-sub {
-    background-color: #0564F2;
+.fs-lg {
+    font-size: 1.5rem;
 }
 
-.bg-white {
-    background-color: #FFFFFF;
+.fs-md {
+    font-size: 1.15rem;
 }
 
-.font-lg {
-    font-family: 'NanumSquareExtraBold';
-    font-size: 1.75rem;
-
-}
-
-.font-md {
-    font-family: 'NanumSquare';
-    font-size: 1.25rem;
-}
-
-.font-sm {
-    font-family: 'NanumSquareAcr';
+.fs-sm {
     font-size: 1rem;
 }
 
-.font-min {
-    font-family: 'NanumSquareLight';
+.fs-min {
     font-size: 0.9rem;
-}
-
-.font-gray {
-    color: #A1A1A1 !important;
-}
-
-.login, .signup, .password-reset, .password-change {
-    padding-left: 20%;
-    padding-right: 20%;
 }
 
 .footer a, .footer div, .footer span {
     text-decoration-line:none !important;
     color: #A1A1A1;
-}
-
-.social a {
-    text-decoration-line:none !important;
-}
-
-.collapse ul > li > a {
-    text-decoration: none;
-}
-
-.button {
-    background-color: #044FBF;
 }

@@ -4,67 +4,17 @@
 {% load get_attr %}
 {% load convert_account %}
 {% block style %}
-<style>
-    input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    input[type=number] {
-        -moz-appearance:textfield;
-    }
-    
-    .badge {
-        margin: 0px 2px 4px 0px;
-        font-size: 0.8rem;
-    }
-
-    #corp_name {
-        width: 15%;
-    }
-
-    #id_apply_filters span:hover {
-        cursor: pointer;
-    }
-
-    thead th:hover {
-        cursor: pointer;
-    }
-
-    #filter-modal .modal-content {
-        max-height: 550px;
-    }
-
-    @media (max-width: 800px) {
-        .filter_tab {
-            overflow: auto;
-            white-space:nowrap;
-            height: 35px;
-        }
-        #index {
-            width: 100px;
-        }
-        #corp_name {
-            width: 40%;
-        }
-    }
-
-    .form-floating label {
-        font-family: 'NanumSquareAcr';
-        font-size: 1rem;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/search.css' %}">
 {% endblock %}
 {% block content %}
 <div class="mt-5">
-    <span class="font-md fw-semibold">검색결과</span>
-    <span class="font-sm fw-semibold">총 {{ paginator.count }}건</span>
+    <span class="fs-md fw-bold">검색결과</span>
+    <span class="fs-sm fw-semibold">총 {{ paginator.count }}건</span>
 </div>
 
 <div class="row align-items-center">
     <div class="col-8">
-        <div class="font-sm">
+        <div class="fs-sm">
             {% if request.session.corp_name %}
                 {% if request.session.corp_name|length == 6 and request.session.corp_name.isdigit %}
                 <span class="badge text-bg-light">종목코드: {{ request.session.corp_name }}</span>
@@ -75,41 +25,31 @@
             
             {% if request.session.year and request.session.quarter and request.session.fs_type %}
             <span class="badge text-bg-light">
-                {{ request.session.year }}년 
-                {{ request.session.quarter }}분기, 
-                {% if request.session.fs_type == '0' %}
-                연결
-                {% else %}
-                별도
-                {% endif %}
+                {{ request.session.year }}년 {{ request.session.quarter }}분기, {% if request.session.fs_type == '0' %}연결{% else %}별도{% endif %}재무제표 기준
             </span>
             {% else %}
-            <span class="badge text-bg-light">
-                {{ year }}년 
-                {{ quarter }}분기, 
-                별도
-            </span>
+            <span class="badge text-bg-light">{{ year }}년 {{ quarter }}분기, 별도재무제표 기준</span>
             {% endif %}
         </div>
     </div>
     <div class="col-4 d-flex justify-content-end">
         <div class="float-end">
-            <button id="id_reset_filters" type="button" class="btn btn-light btn-sm"><i class="bi bi-arrow-clockwise font-md" data-bs-toggle="tooltip" daxt-bg-primaryta-bs-placement="top" data-bs-title="필터초기화"></i></button>
+            <button id="id_reset_filters" type="button" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-clockwise fs-md" data-bs-toggle="tooltip" daxt-bg-primaryta-bs-placement="top" data-bs-title="필터초기화"></i></button>
             <form id="checked_corp_list" class="d-inline-block" action="{% url 'services:analysis' %}" method="post">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-light btn-sm mx-1"><i class="bi bi-graph-up font-md" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="기업분석"></i></button>
+                <button type="submit" class="btn btn-outline-dark btn-sm mx-1"><i class="bi bi-graph-up fs-md" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="기업분석"></i></button>
             </form>
-            <button type="button" class="btn btn-light btn-sm filter_set fw-bold" data-bs-toggle="modal" data-bs-target="#filter-modal"><i class="bi bi-sliders2 font-md" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="필터설정"></i></button>
+            <button type="button" class="btn btn-outline-dark  btn-sm filter_set fw-bold" data-bs-toggle="modal" data-bs-target="#filter-modal"><i class="bi bi-sliders2 fs-md" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="필터설정"></i></button>
         </div>
     </div>
 </div>
 
 <div id="id_table_wrapper" style="overflow-x: auto;">
-    <table class="table table-hover align-middle font-sm text-center mt-3" id="table">
+    <table class="table table-hover align-middle fs-sm text-center mt-3" id="table">
         <thead>
-            <div class="font-min text-end mt-3">단위: 억원, 배, %</div>
+            <div class="fs-min text-end mt-3 text-black-50">단위: 억원, 배, %</div>
             <tr class="fw-semibold">
-                <th id="corp_name" class="text-left" data-account-name="corp_name">회사명</th>
+                <th class="text-left" data-account-name="corp_name">회사명</th>
                 {% for key in index.keys %}
                 <th class="text-center" data-account-name="{{ key }}">{{ key|convert_account }}</th>
                 {% endfor %}
@@ -122,10 +62,10 @@
                     <div class="d-flex align-items-center col-12">
                         <input class="m-0" type="checkbox" name="checked_corp" value="{{ obj.corp_id }},{{ obj.year }},{{ obj.quarter }},{% if request.session.fs_type %}{{ request.session.fs_type }}{% else %}5{% endif %}" 
                             data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="분석기업 선택">&nbsp;
-                        <a href="{% url 'services:corp_inquiry' obj.corp_id %}" class="text-decoration-none font-sm fw-semibold" style="color:black;">{{ obj.corp_id_id__corp_name }}</a>
+                        <a href="{% url 'services:corp_inquiry' obj.corp_id %}" class="text-decoration-none fs-sm fw-semibold" style="color:black;">{{ obj.corp_id_id__corp_name }}</a>
                     </div>
-                    <span class="badge text-bg-light" style="margin: 1% 1% 1% 0;">{{ obj.corp_id_id__corp_market }}</span>
-                    <span class="badge text-bg-light" style="margin: 1% 1% 1% 0;">{{ obj.corp_id_id__corp_sectors }}</span>
+                    <span class="badge badge-margin text-bg-light">{{ obj.corp_id_id__corp_market }}</span>
+                    <span class="badge badge-margin text-bg-light">{{ obj.corp_id_id__corp_sectors }}</span>
                 </td>
                 {% for key in index.keys %}
                 <td>{{ obj|get_attr:key|floatformat:'2'|intcomma }}</td>
@@ -145,7 +85,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title font-md fw-semibold">필터설정</div>
+                <div class="modal-title fs-md fw-semibold">필터설정</div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -153,31 +93,31 @@
                     <div class="col filter_tab">
                         <ul class="nav nav-underline filter_tabs d-flex flex-nowrap">
                             <li class="nav-item">
-                                <a class="nav-link active font-sm" href="javascript:void(0);">계정과목</a>
+                                <a class="nav-link active fs-sm" href="javascript:void(0);">계정과목</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link font-sm" href="javascript:void(0);">투자지표</a>
+                                <a class="nav-link fs-sm" href="javascript:void(0);">투자지표</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link font-sm" href="javascript:void(0);">배당</a>
+                                <a class="nav-link fs-sm" href="javascript:void(0);">배당</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link font-sm" href="javascript:void(0);">재무제표</a>
+                                <a class="nav-link fs-sm" href="javascript:void(0);">재무제표</a>
                             </li>
                         </ul>
                     </div>
                     <div class="col">
-                        <div class="input-group font-sm">
+                        <div class="input-group fs-sm">
                             <input class="form-control" id="id_search_corp_name" name="corp" type="text" placeholder="기업명·종목코드 입력" onkeyup="searchCorpName(this)">
-                            <button class="btn btn-sm btn-light" onclick="searchCorpName(this)"><i class="bi bi-search font-md"></i></button>
+                            <button class="btn btn-sm btn-secondary" onclick="searchCorpName(this)"><i class="bi bi-search fs-md"></i></button>
                         </div>
                     </div>
                 </div>
-                <div id="id_apply_filters" class="font-sm mt-3">
+                <div id="id_apply_filters" class="fs-sm mt-3">
                 </div>
                 <hr>
                 <div class="row mt-2">
-                    <div id="index" class="col-3 font-sm p-2">
+                    <div id="index" class="col-3 fs-sm p-2">
                         <div id="account_index" style="overflow: auto; height: 180px;">
                             <ul class="nav nav-pills nav-fill flex-column index_tabs">
                                 {% for index in account_index %}
@@ -211,10 +151,10 @@
 
                     <div id="fs_options" style="display: none;">
                         <div class="mx-2 mb-3">
-                            <span class="font-min">* 재무제표는 한 가지만 선택할 수 있습니다.</span>
+                            <span class="fs-min">* 재무제표는 한 가지만 선택할 수 있습니다.</span>
                         </div>
                         <div class="row mx-2 mb-3">
-                            <select class="form-select form-select-sm col font-sm" name="year">
+                            <select class="form-select form-select-sm col fs-sm" name="year">
                                 {% now "Y" as current_year %}
                                 <option selected>년도</option>
                                 <option value="{{ current_year }}">{{ current_year }}</option>
@@ -223,7 +163,7 @@
                                 <option value="{{ current_year|add:'-3' }}">{{ current_year|add:'-3' }}</option>
                             </select>
     
-                            <select class="form-select form-select-sm col mx-2 font-sm" name="quarter">
+                            <select class="form-select form-select-sm col mx-2 fs-sm" name="quarter">
                                 <option selected>분기</option>
                                 <option value="1">1분기</option>
                                 <option value="2">2분기</option>
@@ -231,46 +171,46 @@
                                 <option value="4">4분기</option>
                             </select>
     
-                            <select class="form-select form-select-sm col font-sm" name="fs_type">
+                            <select class="form-select form-select-sm col fs-sm" name="fs_type">
                                 <option selected>재무제표</option>
                                 <option value="0">연결</option>
                                 <option value="5">별도</option>
                             </select>
                         </div>
                         
-                        <button id="id_set_fs_options" class="btn btn-light font-sm float-end mx-2">추가</button>
+                        <button id="id_set_fs_options" class="btn btn-secondary fs-sm float-end mx-2">추가</button>
                     </div>
 
                     <div id="id_insert_index" class="col-8" style="display: none;">
                         <div class="row mb-3">
-                            <span class="col font-md fw-semibold" data-filter-name=""></span>
-                            <span class="col font-min text-end">단위: 억원, 배, %</span>
+                            <span class="col fs-md fw-semibold" data-filter-name=""></span>
+                            <span class="col fs-min text-end text-black-50">단위: 억원, 배, %</span>
                         </div>
 
                         <div class="d-flex align-items-center mb-3">
                             <div class="col">
                                 <div class="form-floating">
                                     <input type="number" class="form-control" id="id_min" placeholder=" ">
-                                    <label class="font-sm" for="id_min">최소값</label>
+                                    <label class="fs-sm" for="id_min">최소값</label>
                                 </div>
                             </div>
-                            <div style="margin: 3%">~</div>
+                            <div class="mx-2">~</div>
                             <div class="col">
                                 <div class="form-floating">
                                     <input type="number" class="form-control" id="id_max" placeholder=" ">
-                                    <label class="font-sm" for="id_min">최대값</label>
+                                    <label class="fs-sm" for="id_min">최대값</label>
                                 </div>
                             </div>
                         </div>
 
-                        <button id="id_add_index" class="btn btn-light font-sm float-end">추가</button>
+                        <button id="id_add_index" class="btn btn-secondary fs-sm float-end">추가</button>
                     </div>
                 </div>
 
             </div>
             <div class="modal-footer">
-                <button class="btn btn-light" data-bs-dismiss="modal">취소</button>
-                <button id="submit_search" class="btn btn-light">완료</button>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                <button id="submit_search" class="btn btn-primary fw-bold">완료</button>
             </div>
         </div>
     </div>
@@ -347,7 +287,7 @@
         filter_name = 'corp_name'
         apply_index = '<span class="badge text-bg-light">' +
             '<span onclick=removeIndex(this,'+'"'+ filter_naRe +'"'+'>'+'기업명: {{ request.session.corp_name }}</span>'+
-            '<span class="btn-close btn-close-white ms-1 text-end remove_index");></span>'+
+            '<span class="btn-close ms-1 text-end remove_index");></span>'+
             '</span>';
 
         $('#id_apply_filters').append(apply_index);
@@ -365,7 +305,7 @@
         
         apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
             '<span>{% if request.session.year and request.session.quarter and request.session.fs_type %}{{ request.session.year }}년 {{ request.session.quarter }}분기 {% else %}{{ year }}년 {{ quarter }}분기 {% endif %} , '+fs_type+'</span>'+
-            '<span class="btn-close btn-close-white ms-1 text-end remove_index"></span>'+
+            '<span class="btn-close ms-1 text-end remove_index"></span>'+
             '</span>';
 
         $('#id_apply_filters').append(apply_index);
@@ -377,7 +317,7 @@
         filter_name_en = '{{ key }}';
         apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
             '<span>{{ key|convert_account }}: {% if value.min == "전체" %} {{ value.min }} {% elif value.min == "이하" %} {{ value.max }} 이하 {% elif value.max == "이상" %} {{ value.min }} 이상 {% else %} {{ value.min }} ~ {{ value.max }} {% endif %}</span>' +
-            '<span class="btn-close btn-close-white ms-1 text-end remove_index"></span>'+
+            '<span class="btn-close ms-1 text-end remove_index"></span>'+
             '</span>';
 
         $('#id_apply_filters').append(apply_index);
@@ -399,7 +339,7 @@
                     else {
                         apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
                                         '<span>'+filter_name_ko+': '+min_val+' ~ '+max_val+'</span>'+
-                                        '<span class="btn-close btn-close-white ms-1 text-end remove_index");></span>'+
+                                        '<span class="btn-close ms-1 text-end remove_index");></span>'+
                                     '</span>';
 
                         $('#id_apply_filters').append(apply_index);
@@ -418,7 +358,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
                                     '<span>'+filter_name_ko+': '+min_val+' 이상'+'</span>'+
-                                    '<span class="btn-close btn-close-white ms-1 text-end remove_index");></span>'+
+                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -433,7 +373,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
                                     '<span>'+filter_name_ko+': '+max_val+' 이하'+'</span>'+
-                                    '<span class="btn-close btn-close-white ms-1 text-end remove_index");></span>'+
+                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -447,7 +387,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
                                     '<span>'+filter_name_ko+': 전체'+'</span>'+
-                                    '<span class="btn-close btn-close-white ms-1 text-end remove_index");></span>'+
+                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -483,7 +423,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
                                     '<span>'+year+'년 '+quarter+' 분기, '+fs_type_name+'</span>'+
-                                    '<span class="btn-close btn-close-white ms-1 text-end remove_index");></span>'+
+                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -506,7 +446,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
                                     '<span>'+'종목코드: '+corp_name+'</span>'+
-                                    '<span class="btn-close btn-close-white ms-1 text-end remove_index"></span>'+
+                                    '<span class="btn-close ms-1 text-end remove_index"></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -520,7 +460,7 @@
                 else {
                     apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
                                     '<span>'+'기업명: '+corp_name+'</span>'+
-                                    '<span class="btn-close btn-close-white ms-1 text-end remove_index");></span>'+
+                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);

@@ -4,36 +4,18 @@
 {% load get_attr %}
 {% load humanize %}
 {% block style %}
-<style>
-    @media (max-width: 800px) {
-        #info_content {
-            display: block;
-        }
-
-        #stock_info {
-            width: 100%;
-        }
-
-        #stock_value {
-            display: flex;
-        }
-
-        #chart_info {
-            width: 100%;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/corp_inquiry.css' %}">
 {% endblock %}
 {% block content %}
 <div class="mt-5 card">
     <div class="card-body">
         <div>
-            <span class="font-md fw-semibold">{{ corp_id.corp_name }}</span>
+            <span class="fs-md fw-semibold">{{ corp_id.corp_name }}</span>
             <a class="bi bi-house" href="https://{{ corp_info.corp_homepage_url }}"></a>
             <div class="btn-group dropend">
                 <button type="button" class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"></button>
                 <ul class="dropdown-menu">
-                    <div class="font-min px-3">
+                    <div class="fs-min px-3">
                         <div><span class="fw-semibold">결산월:</span> {{ corp_info.corp_settlement_month }}월</div>
                         <div><span class="fw-semibold">CEO 명:</span> {{ corp_info.corp_ceo_name }}</div>
                     </div>
@@ -45,73 +27,84 @@
             <span class="badge text-bg-light">{{ corp_id.corp_sectors }}</span>
         </div>
         <div>
-            <span class="font-md fw-semibold">{{ latest_stock_info.close_price|floatformat:'0'|intcomma }}</span>
+            <span class="fs-md fw-semibold">{{ latest_stock_info.close_price|floatformat:'0'|intcomma }}</span>
 
             {% if latest_stock_info.change_price < 0 %}
-            <span class="font-sm fw-semibold"><b class="text-primary">▼</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            <span class="fs-sm fw-semibold"><b class="text-primary">▼</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
             {% elif latest_stock_info.change_price == 0 %}
-            <span class="font-sm fw-semibold"><b class="text-black">-</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            <span class="fs-sm fw-semibold"><b class="text-black">-</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
             {% else %}
-            <span class="font-sm fw-semibold"><b class="text-danger">▲</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            <span class="fs-sm fw-semibold"><b class="text-danger">▲</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
             {% endif %}
 
-            <span class="font-sm fw-semibold text-black-50">{{ latest_stock_info.trade_date }} 기준</span>
+            <span class="fs-min fw-semibold text-black-50">{{ latest_stock_info.trade_date }} 기준</span>
         </div>
         <div class="mt-2">
-            <div class="font-sm fw-semibold">기업소개</div>
-            <div class="font-sm">
+            <div class="fs-sm fw-semibold">기업소개</div>
+            <div class="fs-sm">
                 {% if corp_info.corp_summary is None %}
                 내용이 없습니다.
                 {% else %}
-                {{ corp_info.corp_summary }}
+                {{ corp_info.corp_summary|safe }}
                 {% endif %}
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <div id="chart_info">
+            <div class="row mb-4">
+                <div class="col chart_tab">
+                    <ul class="nav nav-underline chart_tabs d-flex flex-nowrap">
+                        <li class="nav-item">
+                            <a class="nav-link active fs-sm" href="javascript:void(0);">1개월</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">3개월</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">1년</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">3년</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">전체</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div id="chart" style="width: 100%; height: 300px;"></div>
         </div>
 
         <hr class="my-3">
 
-        <div id="info_content" class="row">
-            <div id="stock_info" class="col-4" style="border-right: 1px solid rgba(0, 0, 0, 20%);">
-                <div class="row mb-4">
-                    <div class="col font-md fw-semibold">주식정보</div>
-                    <div class="col font-sm fw-semibold text-black-50 text-end">(단위: 원, 주)</div>
-                </div>
-                <div id="stock_value" class="row">
-                    <div class="col fw-semibold">
-                        <div>52주 최고/최저</div>
-                        <div>거래량</div>
-                        <div>거래대금</div>
-                        <div>시가총액</div>
-                        <div>상장주식수</div>
-                    </div>
-                    <div class="col text-end">
-                        {% if week_52_price %}
-                        <div><span class="text-danger">{{ week_52_price.high_price|floatformat:'0'|intcomma }}</span>/<span class="text-primary">{{ week_52_price.low_price|floatformat:'0'|intcomma }}</span></div>
-                        {% else %}
-                        <div>-</div>
-                        {% endif %}
-                        <div>{{ latest_stock_info.trade_quantity|floatformat:'0'|intcomma }}</div>
-                        <div>{{ latest_stock_info.trade_price|floatformat:'0'|intcomma }}</div>
-                        <div>{{ latest_stock_info.market_capitalization|floatformat:'0'|intcomma }}</div>
-                        <div>{{ latest_stock_info.total_stock|floatformat:'0'|intcomma }}</div>
-                    </div>
-                </div>
+        <div id="stock_info">
+            <div class="row mb-4">
+                <div class="col fs-md fw-semibold">주식정보</div>
+                <div class="col fs-sm fw-semibold text-black-50 text-end">(단위: 원, 주)</div>
             </div>
-            
-            <div id="chart_info" class="col-8">
-                <div class="row mb-4">
-                    <div class="col font-md fw-semibold">차트</div>
-                    <div class="col fw-semibold">
-                        <nav id="id_chart_menu" class="nav font-sm float-end">
-                            <a class="nav-link" href="javascript:void(0);">1개월</a>
-                            <a class="nav-link" href="javascript:void(0);">3개월</a>
-                            <a class="nav-link" href="javascript:void(0);">1년</a>
-                            <a class="nav-link" href="javascript:void(0);">3년</a>
-                            <a class="nav-link" href="javascript:void(0);">전체</a>
-                        </nav>
-                    </div>
+            <div id="stock_value" class="row">
+                <div class="col fw-semibold">
+                    <div>52주 최고/최저</div>
+                    <div>거래량</div>
+                    <div>거래대금</div>
+                    <div>시가총액</div>
+                    <div>상장주식수</div>
                 </div>
-                <div id="chart" style="width: 100%; height: 300px;"></div>
+                <div class="col text-end">
+                    {% if week_52_price %}
+                    <div><span class="text-danger">{{ week_52_price.high_price|floatformat:'0'|intcomma }}</span>/<span class="text-primary">{{ week_52_price.low_price|floatformat:'0'|intcomma }}</span></div>
+                    {% else %}
+                    <div>-</div>
+                    {% endif %}
+                    <div>{{ latest_stock_info.trade_quantity|floatformat:'0'|intcomma }}</div>
+                    <div>{{ latest_stock_info.trade_price|floatformat:'0'|intcomma }}</div>
+                    <div>{{ latest_stock_info.market_capitalization|floatformat:'0'|intcomma }}</div>
+                    <div>{{ latest_stock_info.total_stock|floatformat:'0'|intcomma }}</div>
+                </div>
             </div>
         </div>
     </div>
@@ -131,7 +124,7 @@
         <!-- 재무정보 -->
         <div id="id_fs_info">
             <div class="row my-2">
-                <div class="col font-sm d-flex align-items-center fw-semibold text-black-50 text-start">IFRS 기준, (단위: 억원, 배, %)</div>
+                <div class="col fs-min d-flex align-items-center fw-semibold text-black-50 text-start">IFRS 기준, (단위: 억원, 배, %)</div>
                 <div class="col text-end">
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="btnradio" id="cfs" autocomplete="off" checked>
@@ -144,7 +137,7 @@
             </div>
             {% if fs_date %}
             <div id="id_table_wrapper" style="overflow-x: auto;">
-                <table class="table table-bordered text-center font-sm">
+                <table class="table table-bordered text-center fs-sm">
                     <thead class="bg-light">
                         <tr class="fw-semibold">
                             <th style="position: sticky; border-right: 2px solid rgba(0, 0, 0, 30%); width: 15%;"></th>
@@ -171,7 +164,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <table class="table table-bordered text-center font-sm">
+                <table class="table table-bordered text-center fs-sm">
                     <thead class="bg-light">
                         <tr class="fw-semibold">
                             <th></th>
@@ -190,9 +183,9 @@
         <!-- 공시정보 -->
         <div id="disclosure_info" style="display: none;">
             <div class="my-2">
-                <div class="font-min">공시정보는 최대 3년 이내, 100개만 제공됩니다.</div>
+                <div class="fs-min text-black-50 fw-bold">공시정보는 최대 3년 이내, 100개만 제공됩니다.</div>
             </div>
-            <table class="table table-hover text-center font-sm" id="table">
+            <table class="table table-hover text-center fs-sm" id="table">
                 <thead>
                     <tr class="fw-semibold">
                         <td style="width: 10%;">No.</td>
@@ -223,17 +216,20 @@
                 </tbody>
             </table>
             <div class="d-grid gap-2">
-                <button id="load_more_button" class="btn btn-light" onclick="paging()">더보기( {{ object_list|length }} / {{ paginator.count }} )</button>
+                <button id="load_more_button" class="btn btn-light" onclick="paging()">더보기( {{ page_obj|length }} / {{ page_obj.paginator.count }} )</button>
             </div>
         </div>
     </div>
 </div>
+<input id="page" type="hidden" data-page="{{ page_obj.number }}">
 {% include 'includes/footer.html' %}
 {% endblock %}
 {% block script %}
 <script src="{% static 'js/lightweight-charts.standalone.production.js' %}"></script>
 <script>
     $(document).ready(function() {
+        page_number = Number($('#page').data('page'));
+
         $('#corp_info_tabs > li').on('click', function() {
             if($('#corp_info_tabs > li > a').hasClass('nav-link active') == true) {
                 $('#corp_info_tabs > li > a').removeClass('active');
@@ -253,7 +249,6 @@
         });
     });
 </script>
-
 <script>
     const chartOptions = { 
         layout: { 
@@ -261,15 +256,19 @@
         }
     };
     const container = document.getElementById('chart');
-
     const chart = LightweightCharts.createChart(container, chartOptions);
 
-    const candlestickSeries = chart.addCandlestickSeries({ 
-        upColor: '#ff3545',
-        downColor: '#1058ca',
-        borderVisible: false,
-        wickUpColor: '#ff3545',
-        wickDownColor: '#1058ca'
+    const candlestickSeries = chart.addAreaSeries({
+        {% if latest_stock_info.change_price < 0 %}
+        topColor: "rgba(46, 46, 254, 0.56)",
+        bottomColor: "rgba(38,198,218, 0.04)",
+        lineColor: "rgba(1, 1, 223, 0.75)",
+        {% else %}
+        topColor: "rgba(254, 46, 46, 0.56)",
+        bottomColor: "rgba(38,198,218, 0.04)",
+        lineColor: "rgba(223, 1, 1, 0.75)",
+        {% endif %}
+        lineWidth: 2
     });
 
     candlestickSeries.priceScale().applyOptions({
@@ -283,10 +282,7 @@
         {% for data in stock_data %}
         {
             time: '{{ data.trade_date }}',
-            open: {{ data.open_price }},
-            high: {{ data.high_price }},
-            low: {{ data.low_price }},
-            close: {{ data.close_price }},
+            value: {{ data.close_price }}
         },
         {% endfor %}
     ];
@@ -302,7 +298,7 @@
     });
     volumeSeries.priceScale().applyOptions({
         scaleMargins: {
-            top: 0.7,
+            top: 0.6,
             bottom: 0,
         },
     });
@@ -318,34 +314,52 @@
     volumeSeries.setData(trade_data);
     chart.timeScale().fitContent();
     
+    /* 차트 크기 자동 맞춤 */
+    window.addEventListener('resize', function() {
+        chart.resize(
+            container.offsetWidth,
+            container.offsetHeight
+        );
+    });
+
     /** 차트 기간 설정 버튼 */
-    $('#id_chart_menu > a').on('click', function() {
+    $('.chart_tabs a').on('click', function() {
+        $('.chart_tabs > li > a').removeClass('active');
+        $(this).parent('li').children('a').addClass('active');
         now = new Date();
 
-        switch ($(this).index()) {
+        switch ($(this).parent('li').index()) {
             case 0:
                 chart.timeScale().setVisibleRange({
                     from: new Date(now.getTime()).setMonth(now.getMonth() - 1) / 1000,
                     to: (new Date(now)).getTime() / 1000,
                 });
+                startDate = new Date(now.getTime()).setMonth(now.getMonth() - 1) / 1000
+                endDate = (new Date(now)).getTime() / 1000
                 break;
             case 1:
                 chart.timeScale().setVisibleRange({
                     from: new Date(now.getTime()).setMonth(now.getMonth() - 3) / 1000,
                     to: (new Date(now)).getTime() / 1000,
                 });
+                startDate = new Date(now.getTime()).setMonth(now.getMonth() - 3) / 1000
+                endDate = (new Date(now)).getTime() / 1000
                 break;
             case 2:
                 chart.timeScale().setVisibleRange({
                     from: new Date(now.getTime()).setMonth(now.getMonth() - 12) / 1000,
                     to: (new Date(now)).getTime() / 1000,
                 });
+                startDate = new Date(now.getTime()).setMonth(now.getMonth() - 12) / 1000
+                endDate = (new Date(now)).getTime() / 1000
                 break;
             case 3:
                 chart.timeScale().setVisibleRange({
                     from: new Date(now.getTime()).setMonth(now.getMonth() - 36) / 1000,
                     to: (new Date(now)).getTime() / 1000,
                 });
+                startDate = new Date(now.getTime()).setMonth(now.getMonth() - 36) / 1000
+                endDate = (new Date(now)).getTime() / 1000
                 break;
             case 4:
                 chart.timeScale().fitContent();
@@ -386,7 +400,7 @@
     /** 공시 페이징 */
     function paging() {
         var table = $('#table');
-        var totalPages = {{ paginator.num_pages }};
+        var totalPages = {{ page_obj.paginator.num_pages }};
 
         page_number += 1;
 
@@ -394,8 +408,7 @@
             $.get({
                 url: "{% url 'services:search' %}",
                 data: {
-                    'page': JSON.stringify(page_number),
-                    'ordering': JSON.stringify(orderby)
+                    'page': JSON.stringify(page_number)
                 },
                 error: function() {
                     alert('로그인이 필요한 서비스입니다.');
@@ -409,12 +422,15 @@
                         table.find("tbody").append($(this));
                     })
                     
-                    $("#load_more_button").text("더보기( " + {{ object_list|length }} * page_number + " / {{ paginator.count }} )");
+                    $("#load_more_button").text("더보기( " + {{ page_obj|length }} * 1 + " / {{ page_obj.paginator.count }} )");
                     
                     if (page_number == totalPages) {
                         $("#load_more_button").prop("disabled", true);
-                        $("#load_more_button").text("더보기( {{ paginator.count }} / {{ paginator.count }} )");
+                        $("#load_more_button").text("더보기( {{ page_obj.paginator.count }} / {{ page_obj.paginator.count }} )");
                     }
+
+                    $('#page').remove();
+                    $('.footer').before().before(page);
                 }
             });
         }

@@ -1,0 +1,57 @@
+/*
+    Aimdat Team, 2023.07.05
+*/
+
+/* Search View Default Settings */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance:textfield;
+}
+
+#id_apply_filters span:hover {
+    cursor: pointer;
+}
+
+thead th:hover {
+    cursor: pointer;
+}
+
+#filter-modal .modal-content {
+    max-height: 550px;
+}
+
+.badge-margin {
+    margin: 1% 1% 1% 0;
+}
+
+.form-floating label {
+    font-family: 'NanumSquareAcL';
+    font-size: 1rem;
+}
+
+/* Mobile Settings */
+@media (max-width: 1000px) {
+    .filter_tab {
+        overflow: auto;
+        white-space: nowrap;
+        height: 35px;
+    }
+    #index {
+        width: 100px;
+    }
+    #table > thead > tr > th:first-child {
+        width: 40%;
+    }
+}
+
+/* Desktop Settings */
+@media (min-width: 1000px) {
+    #table > thead > tr > th:first-child {
+        width: 20%;
+    }
+}
