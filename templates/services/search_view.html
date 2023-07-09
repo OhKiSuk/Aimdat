@@ -49,7 +49,7 @@
         <thead>
             <div class="fs-min text-end mt-3 text-black-50">단위: 억원, 배, %</div>
             <tr class="fw-semibold">
-                <th class="text-left" data-account-name="corp_name">회사명</th>
+                <th class="text-left" data-account-name="corp_name">회사명<i class="bi bi-caret-up-fill ordering"></i></th>
                 {% for key in index.keys %}
                 <th class="text-center" data-account-name="{{ key }}">{{ key|convert_account }}</th>
                 {% endfor %}

@@ -5,7 +5,6 @@
 @modified at 2023.04.11
 @author OKS in Aimdat Team
 """
-from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
@@ -62,7 +61,7 @@ class UserCreationForm(UserCreationForm):
         
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.expiration_date = datetime(2023, 4, 11) + relativedelta(months=3)
+        user.expiration_date = datetime(9999, 12, 31)
         user.set_password(self.cleaned_data["password1"])
         if commit and self.cleaned_data['terms_of_use_agree'] and self.cleaned_data['terms_of_privacy_agree'] and self.cleaned_data['is_not_teen']:
             user.save()
