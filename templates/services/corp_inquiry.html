@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load divide_marketcap %}
 {% load convert_account %}
 {% load get_attr %}
 {% load humanize %}
@@ -59,7 +60,7 @@
                 <div class="col chart_tab">
                     <ul class="nav nav-underline chart_tabs d-flex flex-nowrap">
                         <li class="nav-item">
-                            <a class="nav-link active fs-sm" href="javascript:void(0);">1개월</a>
+                            <a class="nav-link fs-sm" href="javascript:void(0);">1개월</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link fs-sm" href="javascript:void(0);">3개월</a>
@@ -71,7 +72,7 @@
                             <a class="nav-link fs-sm" href="javascript:void(0);">3년</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fs-sm" href="javascript:void(0);">전체</a>
+                            <a class="nav-link active fs-sm" href="javascript:void(0);">전체</a>
                         </li>
                     </ul>
                 </div>
@@ -102,7 +103,14 @@
                     {% endif %}
                     <div>{{ latest_stock_info.trade_quantity|floatformat:'0'|intcomma }}</div>
                     <div>{{ latest_stock_info.trade_price|floatformat:'0'|intcomma }}</div>
+                    <!-- 시가총액 단위 -->
+                    {% if latest_stock_info.market_capitalization >= 100_000_000_000 %}
+                    <div>{{ latest_stock_info.market_capitalization|divide_marketcap|intcomma }}</div>
+                    {% elif latest_stock_info.market_capitalization >= 100_000_000 %}
+                    <div>{{ latest_stock_info.market_capitalization|divide_marketcap|intcomma }}</div>
+                    {% else %}
                     <div>{{ latest_stock_info.market_capitalization|floatformat:'0'|intcomma }}</div>
+                    {% endif %}
                     <div>{{ latest_stock_info.total_stock|floatformat:'0'|intcomma }}</div>
                 </div>
             </div>
@@ -274,7 +282,7 @@
     candlestickSeries.priceScale().applyOptions({
         scaleMargins: {
             top: 0.2,
-            bottom: 0.4,
+            bottom: 0.6,
         },
     });
 
@@ -290,6 +298,8 @@
     candlestickSeries.setData(data);
     
     const volumeSeries = chart.addHistogramSeries({
+        topColor: undefined, 
+        bottomColor: undefined, 
         priceScaleId: '',
         priceFormat: {
             type: "volume"
@@ -298,7 +308,7 @@
     });
     volumeSeries.priceScale().applyOptions({
         scaleMargins: {
-            top: 0.6,
+            top: 0.7,
             bottom: 0,
         },
     });
@@ -406,7 +416,7 @@
 
         if (page_number <= totalPages) {
             $.get({
-                url: "{% url 'services:search' %}",
+                url: "{% url 'services:corp_inquiry' corp_info.id %}",
                 data: {
                     'page': JSON.stringify(page_number)
                 },
