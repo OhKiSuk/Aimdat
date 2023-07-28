@@ -2,7 +2,7 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.06.19
+@modified at 2023.07.26
 @author OKS in Aimdat Team
 """
 import csv
@@ -11,8 +11,9 @@ import logging
 import os
 import pandas
 import pymongo
-import time
+import re
 import shutil
+import time
 import zipfile
 
 from bson.decimal128 import Decimal128
@@ -48,7 +49,7 @@ def _get_ifrs_xbrl_txt(years, quarters):
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options = option)
+    driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options = option)
 
     # 수집할 데이터
     report = ['재무상태표', '손익계산서', '현금흐름표']
@@ -108,7 +109,7 @@ def _get_dcorp_list():
         option.add_argument("--headless")
         option.add_argument('--no-sandbox')
         option.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
+        driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
         driver.get(url)
         time.sleep(5)
         
@@ -154,10 +155,6 @@ def _parse_txt(stock_codes):
     for txt_file in txt_files:
         df = pandas.read_csv(os.path.join(path, txt_file), sep='\t', encoding='CP949', dtype='unicode', header=0)
 
-        # 손익계산서 건너뛰기
-        if '_02_' in txt_file:
-            continue
-
         # 불필요한 값 제거
         unused_cols = df.columns.str.contains('전기|Unnamed')
         df = df.drop(df[df.columns[unused_cols]], axis=1)
@@ -198,13 +195,18 @@ def _parse_txt(stock_codes):
             
             # 계정과목 저장
             for _, row in match_rows.iterrows():
+                if str(row['항목명']).endswith('.'):
+                    row['항목명'] = row['항목명'][:-1]
+
+                account_name = re.sub(r'\s+', '', row['항목명'])
+
                 if row.filter(regex=r'(?!.*3개월)당기').empty:
-                    fs_dict[row['항목명']] = None 
+                    fs_dict[account_name] = None 
                 else:
                     if row.filter(regex=r'(?!.*3개월)당기').iloc[0] == 'nan':
-                        fs_dict[row['항목명']] = None
+                        fs_dict[account_name] = None
                     else:
-                        fs_dict[row['항목명']] = Decimal128(str(row.filter(regex=r'(?!.*3개월)당기').iloc[0]).replace(',', ''))
+                        fs_dict[account_name] = Decimal128(str(row.filter(regex=r'(?!.*3개월)당기').iloc[0]).replace(',', ''))
 
             fs_dict_list.append(fs_dict)
     

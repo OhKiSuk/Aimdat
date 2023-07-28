@@ -2,7 +2,7 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.06.19
+@modified at 2023.07.19
 @author OKS in Aimdat Team
 """
 import csv
@@ -47,7 +47,7 @@ def _get_fcorp_list():
         option.add_argument("--headless")
         option.add_argument('--no-sandbox')
         option.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
+        driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
         driver.get(url)
         time.sleep(5)
 
@@ -89,7 +89,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
+    driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
     
     fs_result = []
     # 검색 후 재무제표 획득
@@ -124,7 +124,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
             LOGGER.info(e, stock_code, year, quarter, fs_type)
 
         # 새로운 체크박스 중 첫 번째 체크박스 클릭
-        checkbox = driver.find_element(By.XPATH, '(//input[@type="checkbox"][@name="checkCorpSelect"])[1]')
+        checkbox = WebDriverWait(driver, 1).until(EC.presence_of_element_located((By.XPATH, '//*[@id="checkCorpSelect"]')))
         checkbox.click()
 
         search_button = driver.find_element(By.CLASS_NAME, 'btn_s_b')
@@ -212,8 +212,9 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                 
                 rows = table.find_all('tr')
                 # 차변/대변 존재 여부 확인
-                if len(table.find_all(attrs={'colspan': '2'})) and len(table.find_all(string=re.compile(r'제(\s|&nbsp;)*[0-9]+(\s|&nbsp;)*(\(당\))?기?말?(\s|&nbsp;)*((1|3)분기|반기)?(\s|&nbsp;)*말?$'))) > 0 or \
-                    len(table.find_all(attrs={'colspan': '2'})) and len(table.find_all(string=re.compile(r'(3(\s|&nbsp;)?개(\s|&nbsp;)*월|누(\s|&nbsp;)*적(\s|&nbsp;)*)'))) > 0:
+                if len(table.find_all(attrs={'colspan': '2'})) and len(table.find_all(string=re.compile(r'제(\s|&nbsp;)*[0-9]+(\s|&nbsp;)*(\(당\))?기?말?(\s|&nbsp;)*((1|3)분기|반기)?(\s|&nbsp;)*말?'))) > 0 or \
+                    len(table.find_all(string=re.compile(r'(3(\s|&nbsp;)?개(\s|&nbsp;)*월|누(\s|&nbsp;)*적(\s|&nbsp;)*)'))) > 0 or \
+                    len(table.find_all(string=re.compile(r'(회계연도|당분기)'))):
                     for row in rows:
                         # 재무제표 표 헤더 건너뛰기
                         if row.find_all(name='th') or len(row.find_all(string=re.compile(r'과(\s|&nbsp;)*목$'))) > 0 or\
@@ -226,13 +227,16 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                             # colspan이 합쳐져 있는 형태의 계정과목 생략
                             continue
                         else:
-                            account_subject = tds[0].get_text() # 계정과목
+                            account_subject = re.sub(r'\s+', '', tds[0].get_text()) # 계정과목
+
+                            if str(account_subject).endswith('.'):
+                                account_subject = account_subject[:-1]
 
                         # row가 합쳐져 있는 형태를 찾은 경우 log 저장 후 넘김
                         rowspan_tds = [td for td in tds if td.has_attr('rowspan')]
                         if len(rowspan_tds) > 0 or len(row.find_all(name='td')) == 1:
                             # A503 로깅
-                            LOGGER.info('[A503] 합쳐진 row가 발견됨. {}, {}, {}, {}, {}'.format(stock_code, year, quarter, fs_type, tds[0].get_text()))
+                            LOGGER.info('[A503] 합쳐진 row가 발견됨. {}, {}, {}, {}, {}'.format(stock_code, year, quarter, fs_type, account_subject))
                             continue
 
                         # 표 헤더 부분의 주석 존재 확인
@@ -282,7 +286,10 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
                             # colspan이 합쳐져 있는 형태의 계정과목 생략
                             continue
                         else:
-                            account_subject = tds[0].get_text() # 계정과목
+                            account_subject = re.sub(r'\s+', '', tds[0].get_text()) # 계정과목
+
+                            if str(account_subject).endswith('.'):
+                                account_subject = account_subject[:-1]
 
                         # 표 헤더 부분의 주석 존재 확인
                         if table.find(string=re.compile(r'주(\s|&nbsp;)*석$')):

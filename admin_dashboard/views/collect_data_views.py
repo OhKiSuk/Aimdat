@@ -2,8 +2,8 @@
 @created at 2023.03.25
 @author cslee in Aimdat Team
 
-@modified at 2023.06.15
-@author JSU in Aimdat Team
+@modified at 2023.07.19
+@author OKS in Aimdat Team
 """
 
 import logging
@@ -420,52 +420,26 @@ class CollectInvestmentIndexView(View):
             fs_types = ['0', '5']
         else:
             fs_types = [fs_type]
-
+        
+        exclude_fields = ['id', 'corp_id', 'year', 'quarter', 'fs_type']
         for y in years:
             for q in quarters:
                 for f in fs_types:
-                    result = save_investment_index(y, q, f)
+                    data_list = save_investment_index(y, q, f)
 
-                    if result:
-                        for data in result:
-                            LastCollectDate.objects.create(
-                                    collect_user = request.user.email,
-                                    collect_type = 'investment_index'
-                            )
+                    if data_list:
+                        InvestmentIndex.objects.bulk_create(
+                            data_list, 
+                            update_conflicts=True,
+                            unique_fields=['id', 'corp_id', 'year', 'quarter', 'fs_type'],
+                            update_fields=[f.name for f in InvestmentIndex._meta.fields if f.name not in exclude_fields]
+                        )
 
-                            InvestmentIndex.objects.create(
-                                corp_id=CorpId.objects.get(stock_code=data['stock_code']),
-                                year=data['year'], 
-                                quarter=data['quarter'],
-                                fs_type=data['fs_type'], 
-                                revenue=data['revenue'], 
-                                operating_profit=data['operating_profit'],
-                                net_profit=data['net_profit'],
-                                cost_of_sales_ratio=data['cost_of_sales_ratio'], 
-                                operating_margin=data['operating_margin'],
-                                net_profit_margin=data['net_profit_margin'], 
-                                roe=data['roe'],
-                                roa=data['roa'], 
-                                current_ratio=data['current_ratio'], 
-                                quick_ratio=data['quick_ratio'],
-                                debt_ratio=data['debt_ratio'], 
-                                per=data['per'], 
-                                pbr=data['pbr'],
-                                psr=data['psr'], 
-                                eps=data['eps'], 
-                                bps=data['bps'], 
-                                dps=data['dps'], 
-                                ev_ebitda=data['ev_ebitda'],
-                                ev_ocf=data['ev_ocf'], 
-                                dividend=data['dividend'],
-                                dividend_ratio=data['dividend_ratio'], 
-                                dividend_payout_ratio=data['payout_ratio']
-                            )
                         # A601 로깅
-                        LOGGER.info('[A601] 투자지표를 성공적으로 수집. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), result[0]['fs_type']))
+                        LOGGER.info('[A601] 투자지표를 성공적으로 수집. {}, {}, {}'.format(str(request.user), str(year), str(quarter)))
                     else:
                         # A602 로깅
-                        LOGGER.error('[A602] 투자지표가 정상 수집되지 않음. {}, {}, {}, {}'.format(str(request.user), str(year), str(quarter), fs_type))
+                        LOGGER.error('[A602] 투자지표가 정상 수집되지 않음. {}, {}, {}'.format(str(request.user), str(year), str(quarter), fs_type))
 
         try:
             lastest_fs_date = LastCollectDate.objects.filter(collect_type='investment_index').last().collect_date.strftime('%Y-%m-%d')

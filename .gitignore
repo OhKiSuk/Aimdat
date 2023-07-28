@@ -11,8 +11,13 @@ db.sqlite3
 db.sqlite3-journal
 media
 logs
+
+### 서버 설정 파일 ###
 secrets.json
 robots.txt
+
+### 계정과목 목록 ###
+account_list/
 
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/
 # in your Git repository. Update and uncomment the following line accordingly.
