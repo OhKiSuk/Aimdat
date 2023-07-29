@@ -2,7 +2,7 @@
 @created at 2023.03.22
 @author JSU in Aimdat Team
 
-@modified at 2023.06.21
+@modified at 2023.07.29
 @author OKS in Aimdat Team
 """
 import requests
@@ -78,7 +78,7 @@ class CorpInquiryView(DetailView):
         context['fs_date'] = InvestmentIndex.objects.filter(corp_id=id, fs_type=fs_type).order_by('-year', '-quarter').values('year', 'quarter')
 
         # U201 로깅
-        LOGGER.info('[U201] 상세 분석 시도한 기업 정보. {}'.format(self.context_object_name))
+        LOGGER.info('[U201] 상세 분석 시도한 기업 정보. {}'.format(CorpId.objects.get(id=id).corp_name))
         
         return context
 

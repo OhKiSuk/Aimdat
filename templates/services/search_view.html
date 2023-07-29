@@ -49,7 +49,7 @@
         <thead>
             <div class="fs-min text-end mt-3 text-black-50">단위: 억원, 배, %</div>
             <tr class="fw-semibold">
-                <th class="text-left" data-account-name="corp_name">회사명<i class="bi bi-caret-up-fill ordering"></i></th>
+                <th class="text-left asc" data-account-name="corp_name">회사명<i class="bi bi-caret-up-fill ordering"></i></th>
                 {% for key in index.keys %}
                 <th class="text-center" data-account-name="{{ key }}">{{ key|convert_account }}</th>
                 {% endfor %}
@@ -89,29 +89,42 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="col filter_tab">
-                        <ul class="nav nav-underline filter_tabs d-flex flex-nowrap">
-                            <li class="nav-item">
-                                <a class="nav-link active fs-sm" href="javascript:void(0);">계정과목</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link fs-sm" href="javascript:void(0);">투자지표</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link fs-sm" href="javascript:void(0);">배당</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link fs-sm" href="javascript:void(0);">재무제표</a>
-                            </li>
-                        </ul>
-                    </div>
+                <div class="row mb-2">
+                    <div class="col"></div>
                     <div class="col">
                         <div class="input-group fs-sm">
                             <input class="form-control" id="id_search_corp_name" name="corp" type="text" placeholder="기업명·종목코드 입력" onkeyup="searchCorpName(this)">
                             <button class="btn btn-sm btn-secondary" onclick="searchCorpName(this)"><i class="bi bi-search fs-md"></i></button>
                         </div>
                     </div>
+                </div>
+                <div class="filter_tab">
+                    <ul class="nav nav-underline filter_tabs d-flex flex-nowrap">
+                        <li class="nav-item">
+                            <a class="nav-link active fs-sm" href="javascript:void(0);">계정과목</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">안정성</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">수익성</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">활동성</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">성장성</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">투자지표</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">배당</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">재무제표</a>
+                        </li>
+                    </ul>
                 </div>
                 <div id="id_apply_filters" class="fs-sm mt-3">
                 </div>
@@ -127,6 +140,47 @@
                                 {% endfor %}
                             </ul>
                         </div>
+
+                        <div id="safety_index" style="display: none; overflow: auto; height: 180px;">
+                            <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                                {% for index in safety_index %}
+                                <li class="nav-item" data-index-name="{{ index }}">
+                                    <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div id="profitability_index" style="display: none; overflow: auto; height: 180px;">
+                            <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                                {% for index in profitability_index %}
+                                <li class="nav-item" data-index-name="{{ index }}">
+                                    <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div id="activity_index" style="display: none; overflow: auto; height: 180px;">
+                            <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                                {% for index in activity_index %}
+                                <li class="nav-item" data-index-name="{{ index }}">
+                                    <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div id="growth_index" style="display: none; overflow: auto; height: 180px;">
+                            <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                                {% for index in growth_index %}
+                                <li class="nav-item" data-index-name="{{ index }}">
+                                    <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
 
                         <div id="investment_index" style="display: none; overflow: auto; height: 180px;">
                             <ul class="nav nav-pills nav-fill flex-column index_tabs">
@@ -250,15 +304,39 @@
                     $('#index > div').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
-                    $('#investment_index').show();
+                    $('#safety_index').show();
                     break;
                 case 2:
                     $('#index > div').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
-                    $('#dividend_index').show();
+                    $('#profitability_index').show();
                     break;
                 case 3:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#activity_index').show();
+                    break;
+                case 4:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#growth_index').show();
+                    break;
+                case 5:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#investment_index').show();
+                    break;
+                case 6:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#dividend_index').show();
+                    break;
+                case 7:
                     $('#index > div').hide();
                     $('#id_insert_index').hide();
                     $('#fs_options').show();
@@ -285,9 +363,9 @@
         /** 기존 설정 기업 */
         {% if request.session.corp_name %}
         filter_name = 'corp_name'
-        apply_index = '<span class="badge text-bg-light">' +
-            '<span onclick=removeIndex(this,'+'"'+ filter_naRe +'"'+'>'+'기업명: {{ request.session.corp_name }}</span>'+
-            '<span class="btn-close ms-1 text-end remove_index");></span>'+
+        apply_index = '<span id="corp_name" class="badge text-bg-light">' +
+            '<span onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>'+'기업명(종목코드): {{ request.session.corp_name }}</span>'+
+            '<span class="btn-close ms-1 text-end"></span>'+
             '</span>';
 
         $('#id_apply_filters').append(apply_index);
@@ -303,9 +381,9 @@
         
         filter_name = 'fs_options'
         
-        apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
-            '<span>{% if request.session.year and request.session.quarter and request.session.fs_type %}{{ request.session.year }}년 {{ request.session.quarter }}분기 {% else %}{{ year }}년 {{ quarter }}분기 {% endif %} , '+fs_type+'</span>'+
-            '<span class="btn-close ms-1 text-end remove_index"></span>'+
+        apply_index = '<span id="fs_type" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+            '<span>{% if request.session.year and request.session.quarter and request.session.fs_type %}{{ request.session.year }}년 {{ request.session.quarter }}분기 {% else %}{{ year }}년 {{ quarter }}분기 {% endif %}, '+fs_type+'</span>'+
+            '<span class="btn-close ms-1 text-end"></span>'+
             '</span>';
 
         $('#id_apply_filters').append(apply_index);
@@ -315,9 +393,9 @@
         /** 기존 설정 필터 */
         {% for key, value in index.items %}
         filter_name_en = '{{ key }}';
-        apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+        apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
             '<span>{{ key|convert_account }}: {% if value.min == "전체" %} {{ value.min }} {% elif value.min == "이하" %} {{ value.max }} 이하 {% elif value.max == "이상" %} {{ value.min }} 이상 {% else %} {{ value.min }} ~ {{ value.max }} {% endif %}</span>' +
-            '<span class="btn-close ms-1 text-end remove_index"></span>'+
+            '<span class="btn-close ms-1 text-end"></span>'+
             '</span>';
 
         $('#id_apply_filters').append(apply_index);
@@ -333,18 +411,14 @@
 
             if ($.isNumeric(min_val) == true && $.isNumeric(max_val) == true) {
                 if (Number(min_val) <= Number(max_val)) {
-                    if (Object.keys(indexes).some(v => v == filter_name_en)) {
-                        alert('이미 적용된 필터입니다.');
-                    }
-                    else {
-                        apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
-                                        '<span>'+filter_name_ko+': '+min_val+' ~ '+max_val+'</span>'+
-                                        '<span class="btn-close ms-1 text-end remove_index");></span>'+
-                                    '</span>';
-
-                        $('#id_apply_filters').append(apply_index);
-                        indexes[filter_name_en] = {'min': min_val, 'max': max_val};
-                    }
+                    apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                    '<span>'+filter_name_ko+': '+min_val+' ~ '+max_val+'</span>'+
+                                    '<span class="btn-close ms-1 text-end"></span>'+
+                                '</span>';
+                    
+                    $('#'+filter_name_en).remove();
+                    $('#id_apply_filters').append(apply_index);
+                    indexes[filter_name_en] = {'min': min_val, 'max': max_val};
                 }
                 else {
                     alert('최소값이 최대값보다 클 수 없습니다.');
@@ -352,47 +426,35 @@
             }
             // 이상
             else if ($.isNumeric(min_val) == true && $.isNumeric(max_val) == false) {
-                if (Object.keys(indexes).some(v => v == filter_name_en)) {
-                        alert('이미 적용된 필터입니다.');
-                }
-                else {
-                    apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
-                                    '<span>'+filter_name_ko+': '+min_val+' 이상'+'</span>'+
-                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
-                                '</span>';
-
-                    $('#id_apply_filters').append(apply_index);
-                    indexes[filter_name_en] = {'min': min_val, 'max': '이상'};
-                }
+                apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                '<span>'+filter_name_ko+': '+min_val+' 이상'+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                    
+                $('#'+filter_name_en).remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name_en] = {'min': min_val, 'max': '이상'};
             }
             // 이하
             else if ($.isNumeric(min_val) == false && $.isNumeric(max_val) == true) {
-                if (Object.keys(indexes).some(v => v == filter_name_en)) {
-                        alert('이미 적용된 필터입니다.');
-                }
-                else {
-                    apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
-                                    '<span>'+filter_name_ko+': '+max_val+' 이하'+'</span>'+
-                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
-                                '</span>';
-
-                    $('#id_apply_filters').append(apply_index);
-                    indexes[filter_name_en] = {'min': '이하', 'max': max_val};
-                }
+                apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                '<span>'+filter_name_ko+': '+max_val+' 이하'+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#'+filter_name_en).remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name_en] = {'min': '이하', 'max': max_val};
             }
             else if (min_val == '' && max_val == ''){
-                if (Object.keys(indexes).some(v => v == filter_name_en)) {
-                        alert('이미 적용된 필터입니다.');
-                }
-                else {
-                    apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
-                                    '<span>'+filter_name_ko+': 전체'+'</span>'+
-                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
-                                '</span>';
-
-                    $('#id_apply_filters').append(apply_index);
-                    indexes[filter_name_en] = {'min': '전체', 'max': '전체'};
-                }
+                apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                '<span>'+filter_name_ko+': 전체'+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#'+filter_name_en).remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name_en] = {'min': '전체', 'max': '전체'};
             }
             else {
                 alert('올바른 값을 입력하세요.');
@@ -416,19 +478,14 @@
                 else if (fs_type == 5) {
                     fs_type_name = '별도'
                 }
-
-                if (Object.keys(indexes).some(v => v == filter_name)) {
-                        alert('이미 적용된 필터입니다.');
-                }
-                else {
-                    apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
-                                    '<span>'+year+'년 '+quarter+' 분기, '+fs_type_name+'</span>'+
-                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
-                                '</span>';
-
-                    $('#id_apply_filters').append(apply_index);
-                    indexes[filter_name] = {'year': year, 'quarter': quarter, 'fs_type': fs_type};
-                }
+                apply_index = '<span id="fs_type" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                                '<span>'+year+'년 '+quarter+' 분기, '+fs_type_name+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#fs_type').remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name] = {'year': year, 'quarter': quarter, 'fs_type': fs_type};
             }
         });
     });
@@ -444,9 +501,9 @@
                     alert('이미 적용된 필터입니다.');
                 }
                 else {
-                    apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                    apply_index = '<span id="corp_name" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
                                     '<span>'+'종목코드: '+corp_name+'</span>'+
-                                    '<span class="btn-close ms-1 text-end remove_index"></span>'+
+                                    '<span class="btn-close ms-1 text-end"></span>'+
                                 '</span>';
 
                     $('#id_apply_filters').append(apply_index);
@@ -454,18 +511,14 @@
                 }
             }
             else if ($.isNumeric(corp_name) == false) {
-                if (Object.keys(indexes).some(v => v == filter_name)) {
-                    alert('이미 적용된 필터입니다.');
-                }
-                else {
-                    apply_index = '<span class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
-                                    '<span>'+'기업명: '+corp_name+'</span>'+
-                                    '<span class="btn-close ms-1 text-end remove_index");></span>'+
-                                '</span>';
-
-                    $('#id_apply_filters').append(apply_index);
-                    indexes[filter_name] = corp_name;
-                }
+                apply_index = '<span id="corp_name" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                                '<span>'+'기업명: '+corp_name+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#corp_name').remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name] = corp_name;
             }
             else {
                 alert('올바른 값을 입력해주세요.');
@@ -603,12 +656,11 @@
                 },
                 success: function(response) {
                     var responseHTML = $.parseHTML(response);
-                    var rows = $(responseHTML).find("#table tbody tr");
+                    var tbody = $(responseHTML).find("#table tbody");
                     var page = $(responseHTML).find("#page");
 
-                    rows.each(function() {
-                        table.find("tbody").append($(this));
-                    })
+                    $('#table tbody').remove();
+                    $('#table thead').after(tbody);
                     
                     $("#load_more_button").text("더보기( " + {{ object_list|length }} * page_number + " / {{ paginator.count }} )");
                     

@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.07.05
+@modified at 2023.07.29
 @author OKS in Aimdat Team
 """
 import json
@@ -41,24 +41,28 @@ class SearchView(ListView):
         return False
     
     def get_ordering(self):
-        ordering = json.loads(self.request.GET.get('ordering', '"-corp_id__corp_name"'))
+        ordering = json.loads(self.request.GET.get('ordering', '"corp_id__corp_name"'))
 
-        if ordering == 'corp_name' or ordering == '-corp_name':
-            if str(ordering).startswith('-'):
-                ordering = 'corp_id__corp_name'
-            else:
-                ordering = '-corp_id__corp_name'
+        if ordering == 'corp_name':
+             ordering = 'corp_id__corp_name'
+        elif ordering == '-corp_name':
+            ordering = '-corp_id__corp_name'
 
         return ordering
     
-    def get_paginate_by(self, queryset):
+    def paginate_queryset(self, queryset, page_size):
+        if 'page' in self.request.GET:
+            paginator = self.get_paginator(
+                queryset,
+                page_size*int(self.request.GET['page']),
+                orphans=self.get_paginate_orphans(),
+                allow_empty_first_page=self.get_allow_empty(),
+            )
 
-        if self.request.GET.get('page'):
-            page = self.request.GET.get('page')
+            page = paginator.page(1)
+            return (paginator, page, page.object_list, page.has_other_pages())
 
-            return self.paginate_by * int(page)
-        else:
-            return super().get_paginate_by(queryset)
+        return super().paginate_queryset(queryset, page_size)
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -119,8 +123,9 @@ class SearchView(ListView):
                             q &= Q(**{index+'__range': (Decimal(min), Decimal(max))})
                     
                         indexes_en.append(index)                     
-            
-            queryset = queryset.filter(q).values('corp_id', 'year', 'quarter', *indexes_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+
+            queryset = queryset.filter(q)\
+                .values('corp_id', 'year', 'quarter', *indexes_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
             return queryset
         else:
             default_index = ['revenue', 'operating_profit', 'operating_margin']
@@ -132,7 +137,8 @@ class SearchView(ListView):
 
                 q &= Q(**{index_name+'__range': (Decimal(investment_index_min), Decimal(investment_index_max))})
 
-            queryset = queryset.filter(q).values('corp_id', 'year', 'quarter', *default_index, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+            queryset = queryset.filter(q)\
+                .values('corp_id', 'year', 'quarter', *default_index, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
             return queryset
 
     def get_context_data(self, **kwargs):
@@ -143,16 +149,48 @@ class SearchView(ListView):
         recent_quarter = InvestmentIndex.objects.filter(year=recent_year).aggregate(recent_quarter=Max('quarter'))['recent_quarter']
 
         # 지표 구분
-        account_index = ['revenue', 'operating_profit', 'net_profit']
-        investment_index = [
-            'cost_of_sales_ratio',
-            'operating_margin',
-            'net_profit_margin',
-            'roe',
-            'roa',
+        account_index = [
+            'revenue', 
+            'operating_profit', 
+            'net_profit',
+            'total_assets',
+            'total_debt',
+            'total_capital',
+            'operating_cash_flow',
+            'investing_cash_flow',
+            'financing_cash_flow',
+        ]
+        safety_index = [
             'current_ratio',
             'quick_ratio',
             'debt_ratio',
+            'interest_coverage_ratio'
+        ]
+        profitability_index = [
+            'cost_of_sales_ratio',
+            'gross_profit_margin',
+            'operating_margin',
+            'net_profit_margin',
+            'roic',
+            'roe',
+            'roa'
+        ]
+        activity_index = [
+            'total_assets_turnover',
+            'inventory_turnover',
+            'accounts_receivables_turnover',
+            'accounts_payable_turnover',
+            'working_capital_requirement',
+            'working_capital_once'
+        ]
+        growth_index = [
+            'revenue_growth',
+            'operating_profit_growth',
+            'net_profit_growth',
+            'net_worth_growth',
+            'assets_growth'
+        ]
+        investment_index = [
             'per',
             'pbr',
             'psr',
@@ -194,6 +232,10 @@ class SearchView(ListView):
             }
 
         context['account_index'] = account_index
+        context['safety_index'] = safety_index
+        context['profitability_index'] = profitability_index
+        context['activity_index'] = activity_index
+        context['growth_index'] = growth_index
         context['investment_index'] = investment_index
         context['dividend_index'] = dividend_index
 
@@ -212,6 +254,8 @@ class SearchView(ListView):
                     del self.request.session[key]
         else:
             indexes = json.loads(request.body.decode('utf-8'))
+            recent_year = InvestmentIndex.objects.all().aggregate(recent_year=Max('year'))['recent_year']
+            recent_quarter = InvestmentIndex.objects.filter(year=recent_year).aggregate(recent_quarter=Max('quarter'))['recent_quarter']
 
             if indexes:
                 index_session = {}
@@ -219,9 +263,14 @@ class SearchView(ListView):
                     if index_name == 'corp_name':
                         self.request.session['corp_name'] = indexes['corp_name']
                     elif index_name == 'fs_options':
-                        self.request.session['year'] = indexes['fs_options']['year']
-                        self.request.session['quarter'] = indexes['fs_options']['quarter']
-                        self.request.session['fs_type'] = indexes['fs_options']['fs_type']
+                        if indexes['fs_options']['year'] == '' or indexes['fs_options']['quarter'] == '' or indexes['fs_options']['fs_type'] == '':
+                            self.request.session['year'] = recent_year
+                            self.request.session['quarter'] = recent_quarter
+                            self.request.session['fs_type'] = 5
+                        else:
+                            self.request.session['year'] = indexes['fs_options']['year']
+                            self.request.session['quarter'] = indexes['fs_options']['quarter']
+                            self.request.session['fs_type'] = indexes['fs_options']['fs_type']
                     else:
                         index_session[index_name] = indexes[index_name]
                     
@@ -230,9 +279,9 @@ class SearchView(ListView):
                         del self.request.session['corp_name']
                 if 'fs_options' not in indexes.keys():
                     if 'year' in self.request.session and 'quarter' in self.request.session and 'fs_type' in self.request.session:
-                        del self.request.session['year']
-                        del self.request.session['quarter']
-                        del self.request.session['fs_type']
+                        self.request.session['year'] = recent_year
+                        self.request.session['quarter'] = recent_quarter
+                        self.request.session['fs_type'] = 5
                 
                 self.request.session['index'] = index_session
                 # U101 로깅

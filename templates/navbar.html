@@ -3,10 +3,12 @@
         <div class="d-flex align-items-center py-3">
             <a class="text-decoration-none fs-lg fw-bold text-white" href="{% url 'index' %}">Aimdat</a>
             <div class="ms-auto">
-                {% if user.is_authenticated %}
-                <a class="fs-md text-decoration-none me-2 text-white" href="{% url 'services:mypage' %}">마이페이지</a>
+                <a class="fs-sm text-decoration-none text-white fw-bold" href="https://blog.naver.com/dhrltjr100/223151065165">이용가이드</a>
                 <div class="vr mx-2 text-white"></div>
-                <a class="fs-md text-decoration-none text-white" href="{% url 'account:logout' %}">로그아웃</a>
+                {% if user.is_authenticated %}
+                <a class="fs-sm text-decoration-none text-white" href="{% url 'services:mypage' %}">마이페이지</a>
+                <div class="vr mx-2 text-white"></div>
+                <a class="fs-sm text-decoration-none text-white" href="{% url 'account:logout' %}">로그아웃</a>
                 {% else %}
                 <a class="fs-sm text-decoration-none text-white" href="{% url 'account:login' %}">로그인</a>
                 <div class="vr mx-2 text-white"></div>
