@@ -2,7 +2,7 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.06.19
+@modified at 2023.08.09
 @author OKS in Aimdat Team
 """
 import csv
@@ -83,7 +83,7 @@ def _collect_corp_info(stock_codes):
 
                 # API 호출 로깅
                 try:
-                    response = requests.get(url, params=params, verify=False)
+                    response = requests.get(url, params=params)
                 except ConnectTimeout:
                     LOGGER.error('[A013] Requests 연결 타임아웃 에러')
                 except ConnectionError:
@@ -122,24 +122,24 @@ def _download_induty_code():
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
+    driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
     driver.get(url)
     time.sleep(5)
 
     # A005 로깅
     try:
-        download_button = driver.find_element(By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a')
+        download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
     except NoSuchElementException:
         LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
 
-    time.sleep(3)
     driver.execute_script("arguments[0].click();", download_button)
+    driver.switch_to.alert.accept()
 
 def _parse_induty_code(corp_id, induty_code):
     """
     산업분류코드를 파싱 후 저장
     """
-    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))[0]
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))[0]
 
     with open(file_path, 'r', newline='', encoding='CP949') as file:
         # A006 로깅
@@ -149,9 +149,9 @@ def _parse_induty_code(corp_id, induty_code):
             LOGGER.error('[A006] 산업분류코드 파싱 실패.')
 
         for row in file_content:
-            if row[1] == induty_code:
+            if row[7] == induty_code:
                 CorpId.objects.filter(id=corp_id).update(
-                    corp_sectors=row[2]
+                    corp_sectors=row[8]
                 )
 
 def save_corp_info():
@@ -192,7 +192,7 @@ def save_corp_info():
                     corp_ceo_name = corp_info['corp_ceo_name']
                 )
 
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))[0]
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))[0]
 
         # 고용노동부_표준산업분류코드 제거
         remove_files(file_path)

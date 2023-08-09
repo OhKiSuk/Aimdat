@@ -2,7 +2,7 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.07.19
+@modified at 2023.08.09
 @author OKS in Aimdat Team
 """
 import csv
@@ -54,13 +54,14 @@ def _get_fcorp_list():
         # A005 로깅
         try:
             download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+            driver.switch_to.alert.accept()
         except:
             LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
         
         driver.execute_script("arguments[0].click();", download_button)
         time.sleep(3)
 
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))[0]
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))[0]
 
         with open(file_path, 'r', newline='', encoding='CP949') as file:
             file_content = csv.reader(file)
@@ -68,7 +69,7 @@ def _get_fcorp_list():
             # 금융업 목록만 파싱(대한민국 금융업: 64 ~ 66)
             fcorp_sector_list = []
             for row in file_content:
-                if row[1].startswith(('64', '65', '66')):
+                if row[7].startswith(('64', '65', '66')):
                     fcorp_sector_list.append(row[2])
 
         #현재 등록된 기업 목록 중 금융업종의 종목코드 검색
@@ -343,7 +344,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
         client.close()
 
         # 사용한 파일 제거
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))
 
         if len(file_path) > 0:
             remove_files(file_path[0])
@@ -351,7 +352,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
         return True
 
     # 사용한 파일 제거
-    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드_*.csv'))
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))
 
     if len(file_path) > 0:
         remove_files(file_path[0])
