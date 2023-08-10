@@ -51,16 +51,48 @@ class AnalysisView(ListView):
         context = super().get_context_data(**kwargs)
 
         # 지표 구분
-        account_index = ['revenue', 'operating_profit', 'net_profit', 'cost_of_sales']
-        investment_index = [
-            'cost_of_sales_ratio',
-            'operating_margin',
-            'net_profit_margin',
-            'roe',
-            'roa',
+        account_index = [
+            'revenue', 
+            'operating_profit', 
+            'net_profit',
+            'total_assets',
+            'total_debt',
+            'total_capital',
+            'operating_cash_flow',
+            'investing_cash_flow',
+            'financing_cash_flow',
+        ]
+        safety_index = [
             'current_ratio',
             'quick_ratio',
             'debt_ratio',
+            'interest_coverage_ratio'
+        ]
+        profitability_index = [
+            'cost_of_sales_ratio',
+            'gross_profit_margin',
+            'operating_margin',
+            'net_profit_margin',
+            'roic',
+            'roe',
+            'roa'
+        ]
+        activity_index = [
+            'total_assets_turnover',
+            'inventory_turnover',
+            'accounts_receivables_turnover',
+            'accounts_payable_turnover',
+            'working_capital_requirement',
+            'working_capital_once'
+        ]
+        growth_index = [
+            'revenue_growth',
+            'operating_profit_growth',
+            'net_profit_growth',
+            'net_worth_growth',
+            'assets_growth'
+        ]
+        investment_index = [
             'per',
             'pbr',
             'psr',
@@ -72,6 +104,10 @@ class AnalysisView(ListView):
         dividend_index = ['dividend', 'dividend_ratio', 'dividend_payout_ratio', 'dps']
 
         context['account_index'] = account_index
+        context['safety_index'] = safety_index
+        context['profitability_index'] = profitability_index
+        context['activity_index'] = activity_index
+        context['growth_index'] = growth_index
         context['investment_index'] = investment_index
         context['dividend_index'] = dividend_index
         
@@ -98,7 +134,7 @@ class AnalysisView(ListView):
 
         # 분석할 기업정보를 분석 페이지에서 추가했을 경우
         elif request.POST.get('selected_corp'):
-            if not self.test_func():
+            if not self.request.user.is_authenticated:
                 return HttpResponse('로그인이 필요한 서비스입니다.', status=500)
 
             selected_corp = json.loads(request.POST.get('selected_corp'))
@@ -170,7 +206,7 @@ class AnalysisView(ListView):
 
         # 지표 설정
         elif request.POST.get('field_list'):
-            if not self.test_func():
+            if not self.request.user.is_authenticated:
                 return HttpResponse('로그인이 필요한 서비스입니다.', status=500)
 
             field_list = json.loads(request.POST.get('field_list'))

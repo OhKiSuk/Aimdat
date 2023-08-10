@@ -129,6 +129,34 @@
                         {% endfor %}
                     </div>
                     <div class="mb-3">
+                        <div class="fs-md fw-bold">안정성</div>
+                        {% for index in safety_index %}
+                        <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
+                        <label class="btn btn-outline-primary m-1" for="{{ index }}" style="border-radius: 0px;">{{ index|convert_account }}</label>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <div class="fs-md fw-bold">수익성</div>
+                        {% for index in profitability_index %}
+                        <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
+                        <label class="btn btn-outline-primary m-1" for="{{ index }}" style="border-radius: 0px;">{{ index|convert_account }}</label>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <div class="fs-md fw-bold">활동성</div>
+                        {% for index in activity_index %}
+                        <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
+                        <label class="btn btn-outline-primary m-1" for="{{ index }}" style="border-radius: 0px;">{{ index|convert_account }}</label>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <div class="fs-md fw-bold">성장성</div>
+                        {% for index in growth_index %}
+                        <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
+                        <label class="btn btn-outline-primary m-1" for="{{ index }}" style="border-radius: 0px;">{{ index|convert_account }}</label>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
                         <div class="fs-md fw-bold">투자지표</div>
                         {% for index in investment_index %}
                         <input id="{{ index }}" class="btn-check" type="checkbox" name="field_list" autocomplete="off">
@@ -254,12 +282,9 @@ $(document).ready(function() {
                 $('#id_append_corp_modal').modal('hide');
                 updatePage(response);
             },
-            error: function(xhr, status, error) {
-                var errorMessage = xhr.responseText;
-                alert(errorMessage);
-                if (errorMessage == '로그인이 필요한 서비스입니다.') {
-                    location.href = "{% url 'account:login' %}"
-                }
+            error: function(error) {
+                alert(response['responseText']);
+                location.href = "{% url 'account:login' %}"
             }
         });
     });
@@ -293,13 +318,13 @@ $(document).ready(function() {
             complete: function() {
                 $(".mask").hide();
             },
-            error: function() {
-                alert('로그인이 필요한 서비스입니다.');
+            error: function(response) {
+                alert(response['responseText']);
                 location.href = "{% url 'account:login' %}"
             },
             success: function(response) {
                 $('#id_set_field_modal').modal('hide');
-                updatePage(response)
+                updatePage(response);
             }
         });
     });
