@@ -5,9 +5,6 @@
                 <a href="{% url 'services:mypage' %}" class="nav-link {% if request.path == '/services/mypage/' %} active {% endif %}">회원정보</a>
             </li>
             <li class="nav-item">
-                <a href="{% url 'services:inquiry' %}" class="nav-link {% if '/services/mypage/inquiry' in request.path %} active {% endif %}">1:1문의</a>
-            </li>
-            <li class="nav-item">
                 <a href="{% url 'account:password_change' %}" class="nav-link">비밀번호 변경</a>
             </li>
             <li class="nav-item">

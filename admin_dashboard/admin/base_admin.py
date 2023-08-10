@@ -1,5 +1,5 @@
 """
-@modified at 2023.06.16
+@modified at 2023.08.10
 @author OKS in Aimdat Team
 """
 from account.forms.login_forms import CustomAuthenticationForm
@@ -50,10 +50,6 @@ from ..views.corp_manage_views import (
     ManageInvestmentIndexView,
     ManageInvestmentIndexUpdateView
 )
-from ..views.inquiry_manage_views import (
-    InquiryListView, 
-    InquiryAddAnswerView
-)
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin_dashboard/index.html'
@@ -96,10 +92,6 @@ class CustomAdminSite(AdminSite):
             # 투자지표 관리
             path('manage/index/list', custom_admin_site.admin_view(ManageInvestmentIndexView.as_view()), name='manage_index_list'),
             path('manage/index/update/<int:pk>/', custom_admin_site.admin_view(ManageInvestmentIndexUpdateView.as_view()), name='manage_index_update'),
-
-            #문의사항 관리
-            path('inquiry/manage/', custom_admin_site.admin_view(InquiryListView.as_view()), name='inquiry_manage'),
-            path('inquiry/manage/add/answer/<int:pk>', custom_admin_site.admin_view(InquiryAddAnswerView.as_view()), name='add_inquiry_answer')
         ]
 
         return custom_urls + urls
@@ -107,10 +99,6 @@ class CustomAdminSite(AdminSite):
     def index(self, request, extra_context=None):
         extra_context = extra_context or {}
         signup_period = request.GET.get('period', 'week')
-
-        #1:1 문의 최근 목록
-        if Inquiry.objects.all().exists():
-            extra_context['inquiry'] = Inquiry.objects.all().values('created_at', 'title').order_by('-created_at')[:5]
 
         #총 가입자 수
         if User.objects.filter(is_admin=False).exists():

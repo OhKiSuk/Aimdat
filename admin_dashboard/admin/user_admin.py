@@ -2,8 +2,8 @@
 @created at 2023.03.11
 @author OKS in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.08.10
+@author OKS in Aimdat Team
 """
 
 import logging
@@ -25,7 +25,7 @@ class AccountManageAdmin(ModelAdmin):
     list_per_page = 20
     search_fields = ['user__email']
 
-    list_display = ('email', 'user_classify', 'terms_of_use_agree', 'terms_of_privacy_agree', 'created_at', 'expiration_date', 'is_active', 'is_admin')
+    list_display = ('email', 'user_classify', 'terms_of_use_agree', 'terms_of_privacy_agree', 'created_at', 'last_login', 'is_active', 'is_admin')
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}

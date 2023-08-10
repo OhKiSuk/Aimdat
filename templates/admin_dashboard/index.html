@@ -92,35 +92,6 @@
         </div>
     </div>
 </div>
-
-<div class="row mt-3">
-    <div class="col-12 p-0">
-        <div style="width: 100%;">
-            <div class="p-3 bg-white">
-                <div class="mb-3">
-                    <span class="font-md fw-bold">1:1 문의</span>
-                </div>
-
-                <table class="table table-bordered table-hover">
-                    <thead class="fw-bold bg-light">
-                        <tr>
-                            <td>일시</td>
-                            <td>제목</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for data in inquiry %}
-                        <tr>
-                            <td style="width: 20%">{{ data.created_at }}</td>
-                            <td>{{ data.title }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 {% block script %}
 <script src="{% static 'js/chart.umd.min.js' %}"></script>

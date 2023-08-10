@@ -539,8 +539,9 @@
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
                 },
-                error: function() {
-                    alert('로그인이 필요한 서비스입니다.');
+                error: function(response) {
+                    message = response['responseText'];
+                    alert(message);
                     location.href = "{% url 'account:login' %}"
                 },
                 success: function() {
@@ -558,8 +559,9 @@
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
                 },
-                error: function() {
-                    alert('로그인이 필요한 서비스입니다.');
+                error: function(response) {
+                    message = response['responseText'];
+                    alert(message);
                     location.href = "{% url 'account:login' %}"
                 },
                 success: function() {
@@ -616,8 +618,9 @@
                         'page': JSON.stringify(page_number),
                         'ordering': JSON.stringify(orderby)
                     },
-                    error: function() {
-                        alert('로그인이 필요한 서비스입니다.');
+                    error: function(response) {
+                        message = response['responseText'];
+                        alert(message);
                         location.href = "{% url 'account:login' %}"
                     },
                     success: function(response) {
@@ -650,8 +653,9 @@
                     'page': JSON.stringify(page_number),
                     'ordering': JSON.stringify(orderby)
                 },
-                error: function() {
-                    alert('로그인이 필요한 서비스입니다.');
+                error: function(response) {
+                    message = response['responseText'];
+                    alert(message);
                     location.href = "{% url 'account:login' %}"
                 },
                 success: function(response) {

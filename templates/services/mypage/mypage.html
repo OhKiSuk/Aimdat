@@ -16,7 +16,7 @@
             <img src="{% static 'image/social/google_button.png' %}" height="20px">
             {% endif %}
             <br>
-            <span class="fw-bold">계정 만료일:</span> <span>{{ request.user.expiration_date|date:'Y-m-d' }}</span>
+            <span class="fw-bold">최근 로그인:</span> <span>{{ request.user.last_login|date:'Y-m-d' }}</span>
         </div>
     </div>
 </div>

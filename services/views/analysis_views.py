@@ -2,7 +2,7 @@
 @created at 2023.03.28
 @author JSU in Aimdat Team
 
-@modified at 2023.06.21
+@modified at 2023.08.10
 @author OKS in Aimdat Team
 """
 import json
@@ -17,8 +17,6 @@ from django.http import (
     JsonResponse
 )
 from django.shortcuts import render
-
-from django.utils import timezone
 from django.views.generic import ListView
 
 from ..models.investment_index import InvestmentIndex
@@ -29,15 +27,6 @@ LOGGER = logging.getLogger(__name__)
 class AnalysisView(ListView):
     model = InvestmentIndex
     template_name = 'services/analysis_view.html'
-    
-    def test_func(self):
-        if self.request.user.is_authenticated:
-            if self.request.user.is_admin:
-                return False
-            if self.request.user.expiration_date.date() >= timezone.now().date():
-                return True
-            
-        return False
     
     def get_queryset(self):
         queryset = super().get_queryset()

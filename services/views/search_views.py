@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.07.29
+@modified at 2023.08.10
 @author OKS in Aimdat Team
 """
 import json
@@ -16,7 +16,6 @@ from django.db.models import (
 )
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.utils import timezone
 from django.views.generic.list import ListView
 
 from ..models.investment_index import InvestmentIndex
@@ -30,15 +29,6 @@ class SearchView(ListView):
     model = InvestmentIndex
     template_name = 'services/search_view.html'
     paginate_by = 20
-    
-    def test_func(self):
-        if self.request.user.is_authenticated:
-            if self.request.user.is_admin:
-                return False
-            if self.request.user.expiration_date.date() >= timezone.now().date():
-                return True
-            
-        return False
     
     def get_ordering(self):
         ordering = json.loads(self.request.GET.get('ordering', '"corp_id__corp_name"'))
@@ -295,8 +285,8 @@ class SearchView(ListView):
     def get(self, request):
 
         if request.GET.get('page') or request.GET.get('ordering'):
-            if not self.test_func():
-                return HttpResponse('', status=500)
+            if not self.request.user.is_authenticated:
+                return HttpResponse('로그인이 필요한 서비스입니다.', status=500)
         
         self.object_list = self.get_queryset()
         context = self.get_context_data()

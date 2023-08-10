@@ -10,11 +10,6 @@ from django.urls import path
 from .views.analysis_views import AnalysisView
 from .views.corp_inquiry_views import CorpInquiryView
 from .views.faq_views import FaqView
-from .views.inquiry_views import (
-    AddInquiryView, 
-    InquiryDetailView, 
-    InquiryView
-)
 from .views.mypage_views import MyPageView
 from .views.search_views import SearchView
 from .views.terms_views import (
@@ -43,9 +38,4 @@ urlpatterns = [
 
     #마이페이지
     path("mypage/", MyPageView.as_view(), name="mypage"),
-
-    #1:1 문의
-    path('mypage/inquiry', InquiryView.as_view(), name='inquiry'),
-    path('mypage/inquiry/<int:id>', InquiryDetailView.as_view(), name='inquiry_detail'),
-    path('mypage/inquiry/add/', AddInquiryView.as_view(), name='add_inquiry')
 ]

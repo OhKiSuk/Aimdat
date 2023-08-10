@@ -2,7 +2,7 @@
 @created at 2023.04.01
 @author OKS in Aimdat Team
 
-@modified at 2023.04.05
+@modified at 2023.08.10
 @author OKS in Aimdat Team
 """
 from django.contrib.auth.mixins import UserPassesTestMixin

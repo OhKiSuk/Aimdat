@@ -54,11 +54,6 @@
             계정정보 관리
             </a>
         </li>
-        <li class="nav-item">
-            <a href="{% url 'admin:inquiry_manage' %}" class="nav-link {% if '/admin/inquiry/manage/' in request.path %}active{% endif %}">
-            1:1 문의 관리
-            </a>
-        </li>
         <hr style="border:1px solid black"/>
         <li class="nav-item">
             <a href="{% url 'admin:axes_accessattempt_changelist' %}" class="nav-link {% if '/admin/axes/accessattempt/' in request.path %}active{% endif %}">

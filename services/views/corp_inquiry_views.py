@@ -2,7 +2,7 @@
 @created at 2023.03.22
 @author JSU in Aimdat Team
 
-@modified at 2023.07.29
+@modified at 2023.08.10
 @author OKS in Aimdat Team
 """
 import requests
@@ -19,8 +19,6 @@ from django.db.models import (
     Q
 )
 from django.db.models.functions import Cast
-from django.http import HttpResponse
-from django.utils import timezone
 from django.views.generic import DetailView
 from config.settings.base import get_secret
 
@@ -36,15 +34,6 @@ class CorpInquiryView(DetailView):
     template_name = 'services/corp_inquiry.html'
     context_object_name = 'corp_id'
     pk_url_kwarg = 'id'
-    
-    def test_func(self):
-        if self.request.user.is_authenticated:
-            if self.request.user.is_admin:
-                return False
-            if self.request.user.expiration_date.date() >= timezone.now().date():
-                return True
-            
-        return False
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -124,11 +113,3 @@ class CorpInquiryView(DetailView):
         page_obj = paginator.get_page(page_number)
 
         return page_obj
-    
-    def get(self, request, *args, **kwargs):
-
-        if request.GET.get('page') or request.GET.get('fs_type'):
-            if not self.test_func():
-                return HttpResponse('', status=500)
-        
-        return super().get(request, *args, **kwargs)
