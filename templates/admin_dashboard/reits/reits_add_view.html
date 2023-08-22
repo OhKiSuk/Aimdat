@@ -30,6 +30,16 @@
         </div>
 
         <div class="mb-3">
+            <label class="form-label fw-bold fs-md" for="{{ form.lastest_dividend_date.name }}">{{ form.lastest_dividend_date.label }}</label>
+            <input class="form-control" type="text" id="{{ form.lastest_dividend_date.name }}"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold fs-md" for="{{ form.lastest_dividend_rate.name }}">{{ form.lastest_dividend_rate.label }}</label>
+            <input class="form-control" type="text" id="{{ form.lastest_dividend_rate.name }}"/>
+        </div>
+
+        <div class="mb-3">
             <div class="row mb-2">
                 <div class="col">
                     <span class="fs-md fw-bold">투자자산 정보</span>
@@ -46,7 +56,6 @@
                     <tr class="text-center fw-bold">
                         <th name="asset_name">자산명</th>
                         <th name="asset_division">투자구분</th>
-                        <th name="usage">용도</th>
                         <th name="area">연면적(m<sup>2</sup>)</th>
                         <th name="rental_rate">임대율</th>
                         <th name="wale">WALE(년)</th>
@@ -74,6 +83,7 @@
                     <tr class="text-center fw-bold">
                         <th name="institution_name">기관명</th>
                         <th name="borrowed_division">구분</th>
+                        <th name="amount">금액(억)</th>
                         <th name="due_date">만기일</th>
                         <th name="interest_rate">이자율</th>
                     </tr>

@@ -91,6 +91,8 @@ class ReitsUpdateView(UpdateView):
         form.fields['settlement_cycle'].label = '결산월'
         form.fields['investment_assets_info'].label = '투자자산 정보'
         form.fields['borrowed_info'].label = '차입금 정보'
+        form.fields['lastest_dividend_date'].label = '최근 배당일'
+        form.fields['lastest_dividend_rate'].label = '배당률'
 
         form.fields['corp_id'].queryset = CorpId.objects.filter(stock_code__in=REITS_LIST)
 

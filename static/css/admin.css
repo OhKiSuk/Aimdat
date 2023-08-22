@@ -1,15 +1,13 @@
 body {
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .sidebar {
     width: 155px;
-    overflow-y: auto;
     height: 100vh;
 }
 
 .content {
     left: 10%;
     height: 100vh;
-    overflow-y: auto;
 }
