@@ -1,0 +1,38 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% block content %}
+<div class="float-end mt-5">
+    <a href="{% url 'admin:manage_reits_add' %}" class="btn btn-sm btn-primary">리츠 정보 추가</a>
+</div>
+<table class="table table-hover align-middle fs-sm text-center mt-3" id="table">
+    <thead>
+        <tr class="fw-semibold">
+            <th>번호</th>
+            <th>회사명<i class="bi bi-caret-up-fill ordering"></i></th>
+            <th>결산월</th>
+            <th>정보갱신일</th>
+            <th>수정</th>
+            <th>삭제</th>
+        </tr>
+    </thead>
+    <tbody class="table-group-divider">
+        {% for obj in object_list %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ obj.corp_id.corp_name }}</td>
+            <td>{{ obj.settlement_cycle }}</td>
+            <td>{{ obj.update_date }}</td>
+            <td>
+                <a href="{% url 'admin:manage_reits_update' obj.id %}">
+                    <i class="bi bi-pen"></i>
+                </a>
+            </td>
+            <td>
+                <a href="{% url 'admin:manage_reits_delete' obj.id %}">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

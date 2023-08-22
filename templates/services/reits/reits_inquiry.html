@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load divide_marketcap %}
+{% block content %}
+<div class="mt-5">
+    <div class="bg-light p-3">
+        <p class="fs-min fw-bold">* Aimdat이 제공하는 정보는 신뢰할만한 기관이 제공하는 정보를 직접 가공하여 얻은 정보이나, 정보의 완전성과 정확성을 보장하지 않습니다.</p>
+        <span class="fs-min fw-bold">* Aimdat이 제공하는 정보를 통한 투자 결과에 대한 책임은 투자자 본인에게 있습니다.</span>
+    </div>
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">{{ object.corp_id.corp_name }}</div>
+        <div class="mt-2">
+            <span class="fs-md fw-semibold">{{ latest_stock_info.close_price|floatformat:'0'|intcomma }}</span>
+
+            {% if latest_stock_info.change_price < 0 %}
+            <span class="fs-sm fw-semibold"><b class="text-primary">▼</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            {% elif latest_stock_info.change_price == 0 %}
+            <span class="fs-sm fw-semibold"><b class="text-black">-</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            {% else %}
+            <span class="fs-sm fw-semibold"><b class="text-danger">▲</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
+            {% endif %}
+            <span class="fs-min fw-semibold text-black-50">{{ latest_stock_info.trade_date }} 기준</span>
+            <span class="badge text-bg-light">{{ object.corp_id.stock_code }}</span>
+            <span class="badge text-bg-light">{{ object.corp_id.corp_isin }}</span>
+            <span class="badge text-bg-light">{{ object.corp_id.corp_market }}</span>
+            <span class="badge text-bg-light">{{ object.corp_id.corp_sectors }}</span>
+        </div>
+        <table class="table table-bordered table-sm mt-2">
+            <tbody class="text-center">
+                <tr>
+                    <td class="bg-light fw-bold" width="50%">52주 최고/최저</td>
+                    <td>
+                        {% if week_52_price %}
+                        <span class="text-danger">{{ week_52_price.high_price|floatformat:'0'|intcomma }}</span>/<span class="text-primary">{{ week_52_price.low_price|floatformat:'0'|intcomma }}</span>
+                        {% else %}
+                        <span>-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="bg-light fw-bold" width="50%">거래량</td>
+                    <td>{{ latest_stock_info.trade_quantity|floatformat:'0'|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td class="bg-light fw-bold" width="50%">거래대금</td>
+                    <td>{{ latest_stock_info.trade_price|floatformat:'0'|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td class="bg-light fw-bold" width="50%">시가총액</td>
+                    <td>
+                        {% if latest_stock_info.market_capitalization >= 100_000_000 %}
+                        {{ latest_stock_info.market_capitalization|divide_marketcap|intcomma }}
+                        {% else %}
+                        {{ latest_stock_info.market_capitalization|floatformat:'0'|intcomma }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="bg-light fw-bold" width="50%">상장주식수</td>
+                    <td>
+                        {{ latest_stock_info.total_stock|floatformat:'0'|intcomma }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">기업 개요</div>
+        <table class="table table-bordered mt-2">
+            <tbody class="text-center">
+                <tr>
+                    <td class="fw-bold bg-light" width="25%">CEO명</td>
+                    <td width="25%">{{ corp_info.corp_ceo_name }}</td>
+                    <td class="fw-bold bg-light" width="25%">결산월</td>
+                    <td>{{ object.settlement_cycle }}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold bg-light" width="25%">설립일</td>
+                    <td width="25%">{{ object.establishment_date }}</td>
+                    <td class="fw-bold bg-light" width="25%">상장일</td>
+                    <td width="25%">{{ object.listing_date }}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold bg-light" width="25%">최근 배당일</td>
+                    <td width="25%">{{ obejct.lastest_dividend_date }}</td>
+                    <td class="fw-bold bg-light" width="25%">배당률</td>
+                    <td width="25%">{{ object.lastest_dividend_rate }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">투자자산 개요</div>
+        <table class="table table-bordered mt-2">
+            <thead class="text-center bg-light">
+                <tr class="fw-bold">
+                    <th>투자자산명</th>
+                    <th>투자구분</th>
+                    <th>용도</th>
+                    <th>임대율(%)</th>
+                    <th>WALE(년)</th>
+                    <th>연면적(m<sup>2</sup>)</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                {% for object in object.investment_assets_info %}
+                <tr>
+                    {% for _, value in object.items %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">차입금 현황</div>
+        <table class="table table-bordered mt-2">
+            <thead class="text-center bg-light">
+                <tr class="fw-bold">
+                    <th>기관명</th>
+                    <th>구분</th>
+                    <th>만기일</th>
+                    <th>이자율</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                {% for object in object.borrowed_info %}
+                <tr>
+                    {% for _, value in object.items %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">공시</div>
+        <div class="my-2">
+            <div class="fs-min text-black-50 fw-bold">공시정보는 최대 3년 이내, 100개만 제공됩니다.</div>
+        </div>
+        <table class="table table-hover text-center fs-sm" id="table">
+            <thead>
+                <tr class="fw-semibold">
+                    <td style="width: 10%;">No.</td>
+                    <td style="width: 65%;">제목</td>
+                    <td style="width: 15%;">제출인</td>
+                    <td style="width: 10%;">공시일</td>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% if page_obj %}
+                    {% for data in page_obj %}
+                    <tr>
+                        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td>
+                            <a href="https://dart.fss.or.kr/dsaf001/main.do?rcpNo={{ data.rcept_no }}" target="_blank" class="text-decoration-none">
+                                {{ data.report_nm|truncatechars:100 }}
+                            </a>
+                        </td>
+                        <td>{{ data.flr_nm|truncatechars:25 }} </td>
+                        <td>{{ data.rcept_dt|slice:'0:4' }}-{{ data.rcept_dt|slice:'4:6' }}-{{ data.rcept_dt|slice:'6:8' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3">데이터가 없습니다.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <div class="d-grid gap-2">
+            <button id="load_more_button" class="btn btn-light" onclick="paging()">더보기( {{ page_obj|length }} / {{ page_obj.paginator.count }} )</button>
+        </div>
+    </div>
+</div>
+<input id="page" type="hidden" data-page="{{ page_obj.number }}">
+{% include 'includes/footer.html' %}
+{% endblock %}
+{% block script %}
+<script>
+    $(document).ready(function() {
+        page_number = Number($('#page').data('page'));
+    });
+
+    /** 공시 페이징 */
+    function paging() {
+        var table = $('#table');
+        var totalPages = {{ page_obj.paginator.num_pages }};
+
+        page_number += 1;
+
+        if (page_number <= totalPages) {
+            $.get({
+                url: "{% url 'services:reits_inquiry' object.id %}",
+                data: {
+                    'page': JSON.stringify(page_number)
+                },
+                error: function() {
+                    alert('로그인이 필요한 서비스입니다.');
+                    location.href = "{% url 'account:login' %}"
+                },
+                success: function(response) {
+                    var responseHTML = $.parseHTML(response);
+                    var rows = $(responseHTML).find("#table tbody tr");
+
+                    rows.each(function() {
+                        table.find("tbody").append($(this));
+                    })
+                    
+                    $("#load_more_button").text("더보기( " + {{ page_obj|length }} * page_number + " / {{ page_obj.paginator.count }} )");
+                    
+                    if (page_number == totalPages) {
+                        $("#load_more_button").prop("disabled", true);
+                        $("#load_more_button").text("더보기( {{ page_obj.paginator.count }} / {{ page_obj.paginator.count }} )");
+                    }
+
+                    $('#page').remove();
+                    $('.footer').before().before(page);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

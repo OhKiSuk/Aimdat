@@ -1,0 +1,201 @@
+{% extends 'admin_dashboard/layout/admin_base.html' %}
+{% block content %}
+<div class="row mt-3">
+    <span class="fs-lg fw-bold">리츠정보 수정</span>
+</div>
+<div class="mt-3">
+    <div class="bg-white p-3">
+        <div class="mb-3">
+            <label class="form-label fw-bold fs-md" for="{{ form.corp_id.name }}">{{ form.corp_id.label }}</label>
+            <select class="form-select" name="{{ form.corp_id.name }}" id="{{ form.corp_id.name }}">
+                <option value="{{ form.corp_id.value }}">{{ object.corp_id.corp_name }}</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold fs-md" for="{{ form.establishment_date.name }}">{{ form.establishment_date.label }}</label>
+            <input class="form-control" type="text" id="{{ form.establishment_date.name }}" value="{{ form.establishment_date.value|date:'Y-m-d' }}"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold fs-md" for="{{ form.listing_date.name }}">{{ form.listing_date.label }}</label>
+            <input class="form-control" type="text" id="{{ form.listing_date.name }}" value="{{ form.listing_date.value|date:'Y-m-d' }}"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold fs-md" for="{{ form.settlement_cycle.name }}">{{ form.settlement_cycle.label }}</label>
+            <input class="form-control" type="text" id="{{ form.settlement_cycle.name }}" value="{{ form.settlement_cycle.value }}"/>
+        </div>
+
+        <div class="mb-3">
+            <div class="row mb-2">
+                <div class="col">
+                    <span class="fs-md fw-bold">투자자산 정보</span>
+                </div>
+                <div class="col">
+                    <div class="float-end">
+                        <button class="btn btn-sm btn-primary add_tbody" name="investment_assets_info"><i class="bi bi-plus-lg"></i></button>
+                        <button class="btn btn-sm btn-danger remove_tbody" name="investment_assets_info"><i class="bi bi-trash3"></i></button>
+                    </div>
+                </div>
+            </div>
+            <table class="table table-bordered" data-table-name="investment_assets_info">
+                <thead class="bg-light">
+                    <tr class="text-center fw-bold">
+                        <th name="asset_name">자산명</th>
+                        <th name="asset_division">투자구분</th>
+                        <th name="usage">용도</th>
+                        <th name="area">연면적(m<sup>2</sup>)</th>
+                        <th name="rental_rate">임대율</th>
+                        <th name="wale">WALE(년)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for object in object.investment_assets_info %}
+                    <tr>
+                        {% for key, value in object.items %}
+                        <td>
+                            <input type="text" class="form-control" value="{{ value }}" name="{{ key }}"/>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mb-3">
+            <div class="row mb-2">
+                <div class="col">
+                    <span class="fs-md fw-bold">차입금 정보</span>
+                </div>
+                <div class="col">
+                    <div class="float-end">
+                        <button class="btn btn-sm btn-primary add_tbody" name="borrowed_info"><i class="bi bi-plus-lg"></i></button>
+                        <button class="btn btn-sm btn-danger remove_tbody" name="borrowed_info"><i class="bi bi-trash3"></i></button>
+                    </div>
+                </div>
+            </div>
+            <table class="table table-bordered" data-table-name="borrowed_info">
+                <thead class="bg-light">
+                    <tr class="text-center fw-bold">
+                        <th name="institution_name">기관명</th>
+                        <th name="borrowed_division">구분</th>
+                        <th name="due_date">만기일</th>
+                        <th name="interest_rate">이자율</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for object in object.borrowed_info %}
+                    <tr>
+                        {% for key, value in object.items %}
+                        <td>
+                            <input type="text" class="form-control" value="{{ value }}" name="{{ key }}"/>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mb-2">
+            <div class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin:manage_reits_home' %}">취소</a>
+                <button id="add_reits" class="btn btn-sm btn-primary">수정</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+    $(document).ready(function() {
+        /* 테이블 내 입력 란 생성 */
+        $('.add_tbody').on('click', function() {
+            var table_name = $(this).attr('name');
+            var table = $('table[data-table-name="'+table_name+'"]');
+            
+            var head_length = table.find('tr:first th').length;
+
+            var head_name_list = []
+            for (var i = 0; i < head_length; i++) {
+                head_name_list.push(table.children('thead').find('th').eq(i).attr('name'));
+            }
+
+            var row = $("<tr></tr>");
+            for(var i = 0; i < head_length; i++) {
+                var cell = $('<td></td>');
+                var input = $('<input>').attr('type', 'text').attr('name', head_name_list[i]).addClass('form-control');
+
+                cell.append(input);
+                row.append(cell);
+            }
+
+            table.append(row);
+        });
+
+        /* 테이블 내 입력 란 제거(최근 생성 순) */
+        $('.remove_tbody').on('click', function() {
+            var table_name = $(this).attr('name');
+            var table = $('table[data-table-name="'+table_name+'"]');
+
+            table.children('tbody').children('tr').last().remove();
+        });
+
+        /* 데이터 전송 */
+        $('#add_reits').on('click', function() {
+            var corp_id = $('#corp_id').val();
+            var establishment_date = $('#establishment_date').val();
+            var listing_date = $('#listing_date').val();
+            var settlement_cycle = $('#settlement_cycle').val();
+            var borrowed_info = []
+            var investment_assets_info = []
+
+            $('table[data-table-name="investment_assets_info"] tbody tr').each(function() {
+                var data = {}
+
+                $(this).find('td input').each(function() {
+                    var input_name = $(this).attr('name');
+                    var input_val = $(this).val();
+                    data[input_name] = input_val;
+                });
+
+                investment_assets_info.push(data);
+            });
+
+            $('table[data-table-name="borrowed_info"] tbody tr').each(function() {
+                var data = {}
+
+                $(this).find('td input').each(function() {
+                    var input_name = $(this).attr('name');
+                    var input_val = $(this).val();
+                    data[input_name] = input_val;
+                });
+
+                borrowed_info.push(data);
+            });
+
+            $.ajax({
+                url: "{% url 'admin:manage_reits_update' object.id %}",
+                method: "post",
+                data: {
+                    corp_id: corp_id,
+                    establishment_date: establishment_date,
+                    listing_date: listing_date,
+                    settlement_cycle: settlement_cycle,
+                    investment_assets_info: JSON.stringify(investment_assets_info),
+                    borrowed_info: JSON.stringify(borrowed_info)
+                },
+                beforeSend: function(xhr, settings) {
+                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                },
+                success: function() {
+                    location.href = "{% url 'admin:manage_reits_home' %}";
+                }
+            })
+            
+        });
+    });
+</script>
+{% endblock %}

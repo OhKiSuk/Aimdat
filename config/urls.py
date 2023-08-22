@@ -2,7 +2,7 @@
 @modified at 2023.03.11
 @author OKS in Aimdat Team
 
-@modified at 2023.06.22
+@modified at 2023.08.11
 @author OKS in Aimdat Team
 """
 from admin_dashboard.admin.base_admin import custom_admin_site
@@ -11,7 +11,7 @@ from django.urls import (
     include,
     path
 )
-from services.views.search_views import SearchView
+from services.views.home_views import HomeView
 from .sitemaps import StaticSitemap, CorpInquriySitemap
 
 sitemaps = {
@@ -20,7 +20,7 @@ sitemaps = {
 }
 
 urlpatterns = [
-    path('services/', SearchView.as_view(), name='index'),
+    path('', HomeView.as_view(), name='index'),
     path('admin/', custom_admin_site.urls),
     path('tinymce/', include('tinymce.urls')),
     path('account/', include('account.urls')),

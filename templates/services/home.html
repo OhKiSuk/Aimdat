@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load convert_account %}
+{% block content %}
+<div class="mt-5">
+    <div class="border rounded rounded-1 mb-3">
+        <div class="p-3">
+            <div class="row mb-2">
+                <div class="col">
+                    <span class="fs-md fw-bold">종목 검색</span>
+                </div>
+                <div class="col">
+                    <div class="input-group fs-sm">
+                        <input class="form-control" id="id_search_corp_name" name="corp" type="text" placeholder="기업명·종목코드 입력" onkeyup="searchCorpName(this)">
+                        <button class="btn btn-sm btn-secondary" onclick="searchCorpName(this)"><i class="bi bi-search fs-md"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="filter_tab">
+                <ul class="nav nav-underline filter_tabs d-flex flex-nowrap">
+                    <li class="nav-item">
+                        <a class="nav-link active fs-sm" href="javascript:void(0);">계정과목</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">안정성</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">수익성</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">활동성</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">성장성</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">투자지표</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">배당</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">재무제표</a>
+                    </li>
+                </ul>
+            </div>
+            <div id="id_apply_filters" class="fs-sm mt-3">
+            </div>
+            <hr>
+
+            <div class="row mt-2">
+                <div id="index" class="col-3 fs-sm p-2">
+                    <div id="account_index" style="overflow: auto; height: 180px;">
+                        <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                            {% for index in account_index %}
+                            <li class="nav-item" data-index-name="{{ index }}">
+                                <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div id="safety_index" style="display: none; overflow: auto; height: 180px;">
+                        <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                            {% for index in safety_index %}
+                            <li class="nav-item" data-index-name="{{ index }}">
+                                <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div id="profitability_index" style="display: none; overflow: auto; height: 180px;">
+                        <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                            {% for index in profitability_index %}
+                            <li class="nav-item" data-index-name="{{ index }}">
+                                <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div id="activity_index" style="display: none; overflow: auto; height: 180px;">
+                        <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                            {% for index in activity_index %}
+                            <li class="nav-item" data-index-name="{{ index }}">
+                                <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div id="growth_index" style="display: none; overflow: auto; height: 180px;">
+                        <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                            {% for index in growth_index %}
+                            <li class="nav-item" data-index-name="{{ index }}">
+                                <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+
+                    <div id="investment_index" style="display: none; overflow: auto; height: 180px;">
+                        <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                            {% for index in investment_index %}
+                            <li class="nav-item" data-index-name="{{ index }}">
+                                <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div id="dividend_index" style="display: none; overflow: auto; height: 180px;">
+                        <ul class="nav nav-pills nav-fill flex-column index_tabs">
+                            {% for index in dividend_index %}
+                            <li class="nav-item" data-index-name="{{ index }}">
+                                <a class="nav-link" href="javascript:void(0);">{{ index|convert_account }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="fs_options" style="display: none;">
+                    <div class="mx-2 mb-3">
+                        <span class="fs-min text-black-50">* 재무제표는 한 가지만 선택할 수 있습니다.</span>
+                    </div>
+                    <div class="row mx-2 mb-3">
+                        <select class="form-select form-select-sm col fs-sm" name="year">
+                            {% now "Y" as current_year %}
+                            <option selected>년도</option>
+                            <option value="{{ current_year }}">{{ current_year }}</option>
+                            <option value="{{ current_year|add:'-1' }}">{{ current_year|add:'-1' }}</option>
+                            <option value="{{ current_year|add:'-2' }}">{{ current_year|add:'-2' }}</option>
+                            <option value="{{ current_year|add:'-3' }}">{{ current_year|add:'-3' }}</option>
+                        </select>
+
+                        <select class="form-select form-select-sm col mx-2 fs-sm" name="quarter">
+                            <option selected>분기</option>
+                            <option value="1">1분기</option>
+                            <option value="2">2분기</option>
+                            <option value="3">3분기</option>
+                            <option value="4">4분기</option>
+                        </select>
+
+                        <select class="form-select form-select-sm col fs-sm" name="fs_type">
+                            <option selected>재무제표</option>
+                            <option value="0">연결</option>
+                            <option value="5">별도</option>
+                        </select>
+                    </div>
+                    
+                    <button id="id_set_fs_options" class="btn btn-secondary fs-sm float-end mx-2">추가</button>
+                </div>
+
+                <div id="id_insert_index" class="col-8" style="display: none;">
+                    <div class="row mb-3">
+                        <span class="col fs-md fw-semibold" data-filter-name=""></span>
+                        <span class="col fs-min text-end text-black-50">단위: 억원, 배, %</span>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="col">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="id_min" placeholder=" ">
+                                <label class="fs-sm" for="id_min">최소값</label>
+                            </div>
+                        </div>
+                        <div class="mx-2">~</div>
+                        <div class="col">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="id_max" placeholder=" ">
+                                <label class="fs-sm" for="id_min">최대값</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="id_add_index" class="btn btn-secondary fs-sm float-end">추가</button>
+                </div>
+            </div>
+            <div class="modal-footer mt-3">
+                <button id="reset" class="btn btn-sm btn-outline-secondary me-1">초기화</button>
+                <button id="submit_search" class="btn btn-sm btn-primary fw-bold">검색</button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <a href="{% url 'services:reits_home' %}" class="btn btn-lg btn-primary fw-bold">
+                <i class="bi bi-buildings"></i>
+                리츠(REITs) 정보조회
+            </a>
+        </div>
+    </div>
+</div>
+{% include 'includes/footer.html' %}
+{% endblock %}
+{% block script %}
+<script>
+    var indexes = {}
+    var filter_name = '';
+    var filter_name_en = '';
+
+    /** Index 삭제 함수 */
+    function removeIndex(remove_this, filter_name) {
+        $(remove_this).remove();
+        delete indexes[filter_name];
+    }
+</script>
+<script>
+    /** 탭 선택 */
+    $(document).ready(function() {
+        $('.filter_tabs > li').on('click', function() {
+            $('.filter_tabs > li > a').removeClass('active');
+            $(this).children('a').addClass('active');
+
+            switch($(this).index()) {
+                case 0:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#account_index').show();
+                    break;
+                case 1:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#safety_index').show();
+                    break;
+                case 2:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#profitability_index').show();
+                    break;
+                case 3:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#activity_index').show();
+                    break;
+                case 4:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#growth_index').show();
+                    break;
+                case 5:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#investment_index').show();
+                    break;
+                case 6:
+                    $('#index > div').hide();
+                    $('#fs_options').hide();
+                    $('#id_insert_index').hide();
+                    $('#dividend_index').show();
+                    break;
+                case 7:
+                    $('#index > div').hide();
+                    $('#id_insert_index').hide();
+                    $('#fs_options').show();
+                    break;
+            }
+        });
+
+        $('.index_tabs > li').on('click', function() {
+            if($('.index_tabs > li > a').hasClass('nav-link active') == true) {
+                $('.index_tabs > li > a').removeClass('active');
+            }
+            $(this).children('a').addClass('active');
+
+            $('#id_insert_index').show();
+            $('#id_insert_index > div').children('span:eq(0)').html($(this).children('a').text());
+            $('#id_insert_index > div').children('span:eq(0)').attr('data-filter-name', $(this).data('index-name'));
+            $('#id_min').val('');
+            $('#id_max').val('');
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        /** 필터 추가(계정과목, 투자지표, 배당) */
+        $('#id_add_index').on('click', function() {
+            min_val = $('#id_min').val();
+            max_val = $('#id_max').val();
+            filter_name_ko = $('#id_insert_index > div').eq(0).children('span:eq(0)').text();
+            filter_name_en = $('#id_insert_index > div').children('span:eq(0)').attr('data-filter-name');
+
+            if ($.isNumeric(min_val) == true && $.isNumeric(max_val) == true) {
+                if (Number(min_val) <= Number(max_val)) {
+                    apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light me-1" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                    '<span>'+filter_name_ko+': '+min_val+' ~ '+max_val+'</span>'+
+                                    '<span class="btn-close ms-1 text-end"></span>'+
+                                '</span>';
+                    
+                    $('#'+filter_name_en).remove();
+                    $('#id_apply_filters').append(apply_index);
+                    indexes[filter_name_en] = {'min': min_val, 'max': max_val};
+                }
+                else {
+                    alert('최소값이 최대값보다 클 수 없습니다.');
+                }
+            }
+            // 이상
+            else if ($.isNumeric(min_val) == true && $.isNumeric(max_val) == false) {
+                apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light me-1" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                '<span>'+filter_name_ko+': '+min_val+' 이상'+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                    
+                $('#'+filter_name_en).remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name_en] = {'min': min_val, 'max': '이상'};
+            }
+            // 이하
+            else if ($.isNumeric(min_val) == false && $.isNumeric(max_val) == true) {
+                apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light me-1" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                '<span>'+filter_name_ko+': '+max_val+' 이하'+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#'+filter_name_en).remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name_en] = {'min': '이하', 'max': max_val};
+            }
+            else if (min_val == '' && max_val == ''){
+                apply_index = '<span id="'+filter_name_en+'" class="badge text-bg-light me-1" onclick=removeIndex(this,'+'"'+ filter_name_en +'"'+');>' +
+                                '<span>'+filter_name_ko+': 전체'+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#'+filter_name_en).remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name_en] = {'min': '전체', 'max': '전체'};
+            }
+            else {
+                alert('올바른 값을 입력하세요.');
+            }
+        });
+
+        /** 필터 추가(재무제표) */
+        $('#id_set_fs_options').on('click', function() {
+            year = $('select[name="year"] option:selected').val();
+            quarter = $('select[name="quarter"] option:selected').val();
+            fs_type = $('select[name="fs_type"] option:selected').val();
+            filter_name = 'fs_options'
+
+            if (year == '년도' || quarter == '분기' || fs_type == '재무제표 유형') {
+                alert('년도, 분기, 재무제표 유형 모두 선택해주세요.');
+            }
+            else {
+                if (fs_type == 0) {
+                    fs_type_name = '연결'
+                }
+                else if (fs_type == 5) {
+                    fs_type_name = '별도'
+                }
+                apply_index = '<span id="fs_type" class="badge text-bg-light me-1" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                                '<span>'+year+'년 '+quarter+' 분기, '+fs_type_name+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#fs_type').remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name] = {'year': year, 'quarter': quarter, 'fs_type': fs_type};
+            }
+        });
+    });
+
+    /** 필터 추가(기업명, 종목코드) */
+    function searchCorpName(search_this) {
+        corp_name = $('#id_search_corp_name').val();
+        filter_name = 'corp_name';
+
+        if ($(search_this).prop('tagName') == 'INPUT' && event.keyCode == 13 || $(search_this).prop('tagName') == 'BUTTON') {
+            if ($.isNumeric(corp_name) == true && corp_name.length == 6) {
+                if (Object.keys(indexes).some(v => v == filter_name)) {
+                    alert('이미 적용된 필터입니다.');
+                }
+                else {
+                    apply_index = '<span id="corp_name" class="badge text-bg-light me-1" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                                    '<span>'+'종목코드: '+corp_name+'</span>'+
+                                    '<span class="btn-close ms-1 text-end"></span>'+
+                                '</span>';
+
+                    $('#id_apply_filters').append(apply_index);
+                    indexes[filter_name] = corp_name;
+                }
+            }
+            else if ($.isNumeric(corp_name) == false) {
+                apply_index = '<span id="corp_name" class="badge text-bg-light me-1" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                                '<span>'+'기업명: '+corp_name+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#corp_name').remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name] = corp_name;
+            }
+            else {
+                alert('올바른 값을 입력해주세요.');
+            }
+        }
+    }
+</script>
+<script>
+    $(document).ready(function() {
+        /** 검색 */
+        $('#submit_search').on('click', function() {
+            $.post({
+                url: "{% url 'services:search' %}",
+                data: JSON.stringify(indexes),
+                beforeSend: function(xhr, settings) {
+                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                },
+                error: function(response) {
+                    message = response['responseText'];
+                    alert(message);
+                    location.href = "{% url 'account:login' %}";
+                },
+                success: function() {
+                    $('#filter-modal').modal('hide');
+                    location.href = "{% url 'services:search' %}";
+                }
+            });
+        });
+
+        /** 초기화 */
+        $('#reset').on('click', function() {
+            $('#id_apply_filters').empty();
+            indexes = {};
+        });
+    });
+</script>
+{% endblock %}

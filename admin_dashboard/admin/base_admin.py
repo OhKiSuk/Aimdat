@@ -1,5 +1,5 @@
 """
-@modified at 2023.08.10
+@modified at 2023.08.18
 @author OKS in Aimdat Team
 """
 from account.forms.login_forms import CustomAuthenticationForm
@@ -22,7 +22,6 @@ from django.db.models.functions import (
     TruncDay
 )
 from django.urls import path
-from services.models.inquiry import Inquiry
 from ..models.last_collect_date import LastCollectDate
 
 from .axes_admin import (
@@ -49,6 +48,12 @@ from ..views.corp_manage_views import (
     ManageCorpFinancialStatementsUpdateView,
     ManageInvestmentIndexView,
     ManageInvestmentIndexUpdateView
+)
+from ..views.reits_manage_views import (
+    ReitsManageHome,
+    ReitsAddView,
+    ReitsDeleteView,
+    ReitsUpdateView
 )
 
 class CustomAdminSite(AdminSite):
@@ -92,6 +97,12 @@ class CustomAdminSite(AdminSite):
             # 투자지표 관리
             path('manage/index/list', custom_admin_site.admin_view(ManageInvestmentIndexView.as_view()), name='manage_index_list'),
             path('manage/index/update/<int:pk>/', custom_admin_site.admin_view(ManageInvestmentIndexUpdateView.as_view()), name='manage_index_update'),
+
+            # 리츠 정보 관리
+            path('manage/reits/home', custom_admin_site.admin_view(ReitsManageHome.as_view()), name='manage_reits_home'),
+            path('manage/reits/add/', custom_admin_site.admin_view(ReitsAddView.as_view()), name='manage_reits_add'),
+            path('manage/reits/delete/<int:pk>', custom_admin_site.admin_view(ReitsDeleteView.as_view()), name='manage_reits_delete'),
+            path('manage/reits/update/<int:pk>', custom_admin_site.admin_view(ReitsUpdateView.as_view()), name='manage_reits_update'),
         ]
 
         return custom_urls + urls

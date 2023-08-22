@@ -232,8 +232,6 @@ class SearchView(ListView):
         return context
     
     def post(self, request):
-        if not self.test_func():
-            return HttpResponse('', status=500)
 
         if request.body.decode('utf-8') == 'reset' or request.body.decode('utf-8') == '{}':
             # 세션 초기화

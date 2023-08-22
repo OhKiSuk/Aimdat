@@ -23,3 +23,6 @@ class CorpId(models.Model):
                 name='unique corp'
             )
         ]
+
+    def __str__(self):
+        return self.corp_name
