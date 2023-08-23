@@ -1,6 +1,9 @@
 """
 @created at 2023.08.11
 @author OKS in Aimdat Team
+
+@modified at 2023.08.23
+@author OKS in Aimdat Team
 """
 import requests
 
@@ -59,6 +62,23 @@ class ReitsInquriyView(DetailView):
 
         # 공시정보
         context['page_obj'] = self.paging_disclosure_data(self.disclosure_data())
+
+        # 투자자산 정보 및 차입금 정보
+        investment_assets_info_keys = ['asset_name', 'asset_division', 'area', 'rental_rate', 'wale']
+        borrowed_info_keys = ['institution_name', 'borrowed_division', 'amount', 'due_date', 'interest_rate']
+
+        investment_assets_info_data = []
+        for obj in self.object.investment_assets_info:
+            sorted_obj = [(key,obj[key]) for key in investment_assets_info_keys]
+            investment_assets_info_data.append(sorted_obj)
+
+        borrowed_info_data = []
+        for obj in self.object.borrowed_info:
+            sorted_obj = [(key,obj[key]) for key in borrowed_info_keys]
+            borrowed_info_data.append(sorted_obj)
+
+        context['investment_assets_info'] = investment_assets_info_data
+        context['borrowed_info'] = borrowed_info_data
 
         return context
     

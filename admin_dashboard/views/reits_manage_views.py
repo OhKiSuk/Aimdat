@@ -1,6 +1,9 @@
 """
 @created at 2023.08.12
-@authro OKS in Aimdat Team
+@author OKS in Aimdat Team
+
+@modified at 2023.08.23
+@author OKS in Aimdat Team
 """
 from django.urls import reverse_lazy
 from django.views.generic import (
@@ -54,7 +57,7 @@ class ReitsAddView(CreateView):
     """
     template_name='admin_dashboard/reits/reits_add_view.html'
     model = ReitsInquiry
-    fields = ['corp_id', 'establishment_date', 'listing_date', 'settlement_cycle', 'investment_assets_info', 'borrowed_info']
+    fields = ['corp_id', 'establishment_date', 'listing_date', 'settlement_cycle', 'lastest_dividend_date', 'lastest_dividend_rate', 'investment_assets_info', 'borrowed_info']
     success_url = reverse_lazy('admin:manage_reits_home')
 
     def get_form(self):
@@ -67,6 +70,8 @@ class ReitsAddView(CreateView):
         form.fields['settlement_cycle'].label = '결산월'
         form.fields['investment_assets_info'].label = '투자자산 정보'
         form.fields['borrowed_info'].label = '차입금 정보'
+        form.fields['lastest_dividend_date'].label = '최근 배당일'
+        form.fields['lastest_dividend_rate'].label = '배당률'
 
         form.fields['corp_id'].queryset = CorpId.objects.filter(stock_code__in=REITS_LIST)
 
@@ -78,8 +83,29 @@ class ReitsUpdateView(UpdateView):
     """
     template_name='admin_dashboard/reits/reits_update_view.html'
     model = ReitsInquiry
-    fields = ['corp_id', 'establishment_date', 'listing_date', 'settlement_cycle', 'investment_assets_info', 'borrowed_info']
+    fields = ['corp_id', 'establishment_date', 'listing_date', 'settlement_cycle', 'lastest_dividend_date', 'lastest_dividend_rate', 'investment_assets_info', 'borrowed_info']
     success_url = reverse_lazy('admin:manage_reits_home')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # 투자자산 정보 및 차입금 정보
+        investment_assets_info_keys = ['asset_name', 'asset_division', 'area', 'rental_rate', 'wale']
+        borrowed_info_keys = ['institution_name', 'borrowed_division', 'amount', 'due_date', 'interest_rate']
+
+        investment_assets_info_data = []
+        for obj in self.object.investment_assets_info:
+            sorted_obj = [(key,obj[key]) for key in investment_assets_info_keys]
+            investment_assets_info_data.append(sorted_obj)
+
+        borrowed_info_data = []
+        for obj in self.object.borrowed_info:
+            sorted_obj = [(key,obj[key]) for key in borrowed_info_keys]
+            borrowed_info_data.append(sorted_obj)
+
+        context['investment_assets_info'] = investment_assets_info_data
+        context['borrowed_info'] = borrowed_info_data
+        return context
 
     def get_form(self):
         form = super().get_form()

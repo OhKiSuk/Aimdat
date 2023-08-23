@@ -96,15 +96,15 @@
                 <tr class="fw-bold">
                     <th>투자자산명</th>
                     <th>투자구분</th>
+                    <th>연면적(m<sup>2</sup>)</th>
                     <th>임대율(%)</th>
                     <th>WALE(년)</th>
-                    <th>연면적(m<sup>2</sup>)</th>
                 </tr>
             </thead>
             <tbody class="text-center">
-                {% for object in object.investment_assets_info %}
+                {% for object in investment_assets_info %}
                 <tr>
-                    {% for _, value in object.items %}
+                    {% for key, value in object %}
                     <td>{{ value }}</td>
                     {% endfor %}
                 </tr>
@@ -125,9 +125,9 @@
                 </tr>
             </thead>
             <tbody class="text-center">
-                {% for object in object.borrowed_info %}
+                {% for object in borrowed_info %}
                 <tr>
-                    {% for _, value in object.items %}
+                    {% for _, value in object %}
                     <td>{{ value }}</td>
                     {% endfor %}
                 </tr>

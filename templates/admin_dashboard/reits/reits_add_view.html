@@ -143,6 +143,8 @@
             var establishment_date = $('#establishment_date').val();
             var listing_date = $('#listing_date').val();
             var settlement_cycle = $('#settlement_cycle').val();
+            var lastest_dividend_date = $('#lastest_dividend_date').val();
+            var lastest_dividend_rate = $('#lastest_dividend_rate').val();
             var borrowed_info = []
             var investment_assets_info = []
 
@@ -178,6 +180,8 @@
                     establishment_date: establishment_date,
                     listing_date: listing_date,
                     settlement_cycle: settlement_cycle,
+                    lastest_dividend_date: lastest_dividend_date,
+                    lastest_dividend_rate: lastest_dividend_rate,
                     investment_assets_info: JSON.stringify(investment_assets_info),
                     borrowed_info: JSON.stringify(borrowed_info)
                 },

@@ -29,12 +29,12 @@
 
         <div class="mb-3">
             <label class="form-label fw-bold fs-md" for="{{ form.lastest_dividend_date.name }}">{{ form.lastest_dividend_date.label }}</label>
-            <input class="form-control" type="text" id="{{ form.lastest_dividend_date.name }}"/>
+            <input class="form-control" type="text" id="{{ form.lastest_dividend_date.name }}" value="{{ form.lastest_dividend_date.value }}"/>
         </div>
 
         <div class="mb-3">
             <label class="form-label fw-bold fs-md" for="{{ form.lastest_dividend_rate.name }}">{{ form.lastest_dividend_rate.label }}</label>
-            <input class="form-control" type="text" id="{{ form.lastest_dividend_rate.name }}"/>
+            <input class="form-control" type="text" id="{{ form.lastest_dividend_rate.name }}" value="{{ form.lastest_dividend_rate.value }}"/>
         </div>
 
         <div class="mb-3">
@@ -60,9 +60,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for object in object.investment_assets_info %}
+                    {% for object in investment_assets_info %}
                     <tr>
-                        {% for key, value in object.items %}
+                        {% for key, value in object %}
                         <td>
                             <input type="text" class="form-control" value="{{ value }}" name="{{ key }}"/>
                         </td>
@@ -96,9 +96,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for object in object.borrowed_info %}
+                    {% for object in borrowed_info %}
                     <tr>
-                        {% for key, value in object.items %}
+                        {% for key, value in object %}
                         <td>
                             <input type="text" class="form-control" value="{{ value }}" name="{{ key }}"/>
                         </td>
@@ -159,6 +159,8 @@
             var establishment_date = $('#establishment_date').val();
             var listing_date = $('#listing_date').val();
             var settlement_cycle = $('#settlement_cycle').val();
+            var lastest_dividend_date = $('#lastest_dividend_date').val();
+            var lastest_dividend_rate = $('#lastest_dividend_rate').val();
             var borrowed_info = []
             var investment_assets_info = []
 
@@ -194,6 +196,8 @@
                     establishment_date: establishment_date,
                     listing_date: listing_date,
                     settlement_cycle: settlement_cycle,
+                    lastest_dividend_rate: lastest_dividend_rate,
+                    lastest_dividend_date: lastest_dividend_date,
                     investment_assets_info: JSON.stringify(investment_assets_info),
                     borrowed_info: JSON.stringify(borrowed_info)
                 },
