@@ -2,7 +2,7 @@
 @created at 2023.03.08
 @author OKS in Aimdat Team
 
-@modified at 2023.05.16
+@modified at 2023.08.25
 @author OKS in Aimdat Team
 """
 import secrets
@@ -39,7 +39,7 @@ class CustomPasswordResetView(UserPassesTestMixin, PasswordResetView):
     email_template_name = 'account/password_reset/password_reset_email.html'
     html_email_template_name = 'account/password_reset/password_reset_email.html'
     form_class = CustomPasswordResetForm
-    from_email = 'no-reply@aimdat.com'
+    from_email = 'aimdatservice@naver.com'
     subject_template_name = 'emails/subjects/password_reset_subject.txt'
     template_name = 'account/password_reset/password_reset.html'
 

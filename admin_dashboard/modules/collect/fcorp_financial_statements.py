@@ -25,7 +25,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
-from webdriver_manager.chrome import ChromeDriverManager
 from services.models.corp_id import CorpId
 from ..remove.remove_files import remove_files
 
@@ -39,7 +38,7 @@ def _get_fcorp_list():
     """
     try:
         #고용노동부_표준산업분류코드 csv 다운로드
-        url = 'https://www.data.go.kr/data/15049591/fileData.do'
+        url = 'https://www.data.go.kr/data/15049592/fileData.do'
         option = webdriver.ChromeOptions()
         option.add_experimental_option("prefs", {
             "download.default_directory": DOWNLOAD_PATH
@@ -47,21 +46,24 @@ def _get_fcorp_list():
         option.add_argument("--headless")
         option.add_argument('--no-sandbox')
         option.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
+        option.add_argument(f"--download.default_directory={DOWNLOAD_PATH}") 
+        driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
         driver.get(url)
         time.sleep(5)
-
+        
         # A005 로깅
         try:
             download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+            driver.execute_script("arguments[0].click();", download_button)
+
+            WebDriverWait(driver, 3).until(EC.alert_is_present())
             driver.switch_to.alert.accept()
         except:
-            LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
+            LOGGER.error('[A005] 산업분류코드 다운로드 실패.')
         
-        driver.execute_script("arguments[0].click();", download_button)
-        time.sleep(3)
-
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))[0]
+        time.sleep(5)
+        
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))[0]
 
         with open(file_path, 'r', newline='', encoding='CP949') as file:
             file_content = csv.reader(file)
@@ -69,11 +71,12 @@ def _get_fcorp_list():
             # 금융업 목록만 파싱(대한민국 금융업: 64 ~ 66)
             fcorp_sector_list = []
             for row in file_content:
-                if row[7].startswith(('64', '65', '66')):
-                    fcorp_sector_list.append(row[2])
+                if row[6].startswith(('64', '65', '66')):
+                    fcorp_sector_list.append(row[7])
 
         #현재 등록된 기업 목록 중 금융업종의 종목코드 검색
         stock_code_list = CorpId.objects.filter(Q(corp_sectors__in=fcorp_sector_list)).values_list('stock_code', flat=True)
+
         return stock_code_list
 
     except (CorpId.DoesNotExist, NoSuchElementException, FileNotFoundError):
@@ -90,7 +93,7 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
+    driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
     
     fs_result = []
     # 검색 후 재무제표 획득
@@ -344,7 +347,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
         client.close()
 
         # 사용한 파일 제거
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
 
         if len(file_path) > 0:
             remove_files(file_path[0])
@@ -352,7 +355,7 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
         return True
 
     # 사용한 파일 제거
-    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
 
     if len(file_path) > 0:
         remove_files(file_path[0])

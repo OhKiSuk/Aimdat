@@ -432,7 +432,7 @@
                         table.find("tbody").append($(this));
                     })
                     
-                    $("#load_more_button").text("더보기( " + {{ page_obj|length }} * 1 + " / {{ page_obj.paginator.count }} )");
+                    $("#load_more_button").text("더보기( " + {{ page_obj|length }} * page_number + " / {{ page_obj.paginator.count }} )");
                     
                     if (page_number == totalPages) {
                         $("#load_more_button").prop("disabled", true);

@@ -22,7 +22,8 @@ from django.db.models import Q
 from django.http import HttpResponseServerError
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 
 from services.models.corp_id import CorpId
@@ -49,7 +50,7 @@ def _get_ifrs_xbrl_txt(years, quarters):
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options = option)
+    driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options = option)
 
     # 수집할 데이터
     report = ['재무상태표', '손익계산서', '현금흐름표']
@@ -101,7 +102,7 @@ def _get_dcorp_list():
     """
     try:
         #고용노동부_표준산업분류코드 csv 다운로드
-        url = 'https://www.data.go.kr/data/15049591/fileData.do'
+        url = 'https://www.data.go.kr/data/15049592/fileData.do'
         option = webdriver.ChromeOptions()
         option.add_experimental_option("prefs", {
             "download.default_directory": DOWNLOAD_PATH
@@ -109,20 +110,23 @@ def _get_dcorp_list():
         option.add_argument("--headless")
         option.add_argument('--no-sandbox')
         option.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
+        driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
         driver.get(url)
         time.sleep(5)
         
-        download_button = driver.find_element(By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a')
-        driver.switch_to.alert.accept()
         # A005 로깅
         try:
+            download_button = driver.find_element(By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a')
             driver.execute_script("arguments[0].click();", download_button)
-            time.sleep(3)
+
+            WebDriverWait(driver, 3).until(EC.alert_is_present())
+            driver.switch_to.alert.accept()
         except:
             LOGGER.error('[A005] 산업분류코드 다운로드 실패.')
 
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))[0]
+        time.sleep(5)
+
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))[0]
 
         with open(file_path, 'r', newline='', encoding='CP949') as file:
             file_content = csv.reader(file)
@@ -130,8 +134,8 @@ def _get_dcorp_list():
             # 비금융기업만 파싱(대한민국 금융업: 64 ~ 66)
             fcorp_sector_list = []
             for row in file_content:
-                if not row[7].startswith(('64', '65', '66')):
-                    fcorp_sector_list.append(row[2])
+                if not row[6].startswith(('64', '65', '66')):
+                    fcorp_sector_list.append(row[7])
 
         #현재 등록된 기업 목록 중 비금융업종의 종목코드 검색
         stock_code_list = CorpId.objects.filter(Q(corp_sectors__in=fcorp_sector_list)).values_list('stock_code', flat=True)
@@ -241,7 +245,7 @@ def save_dcorp(years, quarters):
         client.close()
 
         # 파일 삭제
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
         folder_path = glob.glob(os.path.join(DOWNLOAD_PATH, 'fs_zips'))
 
         if len(file_path) > 0:
@@ -253,7 +257,7 @@ def save_dcorp(years, quarters):
         return True
 
     # 파일 삭제
-    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
     folder_path = glob.glob(os.path.join(DOWNLOAD_PATH, 'fs_zips'))
 
     if len(file_path) > 0:

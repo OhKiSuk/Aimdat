@@ -2,7 +2,7 @@
 @created at 2023.05.10
 @author JSU in Aimdat Team
 
-@modified at 2023.07.18
+@modified at 2023.09.04
 @author OKS in Aimdat Team
 """
 import logging
@@ -269,23 +269,17 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
 
                             # 손익계산서 값
                             if account_category == '당기순이익':
-                                if value >= net_profit:
-                                    net_profit = value
+                                net_profit = value
                             elif account_category == '매출액':
-                                if value >= revenue:
-                                    revenue = value
+                                revenue = value
                             elif account_category == '영업이익':
-                                if value >= operating_profit:
-                                    operating_profit = value
+                                operating_profit = value
                             elif account_category == '매출원가':
-                                if value >= cost_of_sales:
-                                    cost_of_sales = value
+                                cost_of_sales = value
                             elif account_category == '이자비용':
-                                if value >= interest_expense:
-                                    interest_expense = value
+                                interest_expense = value
                             elif account_category == '법인세비용':
-                                if value >= corporate_tax:
-                                    corporate_tax = value
+                                corporate_tax = value
 
         # 성장률 계산에 필요한 전기 데이터 조회(2020년 1분기 이전 데이터는 가져오지 않음)
         if year != 2020 and quarter != 1:

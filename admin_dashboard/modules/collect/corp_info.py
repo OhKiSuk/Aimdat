@@ -114,7 +114,7 @@ def _download_induty_code():
     """
     공공데이터포털 고용노동부_표준산업분류코드에서 산업분류코드 다운로드
     """
-    url = 'https://www.data.go.kr/data/15049591/fileData.do'
+    url = 'https://www.data.go.kr/data/15049592/fileData.do'
     option = webdriver.ChromeOptions()
     option.add_experimental_option("prefs", {
         "download.default_directory": DOWNLOAD_PATH
@@ -122,7 +122,7 @@ def _download_induty_code():
     option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(executable_path=ChromeDriverManager(version="114.0.5735.90").install(), chrome_options=option)
+    driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
     driver.get(url)
     time.sleep(5)
 
@@ -139,7 +139,7 @@ def _parse_induty_code(corp_id, induty_code):
     """
     산업분류코드를 파싱 후 저장
     """
-    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))[0]
+    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))[0]
 
     with open(file_path, 'r', newline='', encoding='CP949') as file:
         # A006 로깅
@@ -149,9 +149,9 @@ def _parse_induty_code(corp_id, induty_code):
             LOGGER.error('[A006] 산업분류코드 파싱 실패.')
 
         for row in file_content:
-            if row[7] == induty_code:
+            if row[6] == induty_code:
                 CorpId.objects.filter(id=corp_id).update(
-                    corp_sectors=row[8]
+                    corp_sectors=row[7]
                 )
 
 def save_corp_info():
@@ -192,7 +192,7 @@ def save_corp_info():
                     corp_ceo_name = corp_info['corp_ceo_name']
                 )
 
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_표준산업분류코드(10차_통계청)_*.csv'))[0]
+        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
 
         # 고용노동부_표준산업분류코드 제거
         remove_files(file_path)
