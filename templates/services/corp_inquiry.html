@@ -8,26 +8,21 @@
 <link rel="stylesheet" href="{% static 'css/corp_inquiry.css' %}">
 {% endblock %}
 {% block content %}
-<div class="mt-5 card">
-    <div class="card-body">
-        <div>
-            <span class="fs-md fw-semibold">{{ corp_id.corp_name }}</span>
-            <a class="bi bi-house" href="https://{{ corp_info.corp_homepage_url }}"></a>
-            <div class="btn-group dropend">
-                <button type="button" class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"></button>
-                <ul class="dropdown-menu">
-                    <div class="fs-min px-3">
-                        <div><span class="fw-semibold">결산월:</span> {{ corp_info.corp_settlement_month }}월</div>
-                        <div><span class="fw-semibold">CEO 명:</span> {{ corp_info.corp_ceo_name }}</div>
-                    </div>
-                </ul>
+
+<div class="mt-5 mb-3" id="content">
+
+    <div class="mt-3">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">
+            <span class="me-1" style="vertical-align: middle;">{{ corp_id.corp_name }}</span>
+            {% if corp_info.corp_summary %}
+            <button class="btn btn-sm btn-primary fw-bold" data-bs-toggle="dropdown" aria-expanded="false">기업소개<i class="bi bi-caret-down-fill"></i></button>
+            <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start">
+                <span class="px-3" style="font-size: 0.8rem;">{{ corp_info.corp_summary }}</span>
             </div>
-            <span class="badge text-bg-light">{{ corp_id.stock_code }}</span>
-            <span class="badge text-bg-light">{{ corp_id.corp_isin }}</span>
-            <span class="badge text-bg-light">{{ corp_id.corp_market }}</span>
-            <span class="badge text-bg-light">{{ corp_id.corp_sectors }}</span>
+            {% endif %}
+            <a class="btn btn-sm btn-primary fw-bold" href="https://{{ corp_info.corp_homepage_url }}"><i class="bi bi-house"></i> 홈페이지</a>
         </div>
-        <div>
+        <div class="mt-2">
             <span class="fs-md fw-semibold">{{ latest_stock_info.close_price|floatformat:'0'|intcomma }}</span>
 
             {% if latest_stock_info.change_price < 0 %}
@@ -37,24 +32,19 @@
             {% else %}
             <span class="fs-sm fw-semibold"><b class="text-danger">▲</b> {{ latest_stock_info.change_price|floatformat:'0'|intcomma }} ({{ latest_stock_info.change_rate|floatformat:'2'|intcomma }}%)</span>
             {% endif %}
-
             <span class="fs-min fw-semibold text-black-50">{{ latest_stock_info.trade_date }} 기준</span>
-        </div>
-        <div class="mt-2">
-            <div class="fs-sm fw-semibold">기업소개</div>
-            <div class="fs-sm">
-                {% if corp_info.corp_summary is None %}
-                내용이 없습니다.
-                {% else %}
-                {{ corp_info.corp_summary|safe }}
-                {% endif %}
-            </div>
+            <span class="badge text-bg-light">{{ corp_id.stock_code }}</span>
+            <span class="badge text-bg-light">{{ corp_id.corp_isin }}</span>
+            <span class="badge text-bg-light">{{ corp_id.corp_market }}</span>
+            <span class="badge text-bg-light">{{ corp_id.corp_sectors }}</span>
         </div>
     </div>
-</div>
 
-<div class="card mt-4">
-    <div class="card-body">
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">
+            <span class="me-1" style="vertical-align: middle;">주가정보</span>
+        </div>
+        
         <div id="chart_info">
             <div class="row mb-4">
                 <div class="col chart_tab">
@@ -80,120 +70,110 @@
             <div id="chart" style="width: 100%; height: 300px;"></div>
         </div>
 
-        <hr class="my-3">
-
-        <div id="stock_info">
+        <div>
             <div class="row mb-4">
-                <div class="col fs-md fw-semibold">주식정보</div>
-                <div class="col fs-sm fw-semibold text-black-50 text-end">(단위: 원, 주)</div>
+                <div class="col fs-min fw-semibold text-black-50 text-end">* 단위: 원, 주</div>
             </div>
-            <div id="stock_value" class="row">
-                <div class="col fw-semibold">
-                    <div>52주 최고/최저</div>
-                    <div>거래량</div>
-                    <div>거래대금</div>
-                    <div>시가총액</div>
-                    <div>상장주식수</div>
-                </div>
-                <div class="col text-end">
-                    {% if week_52_price %}
-                    <div><span class="text-danger">{{ week_52_price.high_price|floatformat:'0'|intcomma }}</span>/<span class="text-primary">{{ week_52_price.low_price|floatformat:'0'|intcomma }}</span></div>
-                    {% else %}
-                    <div>-</div>
-                    {% endif %}
-                    <div>{{ latest_stock_info.trade_quantity|floatformat:'0'|intcomma }}</div>
-                    <div>{{ latest_stock_info.trade_price|floatformat:'0'|intcomma }}</div>
-                    <!-- 시가총액 단위 -->
-                    {% if latest_stock_info.market_capitalization >= 100_000_000_000 %}
-                    <div>{{ latest_stock_info.market_capitalization|divide_marketcap|intcomma }}</div>
-                    {% elif latest_stock_info.market_capitalization >= 100_000_000 %}
-                    <div>{{ latest_stock_info.market_capitalization|divide_marketcap|intcomma }}</div>
-                    {% else %}
-                    <div>{{ latest_stock_info.market_capitalization|floatformat:'0'|intcomma }}</div>
-                    {% endif %}
-                    <div>{{ latest_stock_info.total_stock|floatformat:'0'|intcomma }}</div>
-                </div>
-            </div>
+            <table class="table table-sm">
+                <tbody>
+                    <tr>
+                        <td class="fw-bold text-center">52주 최고/최저</td>
+                        {% if week_52_price %}
+                        <td class="text-end"><span class="text-danger">{{ week_52_price.high_price|floatformat:'0'|intcomma }}</span>/<span class="text-primary">{{ week_52_price.low_price|floatformat:'0'|intcomma }}</span></td>
+                        {% else %}
+                        <td class="text-end">-</td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-center">거래량</td>
+                        <td class="text-end">{{ latest_stock_info.trade_quantity|floatformat:'0'|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-center">거래대금</td>
+                        <td class="text-end">{{ latest_stock_info.trade_price|floatformat:'0'|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-center">시가총액</td>
+                        {% if latest_stock_info.market_capitalization >= 100_000_000_000 %}
+                        <td class="text-end">{{ latest_stock_info.market_capitalization|divide_marketcap|intcomma }}</td>
+                        {% elif latest_stock_info.market_capitalization >= 100_000_000 %}
+                        <td class="text-end">{{ latest_stock_info.market_capitalization|divide_marketcap|intcomma }}</td>
+                        {% else %}
+                        <td class="text-end">{{ latest_stock_info.market_capitalization|floatformat:'0'|intcomma }}</td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-center">상장주식수</td>
+                        <td class="text-end">{{ latest_stock_info.total_stock|floatformat:'0'|intcomma }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
-</div>
 
-<div class="mt-4 card">
-    <div class="card-body">
-        <ul id="corp_info_tabs" class="nav nav-underline mb-3" style="box-shadow: 0 -2px 0 0 rgba(0, 0, 0, 10%) inset;">
-            <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="javascript:void(0);">재무정보</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="javascript:void(0);">공시</a>
-            </li>
-        </ul>
-
-        <!-- 재무정보 -->
-        <div id="id_fs_info">
-            <div class="row my-2">
-                <div class="col fs-min d-flex align-items-center fw-semibold text-black-50 text-start">IFRS 기준, (단위: 억원, 배, %)</div>
-                <div class="col text-end">
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="btnradio" id="cfs" autocomplete="off" checked>
-                        <label class="btn btn-sm btn-outline-primary" for="cfs">연결</label>
-                      
-                        <input type="radio" class="btn-check" name="btnradio" id="sfs" autocomplete="off">
-                        <label class="btn btn-sm btn-outline-primary" for="sfs">별도</label>
-                    </div>
-                </div>
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">
+            <span style="vertical-align: middle;">요약재무정보</span>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <span class="fs-min fw-bold text-black-50 my-2" style="vertical-align: middle;">* IFRS 기준, 단위: 억원, 배, %</span>
             </div>
-            {% if fs_date %}
-            <div id="id_table_wrapper" style="overflow-x: auto;">
-                <table class="table table-bordered text-center fs-sm">
-                    <thead class="bg-light">
-                        <tr class="fw-semibold">
-                            <th style="position: sticky; border-right: 2px solid rgba(0, 0, 0, 30%); width: 15%;"></th>
-                            {% for date in fs_date %}
-                            <th>{{ date.year }}년 {{ date.quarter }}분기</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for data in report_data %}
-                        <tr>
-                            {% for key, values in data.items %}
-                            <td class="fw-semibold" style="border-right: 2px solid rgba(0, 0, 0, 30%);">{{ key|convert_account }}</td>
-                                {% for value in values %}
-                                    {% if value is not None %}
-                                    <td>{{ value|floatformat:'2'|intcomma }}</td>
-                                    {% else %}
-                                    <td>-</td>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <table class="table table-bordered text-center fs-sm">
-                    <thead class="bg-light">
-                        <tr class="fw-semibold">
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="fw-semibold">재무제표가 존재하지 않습니다.</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="col">
+                {% if check_fs_types == 'cfs' %}
+                <div class="btn-group btn-group-sm float-end">
+                    <input type="radio" class="btn-check" name="fs_type" id="sfs" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="sfs">별도</label>
+
+                    <input type="radio" class="btn-check" name="fs_type" id="cfs" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="cfs">연결</label>
+                </div>
                 {% endif %}
             </div>
         </div>
-        
-        <!-- 공시정보 -->
-        <div id="disclosure_info" style="display: none;">
+
+        <div class="row">
+            <div class="col">
+                <div class="fs-sm fw-bold bg-main text-white p-2">수익성</div>
+                <canvas id="profit_chart"></canvas>
+            </div>
+            <div class="col">
+                <div class="fs-sm fw-bold bg-main text-white p-2">안정성</div>
+                <canvas id="stability_chart"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="fs-sm fw-bold bg-main text-white p-2">활동성</div>
+                <canvas id="activity_chart"></canvas>
+            </div>
+            <div class="col">
+                <div class="fs-sm fw-bold bg-main text-white p-2">성장성</div>
+                <canvas id="growth_chart"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="fs-sm fw-bold bg-main text-white p-2">배당</div>
+                <canvas id="dividend_chart"></canvas>
+            </div>
+            <div class="col">
+                <div class="fs-sm fw-bold bg-main text-white p-2">투자지표</div>
+                <canvas id="investment_chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <div class="fs-md fw-bold ps-3" style="border-left: 7px solid #044FBF;">
+            <span class="me-1" style="vertical-align: middle;">공시</span>
+        </div>
+
+        <div>
             <div class="my-2">
                 <div class="fs-min text-black-50 fw-bold">공시정보는 최대 3년 이내, 100개만 제공됩니다.</div>
             </div>
-            <table class="table table-hover text-center fs-sm" id="table">
+            <table class="table table-hover text-center fs-sm" id="disclosure_table">
                 <thead>
                     <tr class="fw-semibold">
                         <td style="width: 10%;">No.</td>
@@ -229,44 +209,28 @@
         </div>
     </div>
 </div>
+
+<div class="bg-light p-3 mt-3">
+    <p class="fs-min fw-bold">* Aimdat이 제공하는 정보는 신뢰할만한 기관이 제공하는 정보를 직접 가공하여 얻은 정보이나, 정보의 완전성과 정확성을 보장하지 않습니다.</p>
+    <span class="fs-min fw-bold">* Aimdat이 제공하는 정보를 통한 투자 결과에 대한 책임은 투자자 본인에게 있습니다.</span>
+</div>
+
 <input id="page" type="hidden" data-page="{{ page_obj.number }}">
 {% include 'includes/footer.html' %}
 {% endblock %}
 {% block script %}
 <script src="{% static 'js/lightweight-charts.standalone.production.js' %}"></script>
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
 <script>
-    $(document).ready(function() {
-        page_number = Number($('#page').data('page'));
-
-        $('#corp_info_tabs > li').on('click', function() {
-            if($('#corp_info_tabs > li > a').hasClass('nav-link active') == true) {
-                $('#corp_info_tabs > li > a').removeClass('active');
-            }
-            $(this).children('a').addClass('active');
-
-            switch($(this).index()) {
-                case 0:
-                    $('#disclosure_info').hide();
-                    $('#id_fs_info').show();
-                    break;
-                case 1:
-                    $('#id_fs_info').hide();
-                    $('#disclosure_info').show();
-                    break;
-            }
-        });
-    });
-</script>
-<script>
-    const chartOptions = { 
+    var chartOptions = { 
         layout: { 
             textColor: 'black', background: { type: 'solid', color: 'white' },
         },
     };
-    const container = document.getElementById('chart');
-    const chart = LightweightCharts.createChart(container, chartOptions);
+    var container = document.getElementById('chart');
+    var chart = LightweightCharts.createChart(container, chartOptions);
 
-    const candlestickSeries = chart.addAreaSeries({
+    var candlestickSeries = chart.addAreaSeries({
         {% if latest_stock_info.change_price < 0 %}
         topColor: "rgba(46, 46, 254, 0.56)",
         bottomColor: "rgba(38,198,218, 0.04)",
@@ -286,7 +250,7 @@
         },
     });
 
-    const data = [
+    var data = [
         {% for data in stock_data %}
         {
             time: '{{ data.trade_date }}',
@@ -297,7 +261,7 @@
     
     candlestickSeries.setData(data);
     
-    const volumeSeries = chart.addHistogramSeries({
+    var volumeSeries = chart.addHistogramSeries({
         topColor: undefined, 
         bottomColor: undefined, 
         priceScaleId: '',
@@ -312,7 +276,7 @@
             bottom: 0,
         },
     });
-    const trade_data = [
+    var trade_data = [
         {% for data in stock_data %}
         {
             time: '{{ data.trade_date }}',
@@ -384,32 +348,550 @@
     }
 </script>
 <script>
-    $(document).ready(function() {
-        /** 재무제표 조회 */
-        $('input[name="btnradio"]').on('click', function() {
-            $.get({
-                url: "{% url 'services:corp_inquiry' corp_info.id %}",
-                data: {
-                    fs_type: $(this).attr('id')
-                },
-                error: function() {
-                    alert('로그인이 필요한 서비스입니다.');
-                    location.href = "{% url 'account:login' %}"
-                },
-                success: function() {
-                    var responseHTML = $.parseHTML(response);
-                    var table = $(responseHTML).find('#id_table_wrapper table');
-
-                    $('#id_table_wrapper table').remove();
-                    $('#id_table_wrapper').append(table);
+    /* 수익성 차트 */
+    var profit_chart = document.getElementById("profit_chart").getContext("2d");
+    new Chart(profit_chart, {
+        data: {
+            datasets: [{
+                type: 'line',
+                label: '매출원가율',
+                yAxisID: 'line',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.cost_of_sales_ratio %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            },{
+                type: 'line',
+                label: '영업이익률',
+                yAxisID: 'line',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.operating_margin %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            },{
+                type: 'line',
+                label: '순이익률',
+                yAxisID: 'line',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.net_profit_margin %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: 'ROIC',
+                yAxisID: 'line',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.roic %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: 'ROE',
+                yAxisID: 'line',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.roe %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: 'ROA',
+                yAxisID: 'line',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.roa %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'bar',
+                label: '매출액',
+                yAxisID: 'bar',
+                order: 2,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.revenue %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+                
+            }, {
+                type: 'bar',
+                label: '영업이익',
+                order: 2,
+                yAxisID: 'bar',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.operating_profit %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+                
+            }, {
+                type: 'bar',
+                label: '당기순이익',
+                order: 2,
+                yAxisID: 'bar',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.net_profit %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+                
+            }],
+            labels: [
+                {% for date in fs_date %}
+                "{{ date.year }}.{{ date.quarter }}",
+                {% endfor %}
+            ]
+        },
+        options: {
+            interaction: {
+                mode: 'index',
+            },
+            plugins: {
+                tooltip: {
+                    intersect: false
                 }
-            });
-        });
+            }
+        }
     });
 
-    /** 공시 페이징 */
+    /* 안정성 차트 */
+    var stability_chart = document.getElementById("stability_chart").getContext("2d");
+    new Chart(stability_chart, {
+        data: {
+            datasets: [{
+                type: 'line',
+                label: '유동비율',
+                order: 1,
+                yAxisID: 'line',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.current_ratio %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            },{
+                type: 'line',
+                label: '당좌비율',
+                order: 1,
+                yAxisID: 'line',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.quick_ratio %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '부채비율',
+                order: 1,
+                yAxisID: 'line',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.debt_ratio %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'bar',
+                label: '총자산',
+                order: 2,
+                yAxisID: 'bar',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.total_assets %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            }, {
+                type: 'bar',
+                label: '총부채',
+                order: 2,
+                yAxisID: 'bar',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.total_debt %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            }, {
+                type: 'bar',
+                label: '총자본',
+                order: 2,
+                yAxisID: 'bar',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.total_capital %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            }, ],
+            labels: [
+                {% for date in fs_date %}
+                "{{ date.year }}.{{ date.quarter }}",
+                {% endfor %}
+            ]
+        },
+        options: {
+            interaction: {
+                mode: 'index',
+            },
+            plugins: {
+                tooltip: {
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    /* 활동성 차트 */
+    var activity_chart = document.getElementById("activity_chart").getContext("2d");
+    new Chart(activity_chart, {
+        data: {
+            datasets: [{
+                type: 'line',
+                label: '총자산회전율',
+                order: 1,
+                yAxisID: 'line',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.total_assets_turnover %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '재고자산회전율',
+                order: 1,
+                yAxisID: 'line',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.inventory_turnover %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '매출채권회전율',
+                order: 1,
+                yAxisID: 'line',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.accounts_receivables_turnover %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '매입채무회전율',
+                order: 1,
+                yAxisID: 'line',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.accounts_payable_turnover %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'bar',
+                label: '운전자본소요율(일)',
+                order: 1,
+                yAxisID: 'bar',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.working_capital_requirement %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'bar',
+                label: '1회 운전자본',
+                yAxisID: 'bar2',
+                order: 2,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.working_capital_once %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            }, ],
+            labels: [
+                {% for date in fs_date %}
+                "{{ date.year }}.{{ date.quarter }}",
+                {% endfor %}
+            ]
+        },
+        options: {
+            interaction: {
+                mode: 'index',
+            },
+            plugins: {
+                tooltip: {
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    /* 성장성 차트 */
+    var growth_chart = document.getElementById("growth_chart").getContext("2d");
+    new Chart(growth_chart, {
+        data: {
+            datasets: [{
+                type: 'line',
+                label: '매출액성장률',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.revenue_growth %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '영업이익성장률',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.operating_profit_growth %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '순이익성장률',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.net_profit_growth %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '자기자본증가율',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.net_worth_growth %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '총자산증가율',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.assets_growth %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            }, ],
+            labels: [
+                {% for date in fs_date %}
+                "{{ date.year }}.{{ date.quarter }}",
+                {% endfor %}
+            ]
+        },
+        options: {
+            interaction: {
+                mode: 'index',
+            },
+            plugins: {
+                tooltip: {
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    /* 배당 차트 */
+    var dividend_chart = document.getElementById("dividend_chart").getContext("2d");
+    new Chart(dividend_chart, {
+        data: {
+            datasets: [{
+                type: 'line',
+                label: '배당률',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.dividend_ratio %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: '배당성향',
+                order: 1,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.dividend_payout_ratio %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            },{
+                type: 'bar',
+                label: '배당총액',
+                order: 2,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.dividend %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            }, {
+                type: 'bar',
+                label: '주당배당금(원)',
+                order: 2,
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.dps %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            }, ],
+            labels: [
+                {% for date in fs_date %}
+                "{{ date.year }}.{{ date.quarter }}",
+                {% endfor %}
+            ]
+        },
+        options: {
+            interaction: {
+                mode: 'index',
+            },
+            plugins: {
+                tooltip: {
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    /* 투자지표 차트 */
+    var investment_chart = document.getElementById("investment_chart").getContext("2d");
+    new Chart(investment_chart, {
+        data: {
+            datasets: [{
+                type: 'line',
+                label: 'PER',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.per %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: 'PBR',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.pbr %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: 'PSR',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.psr %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: 'EV/EBITDA',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.ev_ebitda %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            }, {
+                type: 'line',
+                label: 'EV/OCF',
+                data: [
+                    {% for item in report_data %}
+                        {% for value in item.ev_ocf %}
+                        "{{ value }}",
+                        {% endfor %}
+                    {% endfor %}
+                ],
+            },],
+            labels: [
+                {% for date in fs_date %}
+                "{{ date.year }}.{{ date.quarter }}",
+                {% endfor %}
+            ]
+        },
+        options: {
+            interaction: {
+                mode: 'index',
+            },
+            plugins: {
+                tooltip: {
+                    intersect: false
+                }
+            }
+        }
+    });
+</script>
+
+<script>
+    page_number = Number($('#page').data('page'));
+    
+    /* 공시 페이징 */
     function paging() {
-        var table = $('#table');
+        var disclosure_table = $('#disclosure_table');
         var totalPages = {{ page_obj.paginator.num_pages }};
 
         page_number += 1;
@@ -420,16 +902,12 @@
                 data: {
                     'page': JSON.stringify(page_number)
                 },
-                error: function() {
-                    alert('로그인이 필요한 서비스입니다.');
-                    location.href = "{% url 'account:login' %}"
-                },
                 success: function(response) {
                     var responseHTML = $.parseHTML(response);
-                    var rows = $(responseHTML).find("#table tbody tr");
+                    var rows = $(responseHTML).find("#disclosure_table tbody tr");
 
                     rows.each(function() {
-                        table.find("tbody").append($(this));
+                        disclosure_table.find("tbody").append($(this));
                     })
                     
                     $("#load_more_button").text("더보기( " + {{ page_obj|length }} * page_number + " / {{ page_obj.paginator.count }} )");
@@ -445,5 +923,25 @@
             });
         }
     }
+
+    $(document).ready(function() {
+        
+        /** 재무제표 조회 */
+        $('input[name="fs_type"]').on('click', function() {
+            var fs_type = $(this).attr('id')
+
+            $.get({
+                url: "{% url 'services:corp_inquiry' corp_info.id %}",
+                data: {
+                    fs_type: fs_type
+                },
+                success: function(data) {
+                    $('body').children().remove();
+                    $('body').html(data.render);
+                    $('body').find('#'+fs_type).prop('checked', true);
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}

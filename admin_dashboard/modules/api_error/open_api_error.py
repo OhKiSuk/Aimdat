@@ -2,16 +2,15 @@
 @created at 2023.05.17
 @author OKS in Aimdat Team
 
-@modified at 2023.05.25
-@author JSU in Aimdat Team
+@modified at 2023.09.05
+@author OKS in Aimdat Team
 """
 
 import logging
-import xml.etree.ElementTree as ET
 
 LOGGER = logging.getLogger(__name__)
 
-def check_open_api_errors(response):
+def check_open_api_errors(reason_code):
     """
     공공데이터포털 OpenAPI 에러 확인 및 반환
 
@@ -27,10 +26,8 @@ def check_open_api_errors(response):
     32	   | UNREGISTERED_IP_ERROR	                          | 등록되지 않은 IP
     99	   | UNKNOWN_ERROR	                                  | 기타 에러
     """
-    root = ET.fromstring(response.text)
-    reason_code = root.find('.//returnReasonCode').text
     
-    if reason_code == '1' or reason_code == '99':
+    if reason_code == '01' or reason_code == '99':
         LOGGER.error('[O200] 데이터포털 API 에러')
 
     elif reason_code == '10':

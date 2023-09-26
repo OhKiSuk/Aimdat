@@ -2,7 +2,7 @@
 @created at 2023.04.04
 @author cslee in Aimdat Team
 
-@modified at 2023.08.25
+@modified at 2023.09.14
 @author OKS in Aimdat Team
 """
 import logging
@@ -14,11 +14,11 @@ from decimal import (
     Decimal,
     ROUND_DOWN
 )
-
 from config.settings.base import get_secret
 from django.db.models import (
     DateField,
     F,
+    Max,
     Q
 )
 from django.db.models.functions import Cast
@@ -34,6 +34,7 @@ from requests.adapters import (
 )
 from services.models.corp_id import CorpId
 from services.models.stock_price import StockPrice
+import xml.etree.ElementTree as ET
 from ..api_error.open_api_error import check_open_api_errors
 
 LOGGER = logging.getLogger(__name__)
@@ -107,8 +108,10 @@ def _collect_stock_price(stock_codes):
             response_to_json = response.json()
         except ValueError:
             # OpenAPI 로깅
-            check_open_api_errors(response)
-            break
+            root = ET.fromstring(response.text)
+            reason_code = root.find('.//returnReasonCode').text
+            check_open_api_errors(reason_code)
+            continue
 
         dict_list = response_to_json['response']['body']['items']['item']
 
@@ -146,13 +149,26 @@ def _collect_stock_price(stock_codes):
 
     return True
 
-def save_stock_price():
+def save_stock_price(tab):
     """
     주가 데이터 수집 후 저장
 
     성공 시 True 리턴, 실패 시 False 리턴, 기본 리턴값은 False임
-    """    
-    stock_codes = CorpId.objects.all().order_by('corp_name').values_list('stock_code', flat=True)
+    """
+    stock_codes = []
+
+    if tab == 'all_collect':
+        stock_codes = CorpId.objects.all().order_by('corp_name').values_list('stock_code', flat=True)
+    elif tab == 'not_collected':
+        lastest_date = StockPrice.objects.aggregate(lastest_date=Max('trade_date'))['lastest_date'] # 전체 수집 데이터 중 최근 거래일
+        
+        stock_codes = []
+        for stock_code in CorpId.objects.all().order_by('corp_name').values_list('stock_code', flat=True):
+            stock_lastest_date = StockPrice.objects.filter(corp_id_id__stock_code=stock_code).aggregate(lastest_trade_date=Max('trade_date'))['lastest_trade_date'] # 기업의 최근 수집일
+
+            if lastest_date != stock_lastest_date:
+                stock_codes.append(stock_code)
+
     result = _collect_stock_price(stock_codes)
 
     return result

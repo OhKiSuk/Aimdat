@@ -136,6 +136,7 @@ class CollectStockPriceView(View):
     def get(self, request):
         tab = request.GET.get('tab', 'none_action')
         logs = []
+        result = ''
 
         lastest_collect_date = LastCollectDate.objects.filter(collect_type='stock_price').last()
         if lastest_collect_date:
@@ -143,19 +144,21 @@ class CollectStockPriceView(View):
         else:
             lastest_collect_date = '수집 기록이 없습니다.'
 
-        if tab == 'collect':
-            result = save_stock_price()
+        if tab == 'all_collect':
+            result = save_stock_price(tab)
+        elif tab == 'not_collected':
+            result = save_stock_price(tab)
             
-            if result:
-                LastCollectDate.objects.create(
-                    collect_user = request.user.email,
-                    collect_type = 'stock_price'
-                )
-                # A301 로깅
-                LOGGER.info('[A301] 주가 정보를 성공적으로 수집. {}'.format(str(request.user)))
-            else:
-                # A302 로깅
-                LOGGER.error('[A302] 주가 정보가 정상 수집되지 않음. {}'.format(str(request.user)))
+        if result:
+            LastCollectDate.objects.create(
+                collect_user = request.user.email,
+                collect_type = 'stock_price'
+            )
+            # A301 로깅
+            LOGGER.info('[A301] 주가 정보를 성공적으로 수집. {}'.format(str(request.user)))
+        else:
+            # A302 로깅
+            LOGGER.error('[A302] 주가 정보가 정상 수집되지 않음. {}'.format(str(request.user)))
 
         # 로그 출력
         with open(BASE_DIR / 'aimdat/logs/aimdat_admin_dashboard.log', 'r', encoding='utf-8') as f:

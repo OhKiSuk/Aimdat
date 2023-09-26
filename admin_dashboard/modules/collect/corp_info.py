@@ -2,7 +2,7 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.08.09
+@modified at 2023.09.11
 @author OKS in Aimdat Team
 """
 import csv
@@ -15,13 +15,25 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from config.settings.base import get_secret
-from requests import ConnectionError, ConnectTimeout, Timeout, RequestException
+from requests import (
+    ConnectionError, 
+    ConnectTimeout, 
+    Timeout, 
+    RequestException
+)
+from requests.adapters import (
+    HTTPAdapter,
+    Retry
+)
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+
 from services.models.corp_id import CorpId
 from services.models.corp_info import CorpInfo
-from webdriver_manager.chrome import ChromeDriverManager
 from ..api_error.open_dart_api_error import check_open_dart_api_error
 from ..remove.remove_files import remove_files
 
@@ -83,7 +95,25 @@ def _collect_corp_info(stock_codes):
 
                 # API 호출 로깅
                 try:
-                    response = requests.get(url, params=params)
+                    with requests.Session() as session:
+                        connect = 5
+                        read = 5
+                        backoff_factor = 0.5
+                        RETRY_AFTER_STATUS_CODES = (400, 403, 500, 503)
+
+                        retry = Retry(
+                            total=(connect + read),
+                            connect=connect,
+                            read=read,
+                            backoff_factor=backoff_factor,
+                            status_forcelist=RETRY_AFTER_STATUS_CODES,
+                        )
+
+                        adaptor = HTTPAdapter(max_retries=retry)
+                        session.mount("http://", adaptor)
+                        session.mount("https://", adaptor)
+
+                        response = session.get(url=url, params=params)
                 except ConnectTimeout:
                     LOGGER.error('[A013] Requests 연결 타임아웃 에러')
                 except ConnectionError:
@@ -119,7 +149,7 @@ def _download_induty_code():
     option.add_experimental_option("prefs", {
         "download.default_directory": DOWNLOAD_PATH
     })
-    option.add_argument("--headless")
+    #option.add_argument("--headless")
     option.add_argument('--no-sandbox')
     option.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
@@ -129,11 +159,12 @@ def _download_induty_code():
     # A005 로깅
     try:
         download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
+        driver.execute_script("arguments[0].click();", download_button)
+
+        WebDriverWait(driver, 3).until(EC.alert_is_present())
+        driver.switch_to.alert.accept()
     except NoSuchElementException:
         LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
-
-    driver.execute_script("arguments[0].click();", download_button)
-    driver.switch_to.alert.accept()
 
 def _parse_induty_code(corp_id, induty_code):
     """
@@ -192,10 +223,8 @@ def save_corp_info():
                     corp_ceo_name = corp_info['corp_ceo_name']
                 )
 
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
-
         # 고용노동부_표준산업분류코드 제거
-        remove_files(file_path)
+        remove_files(glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))[0])
 
         # corp_code 관련 파일 제거
         remove_files(os.path.join(DOWNLOAD_PATH, 'CORPCODE.xml'))

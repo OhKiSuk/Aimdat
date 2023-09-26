@@ -2,12 +2,14 @@
 @created at 2023.03.22
 @author JSU in Aimdat Team
 
-@modified at 2023.08.10
+@modified at 2023.09.26
 @author OKS in Aimdat Team
 """
 import requests
 import logging
 
+from django.http import JsonResponse
+from config.settings.base import get_secret
 from datetime import (
     datetime, 
     timedelta
@@ -20,7 +22,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Cast
 from django.views.generic import DetailView
-from config.settings.base import get_secret
+from django.template.loader import render_to_string
 
 from ..models.corp_id import CorpId
 from ..models.corp_info import CorpInfo
@@ -43,12 +45,19 @@ class CorpInquiryView(DetailView):
         ).order_by('date_field')
         disclosure_data = self.disclosure_data(id)
         
-        fs_type_name = self.request.GET.get('fs_type', 'cfs')
+        fs_type_name = self.request.GET.get('fs_type', 'sfs')
         # 별도, 연결 구분
         if fs_type_name == 'sfs':
             fs_type = 5
         else:
             fs_type = 0
+
+        # 별도 재무제표만 있을 경우 별도 재무제표만 조회
+        if not InvestmentIndex.objects.filter(corp_id=id, fs_type='0').exists():
+            context['check_fs_types'] = 'sfs'
+            fs_type = 5
+        else:
+            context['check_fs_types'] = 'cfs'
         
         # 윤년 계산
         if (datetime.now().year % 4 == 0 and datetime.now().year % 100 != 0) or datetime.now().year % 400 == 0:
@@ -64,7 +73,7 @@ class CorpInquiryView(DetailView):
         context['stock_data'] = stock_price_obj
         context['week_52_price'] = stock_price_obj.get(Q(trade_date__exact = str(week_52))) if stock_price_obj.filter(Q(trade_date__exact = str(week_52))).exists() else None
         context['report_data'] = self.recent_report(id, fs_type)
-        context['fs_date'] = InvestmentIndex.objects.filter(corp_id=id, fs_type=fs_type).order_by('-year', '-quarter').values('year', 'quarter')
+        context['fs_date'] = InvestmentIndex.objects.filter(corp_id=id, fs_type=fs_type).order_by('year', 'quarter').values('year', 'quarter')
 
         # U201 로깅
         LOGGER.info('[U201] 상세 분석 시도한 기업 정보. {}'.format(CorpId.objects.get(id=id).corp_name))
@@ -81,7 +90,7 @@ class CorpInquiryView(DetailView):
         fs_dict_list = []
         for field in fields:
             fs_dict = {}
-            data = InvestmentIndex.objects.filter(corp_id=id, fs_type=str(fs_type)).order_by('-year', '-quarter').values_list(field, flat=True)
+            data = InvestmentIndex.objects.filter(corp_id=id, fs_type=str(fs_type)).order_by('year', 'quarter').values_list(field, flat=True)
             fs_dict[field] = data
             fs_dict_list.append(fs_dict)
 
@@ -113,3 +122,14 @@ class CorpInquiryView(DetailView):
         page_obj = paginator.get_page(page_number)
 
         return page_obj
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            data = dict()
+            data['render'] = render_to_string(template_name=self.template_name, context=self.get_context_data(**kwargs), request=request)
+
+            return JsonResponse(data)
+        else:
+            return super().get(request, *args, **kwargs)
