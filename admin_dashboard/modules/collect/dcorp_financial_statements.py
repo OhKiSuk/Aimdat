@@ -2,7 +2,7 @@
 @created at 2023.04.21
 @author JSU in Aimdat Team
 
-@modified at 2023.08.09
+@modified at 2023.10.21
 @author OKS in Aimdat Team
 """
 import csv
@@ -101,31 +101,6 @@ def _get_dcorp_list():
     비금융 기업 목록 조회
     """
     try:
-        #고용노동부_표준산업분류코드 csv 다운로드
-        url = 'https://www.data.go.kr/data/15049592/fileData.do'
-        option = webdriver.ChromeOptions()
-        option.add_experimental_option("prefs", {
-            "download.default_directory": DOWNLOAD_PATH
-        })
-        option.add_argument("--headless")
-        option.add_argument('--no-sandbox')
-        option.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
-        driver.get(url)
-        time.sleep(5)
-        
-        # A005 로깅
-        try:
-            download_button = driver.find_element(By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a')
-            driver.execute_script("arguments[0].click();", download_button)
-
-            WebDriverWait(driver, 3).until(EC.alert_is_present())
-            driver.switch_to.alert.accept()
-        except:
-            LOGGER.error('[A005] 산업분류코드 다운로드 실패.')
-
-        time.sleep(5)
-
         file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))[0]
 
         with open(file_path, 'r', newline='', encoding='CP949') as file:
@@ -197,6 +172,7 @@ def _parse_txt(stock_codes):
             fs_dict['년도'] = int(df.iloc[0]['결산기준일'][:4])
             fs_dict['분기'] = quarter
             fs_dict['단위'] = '원'
+            fs_dict['결산기준일'] = df.iloc[0]['결산기준일']
             
             # 계정과목 저장
             for _, row in match_rows.iterrows():
@@ -245,11 +221,7 @@ def save_dcorp(years, quarters):
         client.close()
 
         # 파일 삭제
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
         folder_path = glob.glob(os.path.join(DOWNLOAD_PATH, 'fs_zips'))
-
-        if len(file_path) > 0:
-            remove_files(file_path[0])
 
         if len(folder_path) > 0:
             remove_files(folder_path[0], folder=True)
@@ -257,11 +229,7 @@ def save_dcorp(years, quarters):
         return True
 
     # 파일 삭제
-    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
     folder_path = glob.glob(os.path.join(DOWNLOAD_PATH, 'fs_zips'))
-
-    if len(file_path) > 0:
-        remove_files(file_path[0])
 
     if len(folder_path) > 0:
         remove_files(folder_path[0], folder=True)

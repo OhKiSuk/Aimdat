@@ -2,7 +2,7 @@
 @created at 2023.03.15
 @author JSU in Aimdat Team
 
-@modified at 2023.08.10
+@modified at 2023.10.14
 @author OKS in Aimdat Team
 """
 import json
@@ -18,6 +18,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic.list import ListView
 
+from ..models.corp_id import CorpId
 from ..models.investment_index import InvestmentIndex
 
 LOGGER = logging.getLogger(__name__)
@@ -88,7 +89,11 @@ class SearchView(ListView):
         else:
             q &= Q(fs_type__exact=5)
 
-        # 조건식에 조건 값이 있을 경우 설정(기본 값: 매출액, 영업이익, 당기순이익, 유동비율, 부채비율, 배당금, 배당률)
+        # 조건식에 섹터 값 설정(기본 값: 없음)
+        if 'corp_sector' in self.request.session:
+            q &= Q(corp_id__corp_sectors_main=self.request.session['corp_sector'])
+
+        # 조건식에 조건 값이 있을 경우 설정(기본 값: 매출액, 영업이익, 영업이익률)
         if 'index' in self.request.session and len(self.request.session['index']) > 0:
             indexes = self.request.session['index']
 
@@ -115,7 +120,7 @@ class SearchView(ListView):
                         indexes_en.append(index)                     
 
             queryset = queryset.filter(q)\
-                .values('corp_id', 'year', 'quarter', *indexes_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+                .values('corp_id', 'year', 'quarter', *indexes_en, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_sectors_main', 'corp_id_id__corp_market')
             return queryset
         else:
             default_index = ['revenue', 'operating_profit', 'operating_margin']
@@ -128,7 +133,7 @@ class SearchView(ListView):
                 q &= Q(**{index_name+'__range': (Decimal(investment_index_min), Decimal(investment_index_max))})
 
             queryset = queryset.filter(q)\
-                .values('corp_id', 'year', 'quarter', *default_index, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_market')
+                .values('corp_id', 'year', 'quarter', *default_index, 'corp_id_id__corp_name', 'corp_id_id__corp_country', 'corp_id_id__corp_sectors', 'corp_id_id__corp_sectors_main', 'corp_id_id__corp_market')
             return queryset
 
     def get_context_data(self, **kwargs):
@@ -228,6 +233,7 @@ class SearchView(ListView):
         context['growth_index'] = growth_index
         context['investment_index'] = investment_index
         context['dividend_index'] = dividend_index
+        context['corp_sectors'] = CorpId.objects.distinct().values_list('corp_sectors_main', flat=True) # 섹터목록
 
         return context
     
@@ -235,7 +241,7 @@ class SearchView(ListView):
 
         if request.body.decode('utf-8') == 'reset' or request.body.decode('utf-8') == '{}':
             # 세션 초기화
-            remove_session_keys = ['index', 'corp_name', 'year', 'quarter', 'fs_type']
+            remove_session_keys = ['index', 'corp_name', 'year', 'quarter', 'fs_type', 'corp_sector']
             session_keys = request.session.keys()
             for key in remove_session_keys:
                 if key in session_keys:
@@ -259,12 +265,17 @@ class SearchView(ListView):
                             self.request.session['year'] = indexes['fs_options']['year']
                             self.request.session['quarter'] = indexes['fs_options']['quarter']
                             self.request.session['fs_type'] = indexes['fs_options']['fs_type']
+                    elif index_name == 'corp_sector':
+                        self.request.session['corp_sector'] = indexes['corp_sector']
                     else:
                         index_session[index_name] = indexes[index_name]
                     
                 if 'corp_name' not in indexes.keys():
                     if 'corp_name' in self.request.session:
                         del self.request.session['corp_name']
+                if 'corp_sector' not in indexes.keys():
+                    if 'corp_sector' in self.request.session:
+                        del self.request.session['corp_sector']
                 if 'fs_options' not in indexes.keys():
                     if 'year' in self.request.session and 'quarter' in self.request.session and 'fs_type' in self.request.session:
                         self.request.session['year'] = recent_year

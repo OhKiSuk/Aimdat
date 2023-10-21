@@ -2,7 +2,7 @@
 @created at 2023.05.18
 @author OKS in Aimdat Team
 
-@modified at 2023.09.11
+@modified at 2023.10.14
 @author OKS in Aimdat Team
 """
 import csv
@@ -154,17 +154,18 @@ def _download_induty_code():
     option.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
     driver.get(url)
-    time.sleep(5)
 
     # A005 로깅
     try:
-        download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
-        driver.execute_script("arguments[0].click();", download_button)
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@class="tab-content active"]/div[2]/div[2]/a'))).click()
 
-        WebDriverWait(driver, 3).until(EC.alert_is_present())
+        WebDriverWait(driver, 10).until(EC.alert_is_present())
         driver.switch_to.alert.accept()
     except NoSuchElementException:
         LOGGER.error('[A005] 산업분류코드 다운로드 경로 에러.')
+    
+    # 다운로드 대기
+    time.sleep(5)
 
 def _parse_induty_code(corp_id, induty_code):
     """
@@ -181,9 +182,17 @@ def _parse_induty_code(corp_id, induty_code):
 
         for row in file_content:
             if row[6] == induty_code:
-                CorpId.objects.filter(id=corp_id).update(
-                    corp_sectors=row[7]
-                )
+                if row[6].startswith(('64', '65', '66')):
+                    CorpId.objects.filter(id=corp_id).update(
+                        corp_sectors=row[7],
+                        corp_sectors_main=row[5],
+                        is_financial_industry=True
+                    )
+                else:
+                    CorpId.objects.filter(id=corp_id).update(
+                        corp_sectors=row[7],
+                        corp_sectors_main=row[5]
+                    )
 
 def save_corp_info():
     """
@@ -194,12 +203,13 @@ def save_corp_info():
     _download_corp_code()
     _unzip_corp_code()
 
+    # 산업분류코드 다운로드
+    _download_induty_code()
+
     stock_codes = CorpId.objects.all().values_list('stock_code', flat=True)
     result = _collect_corp_info(stock_codes)
     
     if len(result) > 0:
-        # 산업분류코드 다운로드
-        _download_induty_code()
 
         for corp_info in result:
             # CorpId에 섹터명(산업분류명) 파싱 후 저장(Corp 섹터가 없는 것만)

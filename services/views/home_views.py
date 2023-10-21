@@ -1,8 +1,13 @@
 """
 @created at 2023.08.11
 @author OKS in Aimdat Team
+
+@modified at 2023.10.15
+@author OKS in Aimdat Team
 """
 from django.views.generic import TemplateView
+
+from ..models.corp_id import CorpId
 
 class HomeView(TemplateView):
     template_name = 'services/home.html'
@@ -70,5 +75,6 @@ class HomeView(TemplateView):
         context['growth_index'] = growth_index
         context['investment_index'] = investment_index
         context['dividend_index'] = dividend_index
+        context['corp_sectors'] = CorpId.objects.distinct().values_list('corp_sectors_main', flat=True) # 섹터목록
 
         return context

@@ -2,7 +2,7 @@
 @created at 2023.05.10
 @author JSU in Aimdat Team
 
-@modified at 2023.07.27
+@modified at 2023.10.16
 @author OKS in Aimdat Team
 """
 from django.db import models
@@ -18,6 +18,7 @@ class InvestmentIndex(models.Model):
     year = models.CharField(max_length=4)
     quarter = models.CharField(max_length=2)
     fs_type = models.CharField(max_length=1) # {연결: 0, 별도: 5}
+    settlement_date = models.CharField(max_length=255, null=True) # 결산일
 
     # 계정과목 정보
     revenue = models.DecimalField(max_digits=30, decimal_places=6, null=True) # 매출액(영업수익)

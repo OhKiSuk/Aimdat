@@ -2,22 +2,31 @@
 @created at 2023.04.23
 @author OKS in Aimdat Team
 
-@modified at 2023.08.09
+@modified at 2023.10.21
 @author OKS in Aimdat Team
 """
+from arelle import Cntlr
 import csv
 import glob
 import logging
 import os
 import pymongo
 import re
+import requests
 import time
+import zipfile
 
 from bson.decimal128 import Decimal128
 from bs4 import BeautifulSoup
 from config.settings.base import get_secret
 from django.http import HttpResponseServerError
 from django.db.models import Q
+from requests import (
+    ConnectionError,
+    ConnectTimeout, 
+    Timeout, 
+    RequestException
+)
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
@@ -36,33 +45,7 @@ def _get_fcorp_list():
     """
     금융 기업 목록 조회
     """
-    try:
-        #고용노동부_표준산업분류코드 csv 다운로드
-        url = 'https://www.data.go.kr/data/15049592/fileData.do'
-        option = webdriver.ChromeOptions()
-        option.add_experimental_option("prefs", {
-            "download.default_directory": DOWNLOAD_PATH
-        })
-        option.add_argument("--headless")
-        option.add_argument('--no-sandbox')
-        option.add_argument('--disable-dev-shm-usage')
-        option.add_argument(f"--download.default_directory={DOWNLOAD_PATH}") 
-        driver = webdriver.Chrome(executable_path=os.path.join(DOWNLOAD_PATH, 'chromedriver-win64/chromedriver.exe'), chrome_options=option)
-        driver.get(url)
-        time.sleep(5)
-        
-        # A005 로깅
-        try:
-            download_button = driver.find_element(By.XPATH, '//*[@id="tab-layer-file"]/div[2]/div[2]/a')
-            driver.execute_script("arguments[0].click();", download_button)
-
-            WebDriverWait(driver, 3).until(EC.alert_is_present())
-            driver.switch_to.alert.accept()
-        except:
-            LOGGER.error('[A005] 산업분류코드 다운로드 실패.')
-        
-        time.sleep(5)
-        
+    try:        
         file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))[0]
 
         with open(file_path, 'r', newline='', encoding='CP949') as file:
@@ -83,6 +66,82 @@ def _get_fcorp_list():
         # A006 로깅
         LOGGER.error('[A006] 산업분류코드 파싱 실패.')
         return HttpResponseServerError
+    
+def _get_settlement_date(rcp_no, year, quarter):
+    """
+    금융기업의 결산기준일 획득 기능
+    """
+    # 보고서 코드
+    # 1분기보고서 : 11013
+    # 반기보고서 : 11012
+    # 3분기보고서 : 11014
+    # 사업보고서 : 11011
+    if quarter == 1:
+        reprt_code = '11013'
+    elif quarter == 2:
+        reprt_code = '11012'
+    elif quarter == 3:
+        reprt_code = '11014'
+    else:
+        reprt_code = '11011'
+
+    url = 'https://opendart.fss.or.kr/api/fnlttXbrl.xml'
+    params = {
+        'crtfc_key': get_secret('crtfc_key'),
+        'rcept_no': rcp_no,
+        'reprt_code': reprt_code
+    }
+
+    # 재무제표원본파일 다운
+    try:
+        response = requests.get(url, params=params)
+    except ConnectTimeout:
+        LOGGER.error('[A013] Requests 연결 타임아웃 에러.')
+    except ConnectionError:
+        LOGGER.error('[A012] Requests 연결 에러.')
+    except Timeout:
+        LOGGER.error('[A011] Requests 타임아웃 에러.')
+    except RequestException:
+        LOGGER.error('[A010] Requests 범용 에러.')
+
+    with open(os.path.join(DOWNLOAD_PATH, 'fnlttXbrl.zip'), 'wb') as file:
+        file.write(response.content)
+
+    # 재무제표원본파일 압축해제
+    try:
+        with zipfile.ZipFile(os.path.join(DOWNLOAD_PATH, 'fnlttXbrl.zip'), 'r') as zip_file:
+            zip_file.extractall(os.path.join(DOWNLOAD_PATH, 'fnlttXbrl'))
+    except:
+        remove_files(glob.glob(os.path.join(DOWNLOAD_PATH, 'fnlttXbrl.zip'))[0])
+
+        if quarter == 1:
+            return str(year)+'-03-31'
+        elif quarter == 2:
+            return str(year)+'-06-30'
+        elif quarter == 3:
+            return str(year)+'-09-30'
+        else:
+            return str(year)+'-12-31'
+
+    # 결산기준일 파싱 및 return
+    xbrl_file_path = glob.glob(os.path.join(os.path.join(os.path.join(DOWNLOAD_PATH, 'fnlttXbrl'), '*.xbrl')))[0]
+
+    cntlr = Cntlr.Cntlr(logFileName='logToStdErr')
+    cntlr.logger.setLevel(logging.CRITICAL)
+    model_xbrl = cntlr.modelManager.load(filesource=xbrl_file_path)
+
+    settlement_date = ''
+    for fact in model_xbrl.facts:
+
+        if "DocumentPeriodEndDate" in fact.concept.qname.localName and re.match(r'.*PeriodCoveredbytheReportofCurrentFiscalYearorQuarterorHalfYearMember', fact.contextID):
+            settlement_date = fact.value
+
+    # 다운로드 파일 삭제
+    remove_files(glob.glob(os.path.join(DOWNLOAD_PATH, 'fnlttXbrl.zip'))[0])
+    remove_files(glob.glob(os.path.join(DOWNLOAD_PATH, 'fnlttXbrl'))[0], folder=True)
+
+    return settlement_date
+
     
 def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
     """
@@ -169,6 +228,11 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
             LOGGER.error('[A505] 재무제표 조회 결과가 반환되지 않음. {}, {}, {}, {}'.format(stock_code, year, quarter, fs_type))
             continue
 
+        iframe_src = driver.find_element(By.TAG_NAME, 'iframe').get_attribute('src')
+        rcp_no = re.findall(r'\?rcpNo=(.*?)\&', iframe_src)[0]
+
+        settlement_date = _get_settlement_date(rcp_no, year, quarter)
+
         driver.switch_to.frame(iframe)
 
         inner_html = BeautifulSoup(driver.page_source, 'html.parser')
@@ -185,6 +249,9 @@ def _crawl_dart(crawl_crp_list, year, quarter, fs_type=5, sleep_time=1):
 
                 # 종목코드 지정
                 fs_dict['종목코드'] = str(stock_code)
+
+                # 결산기준일 지정
+                fs_dict['결산기준일'] = str(settlement_date)
 
                 # 재무제표 금액 단위 파싱
                 unit = inner_html.find(string=re.compile(r'\((\s|&nbsp;)?단위'))
@@ -345,19 +412,6 @@ def save_fcorp(year:int, quarter:int, fs_type=5):
                 collection.insert_one(fs)
 
         client.close()
-
-        # 사용한 파일 제거
-        file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
-
-        if len(file_path) > 0:
-            remove_files(file_path[0])
-
         return True
-
-    # 사용한 파일 제거
-    file_path = glob.glob(os.path.join(DOWNLOAD_PATH, '고용노동부_고용업종코드(표준산업분류코드_10차)_*.csv'))
-
-    if len(file_path) > 0:
-        remove_files(file_path[0])
-
+    
     return False

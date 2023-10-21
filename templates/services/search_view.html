@@ -65,7 +65,8 @@
                         <a href="{% url 'services:corp_inquiry' obj.corp_id %}" class="text-decoration-none fs-sm fw-semibold" style="color:black;">{{ obj.corp_id_id__corp_name }}</a>
                     </div>
                     <span class="badge badge-margin text-bg-light">{{ obj.corp_id_id__corp_market }}</span>
-                    <span class="badge badge-margin text-bg-light">{{ obj.corp_id_id__corp_sectors }}</span>
+                    <span class="badge badge-margin text-bg-light">대분류: {{ obj.corp_id_id__corp_sectors_main }}</span>
+                    <span class="badge badge-margin text-bg-light">소분류: {{ obj.corp_id_id__corp_sectors }}</span>
                 </td>
                 {% for key in index.keys %}
                 <td>{{ obj|get_attr:key|floatformat:'2'|intcomma }}</td>
@@ -123,6 +124,9 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link fs-sm" href="javascript:void(0);">재무제표</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fs-sm" href="javascript:void(0);">섹터</a>
                         </li>
                     </ul>
                 </div>
@@ -205,7 +209,7 @@
 
                     <div id="fs_options" style="display: none;">
                         <div class="mx-2 mb-3">
-                            <span class="fs-min text-black-50">* 재무제표는 한 가지만 선택할 수 있습니다.</span>
+                            <span class="fs-min text-black-50">* 재무제표는 한 분기 내 한 개만 선택할 수 있습니다.</span>
                         </div>
                         <div class="row mx-2 mb-3">
                             <select class="form-select form-select-sm col fs-sm" name="year">
@@ -233,6 +237,18 @@
                         </div>
                         
                         <button id="id_set_fs_options" class="btn btn-secondary fs-sm float-end mx-2">추가</button>
+                    </div>
+
+                    <div id="corp_sectors" style="display: none;">
+
+                        <select class="form-select form-select-sm col fs-sm mb-3" name="corp_sector_list">
+                            <option value="섹터선택">섹터선택</option>
+                            {% for corp_sector in corp_sectors %}
+                            <option value="{{ corp_sector }}">{{ corp_sector }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <button id="id_set_corp_sectors" class="btn btn-secondary fs-sm float-end mx-2">추가</button>
                     </div>
 
                     <div id="id_insert_index" class="col-8" style="display: none;">
@@ -296,50 +312,63 @@
             switch($(this).index()) {
                 case 0:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
                     $('#account_index').show();
                     break;
                 case 1:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
                     $('#safety_index').show();
                     break;
                 case 2:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
                     $('#profitability_index').show();
                     break;
                 case 3:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
                     $('#activity_index').show();
                     break;
                 case 4:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
                     $('#growth_index').show();
                     break;
                 case 5:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
                     $('#investment_index').show();
                     break;
                 case 6:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#fs_options').hide();
                     $('#id_insert_index').hide();
                     $('#dividend_index').show();
                     break;
                 case 7:
                     $('#index > div').hide();
+                    $('#corp_sectors').hide();
                     $('#id_insert_index').hide();
                     $('#fs_options').show();
+                    break;
+                case 8:
+                    $('#index > div').hide();
+                    $('#id_insert_index').hide();
+                    $('#corp_sectors').show();
                     break;
             }
         });
@@ -363,13 +392,25 @@
         /** 기존 설정 기업 */
         {% if request.session.corp_name %}
         filter_name = 'corp_name'
-        apply_index = '<span id="corp_name" class="badge text-bg-light">' +
-            '<span onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>'+'기업명(종목코드): {{ request.session.corp_name }}</span>'+
+        apply_index = '<span id="corp_name" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+            '<span>'+'기업명(종목코드): {{ request.session.corp_name }}</span>'+
             '<span class="btn-close ms-1 text-end"></span>'+
             '</span>';
 
         $('#id_apply_filters').append(apply_index);
         indexes[filter_name] = '{{ request.session.corp_name }}';
+        {% endif %}
+
+        /** 기존 설정 섹터 */
+        {% if request.session.corp_sector %}
+        filter_name = 'corp_sector'
+        apply_index = '<span id="corp_sector" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+            '<span>'+'섹터: {{ request.session.corp_sector }}</span>'+
+            '<span class="btn-close ms-1 text-end"></span>'+
+            '</span>';
+
+        $('#id_apply_filters').append(apply_index);
+        indexes[filter_name] = '{{ request.session.corp_sector }}';
         {% endif %}
 
         /** 기존 설정 재무제표 */
@@ -486,6 +527,26 @@
                 $('#fs_type').remove();
                 $('#id_apply_filters').append(apply_index);
                 indexes[filter_name] = {'year': year, 'quarter': quarter, 'fs_type': fs_type};
+            }
+        });
+
+        /** 필터 추가(섹터) */
+        $('#id_set_corp_sectors').on('click', function() {
+            corp_sector = $('select[name="corp_sector_list"] option:selected').val();
+            filter_name = 'corp_sector'
+
+            if (corp_sector == '섹터선택') {
+                alert('섹터를 선택해주세요.');
+            }
+            else {
+                apply_index = '<span id="corp_sector" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                                '<span>섹터: '+corp_sector+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#corp_sector').remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name] = corp_sector;
             }
         });
     });

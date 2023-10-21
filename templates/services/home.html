@@ -41,6 +41,9 @@
                     <li class="nav-item">
                         <a class="nav-link fs-sm" href="javascript:void(0);">재무제표</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link fs-sm" href="javascript:void(0);">섹터</a>
+                    </li>
                 </ul>
             </div>
             <div id="id_apply_filters" class="fs-sm mt-3">
@@ -153,6 +156,18 @@
                     <button id="id_set_fs_options" class="btn btn-secondary fs-sm float-end mx-2">추가</button>
                 </div>
 
+                <div id="corp_sectors" style="display: none;">
+
+                    <select class="form-select form-select-sm col fs-sm mb-3" name="corp_sector_list">
+                        <option value="섹터선택">섹터선택</option>
+                        {% for corp_sector in corp_sectors %}
+                        <option value="{{ corp_sector }}">{{ corp_sector }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button id="id_set_corp_sectors" class="btn btn-secondary fs-sm float-end mx-2">추가</button>
+                </div>
+
                 <div id="id_insert_index" class="col-8" style="display: none;">
                     <div class="row mb-3">
                         <span class="col fs-md fw-semibold" data-filter-name=""></span>
@@ -262,6 +277,11 @@
                     $('#id_insert_index').hide();
                     $('#fs_options').show();
                     break;
+                case 8:
+                    $('#index > div').hide();
+                    $('#id_insert_index').hide();
+                    $('#corp_sectors').show();
+                    break;
             }
         });
 
@@ -365,6 +385,26 @@
                 $('#fs_type').remove();
                 $('#id_apply_filters').append(apply_index);
                 indexes[filter_name] = {'year': year, 'quarter': quarter, 'fs_type': fs_type};
+            }
+        });
+
+        /** 필터 추가(섹터) */
+        $('#id_set_corp_sectors').on('click', function() {
+            corp_sector = $('select[name="corp_sector_list"] option:selected').val();
+            filter_name = 'corp_sector'
+
+            if (corp_sector == '섹터선택') {
+                alert('섹터를 선택해주세요.');
+            }
+            else {
+                apply_index = '<span id="corp_sector" class="badge text-bg-light" onclick=removeIndex(this,'+'"'+ filter_name +'"'+');>' +
+                                '<span>'+corp_sector+'</span>'+
+                                '<span class="btn-close ms-1 text-end"></span>'+
+                            '</span>';
+                
+                $('#corp_sector').remove();
+                $('#id_apply_filters').append(apply_index);
+                indexes[filter_name] = corp_sector;
             }
         });
     });

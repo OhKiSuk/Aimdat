@@ -2,7 +2,7 @@
 @created at 2023.05.10
 @author JSU in Aimdat Team
 
-@modified at 2023.09.23
+@modified at 2023.10.16
 @author OKS in Aimdat Team
 """
 import logging
@@ -174,13 +174,17 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
         operating_cash_flow = Decimal('0')
         financing_cash_flow = Decimal('0')
         investing_cash_flow = Decimal('0')
+        dps = Decimal('0')
         total_dividend = Decimal('0')
+        dividend_payout_ratio = Decimal('0')
+        dividend_ratio = Decimal('0')
         before_revenue = Decimal('0')
         before_total_assets = Decimal('0')
         before_total_capital = Decimal('0')
         before_operating_profit = Decimal('0')
         before_net_profit = Decimal('0')
         before_dividend = Decimal('0')
+        before_dps = Decimal('0')
         value = Decimal('0')
         before_value = Decimal('0')
         now_value = Decimal('0')
@@ -190,13 +194,11 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
             stock_price_obj = StockPrice.objects.annotate(date_field=Cast(F('trade_date'), output_field=DateField())).filter(Q(corp_id__stock_code__exact = stock_code) & Q(date_field__year__exact = year) & Q(date_field__month__exact = quarter * 3)).latest('date_field')
             market_capitalization = ctx.divide(stock_price_obj.market_capitalization, set_unit) # 시가총액
             shares_outstanding = stock_price_obj.total_stock # 발행주식수
-            stock_price = stock_price_obj.close_price # 주가
         else:
             # A603 로깅
             LOGGER.info('[A603] 저장된 주가 정보가 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
             market_capitalization = 0
             shares_outstanding = 0
-            stock_price = 0
 
         for account_category, account_list in account_dict.items():
             if account_category in bs_list:
@@ -254,7 +256,10 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
 
                         elif account_category in pl_list:
 
-                            if quarter == 1:
+                            is_financial_industry = CorpId.objects.get(stock_code=stock_code).is_financial_industry
+                            
+                            # 금융업(누적 수치 사용하지 않음) 및 1분기일 경우 수치 즉시 저장
+                            if quarter == 1 or is_financial_industry:
                                 value = _check_is_nan(ctx.divide(Decimal(str(document[key].to_decimal())), set_unit))
                             else:
                                 # 당분기 수치(누적분)
@@ -266,10 +271,8 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
                                 for before_document in before_documents:
                                     for before_key in before_document:
                                         if str(before_key).strip() in account_list:
-
                                             # 전기 수치
                                             before_value = _check_is_nan(ctx.divide(Decimal(str(before_document[before_key].to_decimal())), set_unit))
-
                                             value = now_value - before_value
 
                             # 손익계산서 값
@@ -289,7 +292,7 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
         # 성장률 계산에 필요한 전기 데이터 조회(2020년 1분기 이전 데이터는 가져오지 않음)
         if quarter != 1:
             before_data = InvestmentIndex.objects.filter(corp_id__stock_code=stock_code, year=str(before_year), quarter=str(before_quarter), fs_type=str(fs_type)). \
-                only('revenue', 'operating_profit', 'net_profit', 'total_capital', 'total_assets', 'dividend')
+                only('revenue', 'operating_profit', 'net_profit', 'total_capital', 'total_assets', 'dps')
         else:
             before_data = []
 
@@ -300,6 +303,7 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
                 before_total_capital = data.total_capital
                 before_operating_profit = data.operating_profit
                 before_net_profit = data.net_profit
+                before_dps = data.dps
                 before_dividend = data.dividend
 
         # Opendart에서 배당데이터 수집
@@ -356,20 +360,68 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
 
                     for element in api_root.iter('list'):
                         
-                        # 현금배당금 총액 파싱
-                        if re.match(r'현금배당금총액', element.find('se').text):
-                            try:
-                                value = not_digit_pattern.sub('', element.find('thstrm').text)
-                                if value:
-                                    # 배당금 총액
-                                    total_dividend_value = (Decimal(value) * Decimal('1_000_000')).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
-                                    if quarter == 1:
-                                        total_dividend = total_dividend_value
-                                    else:
-                                        total_dividend = total_dividend_value - (before_dividend * Decimal('100_000_000'))
-                            except:
-                                LOGGER.info('[A604] 배당정보 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
-                                total_dividend = Decimal('0')
+                        # 보통주 배당금 수집
+                        if re.match(r'주당 현금배당금', element.find('se').text):
+                            if element.find('stock_knd') != r'우선주':
+                                try:
+                                    value = not_digit_pattern.sub('', element.find('thstrm').text)
+
+                                    if value:
+                                        dps_value = Decimal(value).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
+                                        if quarter == 1:
+                                            dps = dps_value
+                                        else:
+                                            dps = dps_value - before_dps
+
+                                    # 당기에 배당을 안했을 경우
+                                    if dps < Decimal('0'):
+                                        dps = Decimal('0')
+                                except:
+                                    LOGGER.info('[A604] 배당정보 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+                                    dps = Decimal('0')
+                        # 현금 배당금 총액 수집
+                        elif re.match(r'현금배당금총액', element.find('se').text):
+                            if element.find('stock_knd') != r'우선주':
+                                try:
+                                    value = not_digit_pattern.sub('', element.find('thstrm').text)
+                                    if value:
+                                        total_dividend_value = ctx.multiply(Decimal(value), Decimal('1_000_000')).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
+                                        if quarter == 1:
+                                            total_dividend = total_dividend_value
+                                        else:
+                                            total_dividend = total_dividend_value - ctx.multiply(before_dividend, Decimal('100_000_000'))
+                                    
+                                    if total_dividend < Decimal('0'):
+                                        total_dividend = Decimal('0')
+                                except:
+                                    LOGGER.info('[A604] 배당정보 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+                                    total_dividend = Decimal('0')
+                        # 현금배당성향 수집
+                        elif re.match(r'.*현금배당성향', element.find('se').text):
+                            if element.find('stock_knd') != r'우선주':
+                                try:
+                                    value = element.find('thstrm').text
+                                    if value != '-':
+                                        dividend_payout_ratio = Decimal(value)
+                                    
+                                    if dividend_payout_ratio < Decimal('0'):
+                                        dividend_payout_ratio = Decimal('0')
+                                except:
+                                    LOGGER.info('[A604] 배당정보 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+                                    dividend_payout_ratio = Decimal('0')
+                        # 현금배당수익률 수집
+                        elif re.match(r'현금배당수익률', element.find('se').text):
+                            if element.find('stock_knd') != r'우선주':
+                                try:
+                                    value = element.find('thstrm').text
+                                    if value != '-':
+                                        dividend_ratio = Decimal(value)
+                                    
+                                    if dividend_ratio < Decimal('0'):
+                                        dividend_ratio = Decimal('0')
+                                except:
+                                    LOGGER.info('[A604] 배당정보 없음. {}, {}, {}, {}'.format(str(stock_code), str(year), str(quarter), str(fs_type)))
+                                    dividend_ratio = Decimal('0')
                 """
                 자본 총계 계산
                 """                
@@ -570,26 +622,6 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
                 except (InvalidOperation, ZeroDivisionError):
                     ev_ocf = Decimal('0')
                 
-                """
-                배당
-
-                주당 배당금, 배당금 총액, 배당률, 배당성향
-                """
-                try:
-                    dps = _check_is_nan(ctx.divide(total_dividend, shares_outstanding).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP))
-                except (InvalidOperation, ZeroDivisionError):
-                    dps = Decimal('0')
-
-                try:
-                    dividend_ratio = _check_is_nan(ctx.divide(dps, stock_price).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP))
-                except (InvalidOperation, ZeroDivisionError):
-                    dividend_ratio = Decimal('0')
-
-                try:
-                    payout_ratio = _check_is_nan(ctx.multiply(ctx.divide(dps, eps), Decimal('100')))
-                except (InvalidOperation, ZeroDivisionError):
-                    payout_ratio = Decimal('0')
-
                 if InvestmentIndex.objects.filter(corp_id__stock_code=stock_code, year=year, quarter=quarter, fs_type=fs_type).exists():
                     index_list.append(
                         InvestmentIndex(
@@ -598,6 +630,7 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
                             year=year,
                             quarter=quarter,
                             fs_type=fs_type,
+                            settlement_date=document['결산기준일'],
                             revenue=revenue,
                             operating_profit=operating_profit,
                             net_profit=net_profit,
@@ -630,9 +663,9 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
                             net_worth_growth=net_worth_growth,
                             assets_growth=assets_growth,
                             dps=dps,
-                            dividend=ctx.divide(total_dividend, set_unit).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP),
+                            dividend=ctx.divide(total_dividend, Decimal('100_000_000')).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP),
                             dividend_ratio=dividend_ratio,
-                            dividend_payout_ratio=payout_ratio,
+                            dividend_payout_ratio=dividend_payout_ratio,
                             per=per,
                             pbr=pbr,
                             psr=psr,
@@ -649,6 +682,7 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
                             year=year,
                             quarter=quarter,
                             fs_type=fs_type,
+                            settlement_date=document['결산기준일'],
                             revenue=revenue,
                             operating_profit=operating_profit,
                             net_profit=net_profit,
@@ -681,9 +715,9 @@ def _parse_investment_index(year, quarter, fs_type, corp_list):
                             net_worth_growth=net_worth_growth,
                             assets_growth=assets_growth,
                             dps=dps,
-                            dividend=ctx.divide(total_dividend, set_unit).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP),
+                            dividend=ctx.divide(total_dividend, Decimal('100_000_000')).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP),
                             dividend_ratio=dividend_ratio,
-                            dividend_payout_ratio=payout_ratio,
+                            dividend_payout_ratio=dividend_payout_ratio,
                             per=per,
                             pbr=pbr,
                             psr=psr,
@@ -711,8 +745,7 @@ def save_investment_index(year, quarter, fs_type):
     """
     투자지표 저장
     """
-    #stock_codes = CorpId.objects.values_list('stock_code', flat=True)
-    stock_codes = ['005930']
+    stock_codes = CorpId.objects.values_list('stock_code', flat=True)
     _download_corp_code()
     _unzip_corp_code()
     corp_list = _get_collect_corp_list(stock_codes, year, quarter)

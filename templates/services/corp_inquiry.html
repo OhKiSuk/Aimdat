@@ -630,10 +630,10 @@
                     {% endfor %}
                 ],
             }, {
-                type: 'bar',
+                type: 'line',
                 label: '운전자본소요율(일)',
                 order: 1,
-                yAxisID: 'bar',
+                yAxisID: 'line',
                 data: [
                     {% for item in report_data %}
                         {% for value in item.working_capital_requirement %}
@@ -752,6 +752,7 @@
             datasets: [{
                 type: 'line',
                 label: '배당률',
+                yAxisID: 'line',
                 order: 1,
                 data: [
                     {% for item in report_data %}
@@ -763,6 +764,7 @@
             }, {
                 type: 'line',
                 label: '배당성향',
+                yAxisID: 'line',
                 order: 1,
                 data: [
                     {% for item in report_data %}
@@ -774,6 +776,7 @@
             },{
                 type: 'bar',
                 label: '배당총액',
+                yAxisID: 'bar',
                 order: 2,
                 data: [
                     {% for item in report_data %}
@@ -785,6 +788,7 @@
             }, {
                 type: 'bar',
                 label: '주당배당금(원)',
+                yAxisID: 'bar2',
                 order: 2,
                 data: [
                     {% for item in report_data %}
